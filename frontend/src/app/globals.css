@@ -1,0 +1,49 @@
+/* Tailwind CSS directives - processed by PostCSS during build */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --background: #0A0A0F;
+    --foreground: #F5F5F7;
+}
+
+@layer base {
+    * {
+        @apply border-gray-800;
+    }
+
+    body {
+        @apply bg-cyber-dark text-foreground;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+}
+
+@layer utilities {
+    .glass {
+        @apply bg-white/5 backdrop-blur-xl border border-white/10;
+    }
+
+    .glass-hover {
+        @apply hover:bg-white/10 transition-all duration-300;
+    }
+
+    .gradient-border {
+        position: relative;
+        background: linear-gradient(90deg, #A855F7, #3B82F6, #EC4899);
+        background-clip: padding-box;
+    }
+
+    .gradient-border::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 2px;
+        background: linear-gradient(90deg, #A855F7, #3B82F6, #EC4899);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "name": "cvber-free-c2pa",
+    "version": "1.0.0",
+    "description": "C2PA digital signature service for CVBER Free",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "dev": "ts-node src/index.ts"
+    },
+    "dependencies": {
+        "@contentauth/c2pa-node": "^0.4.2",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "multer": "^1.4.5-lts.1"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.17",
+        "@types/express": "^4.17.21",
+        "@types/multer": "^1.4.11",
+        "@types/node": "^20.10.6",
+        "node-forge": "^1.3.3",
+        "selfsigned": "^5.4.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.3.3"
+    }
+}
