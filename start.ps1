@@ -23,13 +23,13 @@ Start-Sleep -Seconds 2
 
 # Start C2PA Service
 Write-Host "🔐 Starting C2PA Service (port 3001)..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD\c2pa-service'; Write-Host '🔐 C2PA Service' -ForegroundColor Cyan; npm run dev"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD\c2pa-service'; Write-Host '🔐 C2PA Service' -ForegroundColor Cyan; npm.cmd run dev"
 
 Start-Sleep -Seconds 2
 
 # Start Frontend
 Write-Host "🎨 Starting Frontend (port 3000)..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD\frontend'; Write-Host '🎨 Frontend Server' -ForegroundColor Cyan; npm run dev"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD\frontend'; Write-Host '🎨 Frontend Server' -ForegroundColor Cyan; npm.cmd run dev"
 
 Write-Host ""
 Write-Host "✨ All services starting!" -ForegroundColor Green
