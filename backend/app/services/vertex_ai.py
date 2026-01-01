@@ -248,6 +248,49 @@ Begin analysis:
                 }
             )
     
+    async def get_mentor_response(
+        self,
+        message: str,
+        history: list = []
+    ) -> str:
+        """
+        Get a generative response from the Security Mentor.
+        """
+        system_prompt = """You are the CVBER Free Security Mentor, a sophisticated AI security expert. 
+Your goal is to help users understand cybersecurity, explain their scan results, and provide actionable protection advice.
+
+**Tone and Style:**
+- Professional yet approachable (like a senior security engineer).
+- Clear, technical but easy to understand for non-experts.
+- Use formatting (bullet points, bold text) for clarity.
+- Stay focused on security and the CVBER Free application.
+
+**Knowledge Base:**
+- CVBER Free uses AI-powered threat detection (Gemini 1.5 Flash).
+- It provides file scanning, malware detection, and C2PA content integrity verification.
+- You can explain terms like 'C2PA', 'Integrity Hash', 'Malware Signature', and 'Risk Score'.
+
+If a user asks about a specific threat, provide realistic mitigation steps. If they ask about the app, guide them on how to use its features.
+"""
+
+        if not self.initialized or self.model is None:
+            return "I'm currently in offline mode because my AI brain (Vertex AI) isn't fully configured. However, I can still tell you that security is a journey! Please check your Google Cloud credentials to enable my full generative capabilities."
+
+        try:
+            # Build chat context
+            chat = self.model.start_chat(history=[]) # Simplified stateless for now, history handled in prompt
+            
+            # Construct enriched prompt with history
+            context_str = "\n".join([f"{h['role']}: {h['content']}" for h in history])
+            full_prompt = f"{system_prompt}\n\nRecent Conversation:\n{context_str}\n\nUser: {message}\nAssistant:"
+            
+            response = await self.model.generate_content_async(full_prompt)
+            return response.text.strip()
+            
+        except Exception as e:
+            print(f"Error getting mentor response: {e}")
+            return "I encountered a digital glitch while processing your request. Please try again or check the system logs."
+
     def _generate_mock_report(self, file_name: str, file_type: str, file_size: int) -> RiskReport:
         """Generate mock report for testing when Vertex AI is unavailable."""
         return RiskReport(

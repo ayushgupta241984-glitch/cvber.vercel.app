@@ -102,6 +102,21 @@ class RegisterRequest(BaseModel):
     full_name: Optional[str] = None
 
 
+class ChatMessage(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
+
+
+class ChatRequest(BaseModel):
+    message: str
+    history: List[ChatMessage] = []
+
+
+class ChatResponse(BaseModel):
+    response: str
+    context_used: Optional[List[str]] = []
+
+
 class AuditLog(BaseModel):
     id: UUID
     user_id: UUID

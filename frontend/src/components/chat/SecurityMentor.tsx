@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageCircle, Send, Bot } from 'lucide-react';
+import { MessageCircle, Send, Bot, AlertCircle } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
 
 interface Message {
     id: string;
@@ -21,6 +22,7 @@ export function SecurityMentor() {
     ]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleSend = async () => {
         if (!input.trim()) return;
@@ -35,18 +37,30 @@ export function SecurityMentor() {
         setMessages(prev => [...prev, userMessage]);
         setInput('');
         setIsTyping(true);
+        setError(null);
 
-        // Simulate AI response (replace with actual API call)
-        setTimeout(() => {
+        try {
+            // Prepare history for AI context (ChatGPT style)
+            const history = messages.map(msg => ({
+                role: msg.role === 'assistant' ? 'assistant' : 'user',
+                content: msg.content
+            }));
+
+            const response = await apiClient.chatWithMentor(input, history);
+
             const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: "I understand your concern. Based on the scan results, I recommend taking the following actions to improve your security posture...",
+                content: response.response,
                 timestamp: new Date(),
             };
             setMessages(prev => [...prev, aiMessage]);
+        } catch (err) {
+            setError("I'm having trouble connecting to my secure servers. Please try again in a moment.");
+            console.error("Mentor chat error:", err);
+        } finally {
             setIsTyping(false);
-        }, 1500);
+        }
     };
 
     return (
@@ -97,6 +111,15 @@ export function SecurityMentor() {
                                 <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                                 <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="flex justify-center p-4">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-100 rounded-full text-red-600">
+                            <AlertCircle className="h-4 w-4" />
+                            <p className="text-xs font-bold uppercase tracking-wider">{error}</p>
                         </div>
                     </div>
                 )}
