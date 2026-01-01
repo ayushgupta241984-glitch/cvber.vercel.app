@@ -1,49 +1,52 @@
-/* Tailwind CSS directives - processed by PostCSS during build */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-    --background: #0A0A0F;
-    --foreground: #F5F5F7;
+    --background: #FFFFFF;
+    --foreground: #111827;
+    --card: #FFFFFF;
+    --card-foreground: #111827;
+    --primary: #3B82F6;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F3F4F6;
+    --secondary-foreground: #1F2937;
+    --muted: #F3F4F6;
+    --muted-foreground: #6B7280;
+    --accent: #F3F4F6;
+    --accent-foreground: #1F2937;
+    --border: #E5E7EB;
+    --input: #E5E7EB;
+    --ring: #3B82F6;
 }
 
 @layer base {
     * {
-        @apply border-gray-800;
+        @apply border-gray-200;
     }
 
     body {
-        @apply bg-cyber-dark text-foreground;
+        @apply bg-white text-gray-900;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 }
 
+@layer components {
+    .btn-primary {
+        @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
+    }
+
+    .btn-secondary {
+        @apply bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2 px-6 rounded-lg transition-all duration-200 shadow-sm;
+    }
+
+    .card {
+        @apply bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300;
+    }
+}
+
 @layer utilities {
-    .glass {
-        @apply bg-white/5 backdrop-blur-xl border border-white/10;
-    }
-
-    .glass-hover {
-        @apply hover:bg-white/10 transition-all duration-300;
-    }
-
-    .gradient-border {
-        position: relative;
-        background: linear-gradient(90deg, #A855F7, #3B82F6, #EC4899);
-        background-clip: padding-box;
-    }
-
-    .gradient-border::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        padding: 2px;
-        background: linear-gradient(90deg, #A855F7, #3B82F6, #EC4899);
-        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor;
-        mask-composite: exclude;
+    .text-balance {
+        text-wrap: balance;
     }
 }

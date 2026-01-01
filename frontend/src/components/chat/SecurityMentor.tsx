@@ -50,21 +50,23 @@ export function SecurityMentor() {
     };
 
     return (
-        <div className="glass rounded-2xl p-6 h-[600px] flex flex-col">
+        <div className="card h-[600px] flex flex-col bg-white overflow-hidden border-2 border-gray-100 ring-1 ring-black/[0.02]">
             {/* Header */}
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/10">
-                <div className="relative">
-                    <Bot className="h-8 w-8 text-cyber-purple" />
-                    <div className="absolute inset-0 blur-lg bg-cyber-purple/50" />
+            <div className="flex items-center gap-3 p-6 border-b border-gray-50 bg-gray-50/30">
+                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                    <Bot className="h-6 w-6" />
                 </div>
                 <div>
-                    <h3 className="text-xl font-semibold text-white">AI Security Mentor</h3>
-                    <p className="text-sm text-gray-400">Your personal cybersecurity guide</p>
+                    <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">Security Mentor</h3>
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active Assistant</p>
+                    </div>
                 </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
                 {messages.map((message) => (
                     <div
                         key={message.id}
@@ -72,28 +74,28 @@ export function SecurityMentor() {
                     >
                         <div
                             className={`
-                max-w-[80%] rounded-2xl px-4 py-3
+                max-w-[85%] rounded-2xl px-4 py-3 shadow-sm
                 ${message.role === 'user'
-                                    ? 'bg-gradient-to-r from-cyber-purple to-cyber-blue text-white'
-                                    : 'bg-white/5 text-gray-200 border border-white/10'
+                                    ? 'bg-blue-600 text-white rounded-tr-none'
+                                    : 'bg-gray-50 text-gray-700 border border-gray-100 rounded-tl-none'
                                 }
               `}
                         >
-                            <p className="text-sm leading-relaxed">{message.content}</p>
-                            <p className="text-xs opacity-60 mt-1">
+                            <p className="text-sm leading-relaxed font-medium">{message.content}</p>
+                            <div className={`text-[10px] mt-2 font-bold uppercase tracking-widest ${message.role === 'user' ? 'text-blue-100' : 'text-gray-400'}`}>
                                 {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </p>
+                            </div>
                         </div>
                     </div>
                 ))}
 
                 {isTyping && (
                     <div className="flex justify-start">
-                        <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3">
-                            <div className="flex gap-1">
-                                <div className="w-2 h-2 bg-cyber-purple rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <div className="w-2 h-2 bg-cyber-purple rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <div className="w-2 h-2 bg-cyber-purple rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <div className="bg-gray-50 border border-gray-100 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm">
+                            <div className="flex gap-1.5">
+                                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                             </div>
                         </div>
                     </div>
@@ -101,23 +103,29 @@ export function SecurityMentor() {
             </div>
 
             {/* Input */}
-            <div className="flex gap-2">
-                <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder="Ask about security threats..."
-                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyber-purple transition-colors"
-                />
-                <button
-                    onClick={handleSend}
-                    disabled={!input.trim()}
-                    className="bg-gradient-to-r from-cyber-purple to-cyber-blue rounded-xl px-6 py-3 text-white font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <Send className="h-5 w-5" />
-                </button>
+            <div className="p-4 bg-gray-50/50 border-t border-gray-50">
+                <div className="flex gap-2 p-1 bg-white border border-gray-200 rounded-xl shadow-sm focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:border-blue-500/50 transition-all">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                        placeholder="Ask your security mentor..."
+                        className="flex-1 bg-transparent px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
+                    />
+                    <button
+                        onClick={handleSend}
+                        disabled={!input.trim()}
+                        className="bg-blue-600 rounded-lg p-2 text-white hover:bg-blue-700 transition-all disabled:opacity-50 disabled:grayscale shadow-md shadow-blue-200 active:scale-95"
+                    >
+                        <Send className="h-4 w-4" />
+                    </button>
+                </div>
+                <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-widest mt-3">
+                    Powered by CVBER AI • v1.0
+                </p>
             </div>
         </div>
     );
 }
+

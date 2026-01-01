@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { Upload, FileCheck, AlertCircle } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
 
 interface FileUploaderProps {
     onUploadComplete?: (result: any) => void;
@@ -36,27 +37,15 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
         setProgress(0);
 
         try {
-            const formData = new FormData();
-            formData.append('file', file);
-
             // Simulate progress
             const progressInterval = setInterval(() => {
                 setProgress(prev => Math.min(prev + 10, 90));
             }, 200);
 
-            const response = await fetch('http://localhost:8000/scan/', {
-                method: 'POST',
-                body: formData,
-            });
+            const result = await apiClient.scanFile(file);
 
             clearInterval(progressInterval);
             setProgress(100);
-
-            if (!response.ok) {
-                throw new Error('Scan failed');
-            }
-
-            const result = await response.json();
 
             if (onUploadComplete) {
                 onUploadComplete(result);
@@ -84,13 +73,12 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
                 }}
                 onDragLeave={() => setDragActive(false)}
                 className={`
-          relative border-2 border-dashed rounded-2xl p-12 transition-all duration-300
+          relative border-2 border-dashed rounded-3xl p-16 transition-all duration-300
           ${dragActive
-                        ? 'border-cyber-purple bg-purple-500/10 scale-105'
-                        : 'border-purple-500/50 bg-black/20'
+                        ? 'border-blue-600 bg-blue-50 scale-[1.01]'
+                        : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-gray-50/50'
                     }
-          ${uploading ? 'pointer-events-none opacity-50' : 'hover:border-purple-400 cursor-pointer'}
-          backdrop-blur-xl
+          ${uploading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
         `}
             >
                 <input
@@ -100,36 +88,38 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
                     disabled={uploading}
                 />
 
-                <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="flex flex-col items-center justify-center space-y-6">
                     {uploading ? (
                         <>
-                            <div className="relative">
-                                <FileCheck className="h-16 w-16 text-cyber-purple animate-pulse" />
-                                <div className="absolute inset-0 blur-xl bg-cyber-purple/50" />
+                            <div className="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 relative overflow-hidden">
+                                <FileCheck className="h-10 w-10 relative z-10" />
+                                <div className="absolute inset-0 bg-blue-600/10 animate-pulse" />
                             </div>
-                            <p className="text-xl font-semibold text-white">Scanning file...</p>
-                            <div className="w-full max-w-md">
-                                <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                            <div className="text-center">
+                                <p className="text-xl font-bold text-gray-900 mb-2">Analyzing your file...</p>
+                                <p className="text-sm text-gray-500">Checking for threats and origin data</p>
+                            </div>
+                            <div className="w-full max-w-xs">
+                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-gradient-to-r from-cyber-purple to-cyber-blue transition-all duration-300"
+                                        className="h-full bg-blue-600 transition-all duration-300 shadow-sm shadow-blue-200"
                                         style={{ width: `${progress}%` }}
                                     />
                                 </div>
-                                <p className="text-sm text-gray-400 mt-2 text-center">{progress}%</p>
+                                <p className="text-xs font-bold text-blue-600 mt-3 text-center tracking-widest">{progress}% COMPLETE</p>
                             </div>
                         </>
                     ) : (
                         <>
-                            <div className="relative">
-                                <Upload className="h-16 w-16 text-purple-400" />
-                                <div className="absolute inset-0 blur-xl bg-purple-400/30" />
+                            <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-colors">
+                                <Upload className="h-10 w-10" />
                             </div>
                             <div className="text-center">
-                                <p className="text-xl font-semibold text-white mb-2">
-                                    Drop files here or click to upload
+                                <p className="text-xl font-bold text-gray-900 mb-2">
+                                    Drop your file here
                                 </p>
-                                <p className="text-sm text-gray-400">
-                                    Maximum file size: 50MB
+                                <p className="text-sm text-gray-500 font-medium max-w-xs mx-auto">
+                                    or click to browse your computer. Maximum file size: 50MB.
                                 </p>
                             </div>
                         </>
@@ -137,12 +127,13 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
                 </div>
 
                 {error && (
-                    <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-xl flex items-center gap-3">
-                        <AlertCircle className="h-5 w-5 text-red-400" />
-                        <p className="text-red-400">{error}</p>
+                    <div className="mt-8 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 animate-shake">
+                        <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
+                        <p className="text-red-600 text-sm font-semibold">{error}</p>
                     </div>
                 )}
             </div>
         </div>
     );
 }
+
