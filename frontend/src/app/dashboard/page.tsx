@@ -128,7 +128,7 @@ export default function DashboardPage() {
 
                     {/* Right: Security Help / Mentor */}
                     <div className="lg:col-span-1">
-                        <SecurityMentor />
+                        <SecurityMentor context={{ files }} />
                     </div>
                 </div>
             </div>

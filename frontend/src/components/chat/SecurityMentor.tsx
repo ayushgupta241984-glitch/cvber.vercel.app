@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, Bot, AlertCircle } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
@@ -11,18 +11,31 @@ interface Message {
     timestamp: Date;
 }
 
-export function SecurityMentor() {
+interface SecurityMentorProps {
+    context?: any;
+}
+
+export function SecurityMentor({ context }: SecurityMentorProps) {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
             role: 'assistant',
-            content: "Hello! I'm your AI Security Mentor. I can help you understand your scan results, explain security threats, and provide recommendations to protect your digital assets. How can I assist you today?",
+            content: "Hello! I'm your AI Security Assistant. I've analyzed your dashboard—you currently have " + (context?.files?.length || 0) + " files protected. I can help you understand your security scores or explaining C2PA verification. How can I help?",
             timestamp: new Date(),
         },
     ]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages, isTyping]);
 
     const handleSend = async () => {
         if (!input.trim()) return;
@@ -46,7 +59,12 @@ export function SecurityMentor() {
                 content: msg.content
             }));
 
-            const response = await apiClient.chatWithMentor(input, history);
+            // Enrich the prompt with dashboard context if available
+            const enrichedInput = context
+                ? `[Context: User has files ${JSON.stringify(context.files.slice(0, 3))}] User Query: ${input}`
+                : input;
+
+            const response = await apiClient.chatWithMentor(enrichedInput, history);
 
             const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
@@ -95,7 +113,7 @@ export function SecurityMentor() {
                                 }
               `}
                         >
-                            <p className="text-sm leading-relaxed font-medium">{message.content}</p>
+                            <p className="text-sm leading-relaxed font-medium whitespace-pre-wrap">{message.content}</p>
                             <div className={`text-[10px] mt-2 font-bold uppercase tracking-widest ${message.role === 'user' ? 'text-blue-100' : 'text-gray-400'}`}>
                                 {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
@@ -123,6 +141,7 @@ export function SecurityMentor() {
                         </div>
                     </div>
                 )}
+                <div ref={messagesEndRef} />
             </div>
 
             {/* Input */}
