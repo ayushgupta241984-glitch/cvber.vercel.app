@@ -12,7 +12,7 @@ app = FastAPI(
 
 # Configure CORS
 # Handle wildcard origin properly
-if settings.allowed_origins == ["*"]:
+if settings.parsed_allowed_origins == ["*"]:
     app.add_middleware(
         CORSMiddleware,
         allow_origin_regex=".*",  # Allow all origins
@@ -23,7 +23,7 @@ if settings.allowed_origins == ["*"]:
 else:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.allowed_origins,
+        allow_origins=settings.parsed_allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

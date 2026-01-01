@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings
-from typing import List, Optional
+from typing import List, Optional, Union
+from pydantic import field_validator
+import os
 
 
 class Settings(BaseSettings):
@@ -29,8 +31,15 @@ class Settings(BaseSettings):
     # C2PA Service
     c2pa_service_url: str = "http://localhost:3001"
     
-    # CORS
-    allowed_origins: List[str] = ["http://localhost:3000", "http://localhost:3002"]
+    # CORS - stored as comma-separated string
+    allowed_origins: str = "http://localhost:3000,http://localhost:3002"
+    
+    @property
+    def parsed_allowed_origins(self) -> list:
+        """Parse ALLOWED_ORIGINS from comma-separated string."""
+        if self.allowed_origins == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.allowed_origins.split(',') if origin.strip()]
     
     class Config:
         env_file = ".env"
