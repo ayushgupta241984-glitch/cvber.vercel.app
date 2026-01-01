@@ -47,7 +47,7 @@ async def register(request: RegisterRequest):
     Register new user with email and password.
     
     - Creates user in Supabase Auth
-    - Creates profile record
+    - Creates profile record (optional, won't fail signup)
     - Returns JWT tokens
     """
     try:
@@ -58,20 +58,23 @@ async def register(request: RegisterRequest):
         })
         
         if not auth_response.user:
-            raise HTTPException(status_code=400, detail="Registration failed")
+            raise HTTPException(status_code=400, detail="Registration failed - no user returned")
         
         user_id = auth_response.user.id
         
-        # Create profile
-        profile = {
-            "id": user_id,
-            "email": request.email,
-            "full_name": request.full_name,
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat()
-        }
-        
-        supabase.table("profiles").insert(profile).execute()
+        # Try to create profile (optional - won't fail signup if profiles table doesn't exist)
+        try:
+            profile = {
+                "id": user_id,
+                "email": request.email,
+                "full_name": request.full_name,
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat()
+            }
+            supabase.table("profiles").insert(profile).execute()
+        except Exception as profile_error:
+            # Profile creation is optional - log but don't fail
+            print(f"Warning: Could not create profile: {profile_error}")
         
         # Create JWT tokens
         access_token = create_access_token(
@@ -89,7 +92,10 @@ async def register(request: RegisterRequest):
             expires_in=settings.access_token_expire_minutes * 60
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"Registration error: {type(e).__name__}: {e}")
         raise HTTPException(status_code=400, detail=f"Registration failed: {str(e)}")
 
 
