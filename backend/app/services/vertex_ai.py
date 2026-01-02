@@ -78,6 +78,8 @@ class VertexAIService:
         file_type: str
     ) -> RiskReport:
         """
+        Analyze a file for security threats using Gemini 3 Flash.
+        """
         self.ensure_initialized()
         # Create security analysis prompt
         prompt = f"""You are an expert cybersecurity analyst specializing in threat detection and risk assessment.
