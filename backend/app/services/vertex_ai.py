@@ -3,6 +3,11 @@ import json
 from datetime import datetime
 from typing import Optional
 
+import logging
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
 # Make Google Cloud imports optional
 try:
     from google.cloud import aiplatform
@@ -277,18 +282,36 @@ Your personality is professional, authoritative, yet helpful and educational—m
 
         try:
             # Build chat context
-            chat = self.model.start_chat(history=[]) # Simplified stateless for now, history handled in prompt
-            
             # Construct enriched prompt with history
             context_str = "\n".join([f"{h['role']}: {h['content']}" for h in history])
             full_prompt = f"{system_prompt}\n\nRecent Conversation:\n{context_str}\n\nUser: {message}\nAssistant:"
             
+            logger.info(f"Generating AI response for message: {message[:50]}...")
+            
             response = await self.model.generate_content_async(full_prompt)
-            return response.text.strip()
+            
+            if not response.candidates:
+                logger.warning("AI returned no candidates (blocked?).")
+                return "I'm sorry, I'm unable to provide a response to that specific query for safety or policy reasons. Please try phrasing your question differently."
+            
+            response_text = response.text.strip()
+            
+            if not response_text:
+                logger.warning("AI response text is empty.")
+                return "I processed your request but didn't generate any text. Could you try asking me in a different way?"
+                
+            return response_text
             
         except Exception as e:
-            print(f"Error getting mentor response: {e}")
-            return "I encountered a digital glitch while processing your request. Please try again or check the system logs."
+            logger.error(f"Critical error in get_mentor_response: {type(e).__name__}: {str(e)}", exc_info=True)
+            # Check for common auth/quota errors to provide better fallback
+            error_msg = str(e).lower()
+            if "credentials" in error_msg or "unauthenticated" in error_msg:
+                return "My AI system is having authentication issues. Please ensure the Google Cloud service account key is correctly configured in the backend environment."
+            if "quota" in error_msg or "429" in error_msg:
+                return "I'm a bit overwhelmed with requests right now. Please wait a moment and I'll be ready to help again soon."
+            
+            return "I encountered a digital glitch while processing your request. This usually happens if the AI service is temporarily unavailable or misconfigured. Please try again or contact support."
 
     def _generate_mock_report(self, file_name: str, file_type: str, file_size: int) -> RiskReport:
         """Generate mock report for testing when Vertex AI is unavailable."""
