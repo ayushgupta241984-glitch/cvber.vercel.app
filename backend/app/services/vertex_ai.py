@@ -26,15 +26,25 @@ class VertexAIService:
         """Initialize Vertex AI with project configuration."""
         self.model = None
         self.initialized = False
+        self._setup_attempted = False
         
+        # Initial setup attempt
+        self.ensure_initialized()
+    
+    def ensure_initialized(self):
+        """Ensure Vertex AI is initialized. Can be called multiple times."""
+        if self.initialized:
+            return True
+            
         if not VERTEX_AI_AVAILABLE:
-            print("Vertex AI libraries not available - using mock data mode")
-            return
-        
+            return False
+            
         try:
             # Set credentials if file exists
             if os.path.exists(settings.google_application_credentials):
                 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.google_application_credentials
+            else:
+                return False
             
             # Initialize Vertex AI
             aiplatform.init(
@@ -46,16 +56,20 @@ class VertexAIService:
             self.model = GenerativeModel(
                 settings.vertex_ai_model,
                 generation_config={
-                    "temperature": 0.2,  # Lower temperature for consistent security analysis
+                    "temperature": 0.2,
                     "top_p": 0.8,
                     "top_k": 40,
                     "max_output_tokens": 8192,
                 }
             )
             self.initialized = True
+            logger.info("Vertex AI successfully initialized")
+            return True
         except Exception as e:
-            print(f"Warning: Vertex AI initialization failed: {e}")
-            print("API will return mock data for testing purposes.")
+            if not self._setup_attempted:
+                logger.warning(f"Vertex AI initialization failed: {e}")
+                self._setup_attempted = True
+            return False
     
     async def analyze_file_threat(
         self, 
@@ -64,16 +78,7 @@ class VertexAIService:
         file_type: str
     ) -> RiskReport:
         """
-        Analyze a file for security threats using Gemini 3 Flash.
-        
-        Args:
-            file_buffer: The file content as bytes
-            file_name: Name of the file
-            file_type: MIME type of the file
-            
-        Returns:
-            RiskReport with detailed threat analysis
-        """
+        self.ensure_initialized()
         # Create security analysis prompt
         prompt = f"""You are an expert cybersecurity analyst specializing in threat detection and risk assessment.
 
@@ -261,6 +266,7 @@ Begin analysis:
         """
         Get a generative response from the Security Mentor.
         """
+        self.ensure_initialized()
         system_prompt = """You are the CVBER Free Security Assistant, a world-class cybersecurity expert and digital asset protector. 
 Your personality is professional, authoritative, yet helpful and educational—much like a high-end AI security consultant.
 

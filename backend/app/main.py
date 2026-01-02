@@ -3,12 +3,33 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import scan, auth, mentor
 
+import os
+import json
+
 # Create FastAPI app
 app = FastAPI(
     title="CVBER Free API",
     description="Cybersecurity platform with AI-powered threat detection and C2PA verification",
     version="1.0.0"
 )
+
+# Initialize Google Cloud Credentials from Environment Variable if provided
+@app.on_event("startup")
+async def initialize_gcp_credentials():
+    gcp_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
+    if gcp_json:
+        try:
+            # Ensure the path exists
+            cred_path = settings.google_application_credentials
+            os.makedirs(os.path.dirname(os.path.abspath(cred_path)), exist_ok=True)
+            
+            # Write JSON content to file
+            with open(cred_path, "w") as f:
+                f.write(gcp_json)
+            
+            print(f"Successfully initialized GCP credentials at {cred_path}")
+        except Exception as e:
+            print(f"Failed to initialize GCP credentials: {e}")
 
 # Configure CORS
 # Handle wildcard origin properly
