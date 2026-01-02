@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     # Google Cloud
     gcp_project_id: str = "placeholder-project-id"
     google_application_credentials: str = "./service-account.json"
+    google_api_key: Optional[str] = None
     
     # Vertex AI
     vertex_ai_location: str = "us-central1"

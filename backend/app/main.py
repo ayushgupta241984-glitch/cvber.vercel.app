@@ -13,23 +13,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Initialize Google Cloud Credentials from Environment Variable if provided
+# Initialize Google Cloud Credentials (Legacy JSON) if provided via Env
 @app.on_event("startup")
 async def initialize_gcp_credentials():
     gcp_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
     if gcp_json:
         try:
-            # Ensure the path exists
             cred_path = settings.google_application_credentials
             os.makedirs(os.path.dirname(os.path.abspath(cred_path)), exist_ok=True)
-            
-            # Write JSON content to file
             with open(cred_path, "w") as f:
                 f.write(gcp_json)
-            
-            print(f"Successfully initialized GCP credentials at {cred_path}")
+            print(f"Legacy GCP credentials initialized at {cred_path}")
         except Exception as e:
-            print(f"Failed to initialize GCP credentials: {e}")
+            print(f"Failed to initialize legacy GCP credentials: {e}")
+    else:
+        print("Note: No legacy GCP JSON credentials found. Using API Key mode for Gemini.")
 
 # Configure CORS
 # Handle wildcard origin properly
