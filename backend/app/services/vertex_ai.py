@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import asyncio
+import base64
 from datetime import datetime
 from typing import Optional
 
@@ -73,7 +74,7 @@ class VertexAIService:
                 self.groq_client = AsyncGroq(api_key=settings.groq_api_key)
                 self.initialized = True
                 self.provider = "groq"
-                logger.info("Groq (Llama 3) initialized")
+                logger.info("Groq (Vision) initialized")
                 return True
             except Exception as e:
                 logger.error(f"Groq init failed: {e}")
@@ -94,30 +95,35 @@ class VertexAIService:
         return False
     
     async def analyze_file_threat(self, file_buffer: bytes, file_name: str, file_type: str) -> RiskReport:
-        """Analyze a file for security threats."""
+        """Analyze a file for security threats and originality."""
         self.ensure_initialized()
         
-        prompt = f"""You are an expert cybersecurity and digital forensics analyst. Analyze this file:
-- Name: {file_name}
-- Type: {file_type}
-- Size: {len(file_buffer)} bytes
+        prompt = f"""You are a professional digital forensics and cybersecurity analyst for CVBER Free. 
+Analyze this file: {file_name} ({file_type}).
 
-**Analysis Requirements:**
-1. **Security Scan**: Check for malware, phishing, and data risks.
-2. **Ownership & Originality Detection**:
-   - Detect if this is a **Screenshot** (look for OS status bars, navigation buttons, browser UI, or mobile battery/time icons).
-   - Assess if it's an **Original** or a **Repost** (look for heavy compression, watermarks from other platforms, or low resolution).
-   - Assign an `originality_score` from 0 (repost/screenshot) to 100 (original creation).
+### CRITICAL REQUIREMENTS:
+1. **Ownership Detection**: 
+   - Check if this is a **SCREENSHOT**. Look for mobile status bars, battery icons, wifi icons, navigation buttons, or browser address bars at the edges of the image.
+   - If you see ANY UI elements (like 'Search...', 'Log In', or 'Get Started' buttons from this or other websites), set `is_screenshot` to `true` and `originality_score` below `30`.
+   - If the file name starts with 'Screenshot' or 'Screen Shot', it is likely a screenshot.
 
-**Output JSON Structure:**
+2. **Originality Assessment**:
+   - Assess if it's an original photograph/design or a repost from the web.
+   - Look for compression artifacts, platform watermarks (like TikTok/Instagram logos), or low resolution.
+   - Assign `originality_score` (0-100). 100 is perfectly original, 0 is a clear repost/screenshot.
+
+3. **Security Scan**:
+   - Identify malware, phishing indicators, or sensitive data leaks.
+
+### OUTPUT FORMAT (Valid JSON only):
 {{
     "overall_risk_score": 0-100,
     "originality_score": 0-100,
     "is_screenshot": true/false,
-    "threat_categories": [{{"name": str, "severity": "low|medium|high", "confidence": 0-1, "description": str}}],
-    "detailed_findings": [{{"category": str, "description": str, "evidence": str}}],
-    "recommendations": [{{"priority": "low|medium|high", "action": str, "rationale": str}}],
-    "confidence_level": 0-1
+    "threat_categories": [{{"name": string, "severity": "low|medium|high|critical", "confidence": 0-1, "description": string}}],
+    "detailed_findings": [{{"category": string, "description": string, "evidence": string}}],
+    "recommendations": [{{"priority": "low|medium|high", "action": string, "rationale": string}}],
+    "confidence_level": 0.0-1.0
 }}"""
 
         if not self.initialized:
@@ -126,17 +132,41 @@ class VertexAIService:
         try:
             response_text = ""
             if self.provider == "google":
+                # Gemini handles byte directly
                 response = await self.model.generate_content_async([prompt, {"mime_type": file_type, "data": file_buffer}])
                 response_text = response.text
+                
             elif self.provider == "groq":
-                # Basic text sample for Groq
-                sample = file_buffer[:1500].decode('utf-8', errors='ignore')
-                chat_completion = await self.groq_client.chat.completions.create(
-                    messages=[{"role": "user", "content": f"{prompt}\n\nFile Content Sample:\n{sample}"}],
-                    model="llama-3.3-70b-versatile",
-                    response_format={"type": "json_object"}
-                )
-                response_text = chat_completion.choices[0].message.content
+                # For images, use a Vision model and base64
+                if "image" in file_type:
+                    base64_image = base64.b64encode(file_buffer).decode('utf-8')
+                    chat_completion = await self.groq_client.chat.completions.create(
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": [
+                                    {"type": "text", "text": prompt},
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {"url": f"data:{file_type};base64,{base64_image}"}
+                                    }
+                                ]
+                            }
+                        ],
+                        model="llama-3.2-90b-vision-preview",
+                        response_format={"type": "json_object"}
+                    )
+                    response_text = chat_completion.choices[0].message.content
+                else:
+                    # Non-image fallback (text/pdf sample)
+                    sample = file_buffer[:2000].decode('utf-8', errors='ignore')
+                    chat_completion = await self.groq_client.chat.completions.create(
+                        messages=[{"role": "user", "content": f"{prompt}\n\nFile Content Sample:\n{sample}"}],
+                        model="llama-3.3-70b-versatile",
+                        response_format={"type": "json_object"}
+                    )
+                    response_text = chat_completion.choices[0].message.content
+                    
             elif self.provider == "vertex":
                 file_part = Part.from_data(data=file_buffer, mime_type=file_type)
                 response = await self.model.generate_content_async([prompt, file_part])
@@ -144,16 +174,17 @@ class VertexAIService:
             
             data = json.loads(self._clean_json_response(response_text))
             
-            # Map "Originality" category to threat if low score
+            # Post-processing: If originality is low, add a specific threat
             threats = [ThreatCategory(**c) for c in data.get("threat_categories", [])]
-            if data.get("originality_score", 100) < 50:
+            if data.get("originality_score", 100) < 50 or data.get("is_screenshot", False):
                 threats.append(ThreatCategory(
                     name="Ownership Alert",
                     severity="medium",
                     confidence=0.9,
-                    description="File detected as a screenshot or non-original repost. This might affect intellectual property claims."
+                    description="File detected as a screenshot or non-original repost. This may affect intellectual property verification."
                 ))
 
+            # Final Risk Report
             return RiskReport(
                 overall_risk_score=data.get("overall_risk_score", 0),
                 originality_score=data.get("originality_score", 100),
@@ -173,14 +204,13 @@ class VertexAIService:
         """Get a response from the Security Mentor."""
         self.ensure_initialized()
         
-        system_prompt = "You are the CVBER Free Security Assistant. Help the user with security and app questions. Be helpful and expert."
+        system_prompt = "You are the CVBER Free Security Assistant, a senior expert. Answer questions about security, ownership, and using the CVBER vault/watermark tools."
 
         if not self.initialized:
-            return "I'm currently in basic mode. To enable my full AI brain, please add a `GROQ_API_KEY` or `GOOGLE_API_KEY` to your Render environment. You can get these for free at console.groq.com or aistudio.google.com!"
+            return "I'm in basic mode. Add a `GROQ_API_KEY` or `GOOGLE_API_KEY` to Render for full AI protection!"
 
         try:
-            if self.provider == "google":
-                # For Google, we use history in a specific way if we wanted state, but staying simple for now
+            if self.provider in ["google", "vertex"]:
                 full_prompt = f"{system_prompt}\n\nHistory: {history}\n\nUser: {message}"
                 response = await self.model.generate_content_async(full_prompt)
                 return response.text.strip()
@@ -193,25 +223,13 @@ class VertexAIService:
                 
                 completion = await self.groq_client.chat.completions.create(
                     messages=messages,
-                    model="llama-3.3-70b-versatile",
+                    model="llama-3.3-70b-versatile", # Mentor uses the versatile text model
                 )
                 return completion.choices[0].message.content
                 
-            elif self.provider == "vertex":
-                full_prompt = f"{system_prompt}\n\nHistory: {history}\n\nUser: {message}"
-                response = await self.model.generate_content_async(full_prompt)
-                return response.text.strip()
-                
         except Exception as e:
-            error_msg = str(e).lower()
             logger.error(f"Mentor AI Error: {e}")
-            
-            if "api_key" in error_msg or "unauthorized" in error_msg or "401" in error_msg:
-                return "Your API key seems to be invalid or expired. Please double-check it in your Render settings."
-            if "quota" in error_msg or "limit" in error_msg or "429" in error_msg:
-                return "I've reached my free limit for a moment. Please wait about 60 seconds and try again!"
-            
-            return f"I'm having a bit of trouble talking to my AI provider ({self.provider}). The error was: {str(e)[:100]}... Please check your internet or API settings."
+            return f"Digital Glitch: {str(e)[:100]}... Please check your API keys."
 
     def _clean_json_response(self, text: str) -> str:
         text = text.strip()
@@ -221,12 +239,14 @@ class VertexAIService:
         return text.strip()
 
     def _generate_mock_report(self, file_name: str, file_type: str, file_size: int, error: str = None) -> RiskReport:
-        desc = "AI Service Offline" if not error else f"AI Error: {error[:50]}"
+        desc = "AI Offline" if not error else f"Error: {error[:50]}"
         return RiskReport(
             overall_risk_score=0.0,
+            originality_score=100.0,
+            is_screenshot=False,
             threat_categories=[],
             detailed_findings=[DetailedFinding(category="System", description=desc)],
-            recommendations=[Recommendation(priority="high", action="Check API Key", rationale="Enable AI")],
+            recommendations=[Recommendation(priority="high", action="Check Key", rationale="Enable AI")],
             confidence_level=0.0,
             scan_timestamp=datetime.utcnow(),
             file_metadata={"file_name": file_name, "file_type": file_type, "file_size": file_size}
