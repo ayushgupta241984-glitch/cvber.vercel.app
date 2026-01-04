@@ -39,6 +39,8 @@ class RiskReport(BaseModel):
     detailed_findings: List[DetailedFinding]
     recommendations: List[Recommendation]
     confidence_level: float = Field(..., ge=0, le=1)
+    originality_score: float = Field(default=100.0, ge=0, le=100) # 0 = repost/screenshot, 100 = original
+    is_screenshot: bool = Field(default=False)
     scan_timestamp: datetime
     file_metadata: Dict[str, Any]
 

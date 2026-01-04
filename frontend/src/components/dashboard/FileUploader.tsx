@@ -5,7 +5,7 @@ import { Upload, FileCheck, AlertCircle } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
 interface FileUploaderProps {
-    onUploadComplete?: (result: any) => void;
+    onUploadComplete?: (result: any, file: File) => void;
 }
 
 export function FileUploader({ onUploadComplete }: FileUploaderProps) {
@@ -48,7 +48,7 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
             setProgress(100);
 
             if (onUploadComplete) {
-                onUploadComplete(result);
+                onUploadComplete(result, file);
             }
 
             setTimeout(() => {

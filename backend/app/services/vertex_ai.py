@@ -97,7 +97,28 @@ class VertexAIService:
         """Analyze a file for security threats."""
         self.ensure_initialized()
         
-        prompt = f"Analyze this file for security threats. Name: {file_name}, Type: {file_type}. Return structured JSON with overall_risk_score (0-100), threat_categories, detailed_findings, and recommendations."
+        prompt = f"""You are an expert cybersecurity and digital forensics analyst. Analyze this file:
+- Name: {file_name}
+- Type: {file_type}
+- Size: {len(file_buffer)} bytes
+
+**Analysis Requirements:**
+1. **Security Scan**: Check for malware, phishing, and data risks.
+2. **Ownership & Originality Detection**:
+   - Detect if this is a **Screenshot** (look for OS status bars, navigation buttons, browser UI, or mobile battery/time icons).
+   - Assess if it's an **Original** or a **Repost** (look for heavy compression, watermarks from other platforms, or low resolution).
+   - Assign an `originality_score` from 0 (repost/screenshot) to 100 (original creation).
+
+**Output JSON Structure:**
+{{
+    "overall_risk_score": 0-100,
+    "originality_score": 0-100,
+    "is_screenshot": true/false,
+    "threat_categories": [{{"name": str, "severity": "low|medium|high", "confidence": 0-1, "description": str}}],
+    "detailed_findings": [{{"category": str, "description": str, "evidence": str}}],
+    "recommendations": [{{"priority": "low|medium|high", "action": str, "rationale": str}}],
+    "confidence_level": 0-1
+}}"""
 
         if not self.initialized:
             return self._generate_mock_report(file_name, file_type, len(file_buffer))
@@ -108,7 +129,7 @@ class VertexAIService:
                 response = await self.model.generate_content_async([prompt, {"mime_type": file_type, "data": file_buffer}])
                 response_text = response.text
             elif self.provider == "groq":
-                # Basic text sample for Groq since it's a chat model
+                # Basic text sample for Groq
                 sample = file_buffer[:1500].decode('utf-8', errors='ignore')
                 chat_completion = await self.groq_client.chat.completions.create(
                     messages=[{"role": "user", "content": f"{prompt}\n\nFile Content Sample:\n{sample}"}],
@@ -122,9 +143,22 @@ class VertexAIService:
                 response_text = response.text
             
             data = json.loads(self._clean_json_response(response_text))
+            
+            # Map "Originality" category to threat if low score
+            threats = [ThreatCategory(**c) for c in data.get("threat_categories", [])]
+            if data.get("originality_score", 100) < 50:
+                threats.append(ThreatCategory(
+                    name="Ownership Alert",
+                    severity="medium",
+                    confidence=0.9,
+                    description="File detected as a screenshot or non-original repost. This might affect intellectual property claims."
+                ))
+
             return RiskReport(
                 overall_risk_score=data.get("overall_risk_score", 0),
-                threat_categories=[ThreatCategory(**c) for c in data.get("threat_categories", [])],
+                originality_score=data.get("originality_score", 100),
+                is_screenshot=data.get("is_screenshot", False),
+                threat_categories=threats,
                 detailed_findings=[DetailedFinding(**f) for f in data.get("detailed_findings", [])],
                 recommendations=[Recommendation(**r) for r in data.get("recommendations", [])],
                 confidence_level=data.get("confidence_level", 0.9),

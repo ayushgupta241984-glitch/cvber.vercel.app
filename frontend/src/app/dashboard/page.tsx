@@ -4,23 +4,42 @@ import { useState } from 'react';
 import { FileUploader } from '@/components/dashboard/FileUploader';
 import { SafeVault } from '@/components/dashboard/SafeVault';
 import { SecurityMentor } from '@/components/chat/SecurityMentor';
-import { Shield, ArrowLeft, FileText, Award, HardDrive, Stamp, Upload, Search, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { FileViewer } from '@/components/dashboard/FileViewer';
+import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
+import { Shield, FileText, Award, HardDrive, Stamp, Upload, Search } from 'lucide-react';
 
 export default function DashboardPage() {
     const [files, setFiles] = useState<any[]>([]);
+    const [selectedFile, setSelectedFile] = useState<any>(null);
+    const [isViewerOpen, setIsViewerOpen] = useState(false);
+    const [isWatermarkOpen, setIsWatermarkOpen] = useState(false);
 
-    const handleUploadComplete = (result: any) => {
+    const handleUploadComplete = (result: any, rawFile: File) => {
+        const previewUrl = URL.createObjectURL(rawFile);
+
         const newFile = {
             id: result.scan_id,
-            name: 'uploaded-file.pdf', // You'd get this from the upload
-            size: 1024 * 50, // Example size
-            status: result.risk_report ? 'safe' : 'scanning',
+            name: rawFile.name,
+            size: rawFile.size,
+            status: result.risk_report ? (result.risk_report.overall_risk_score < 30 ? 'safe' : 'warning') : 'scanning',
             riskScore: result.risk_report?.overall_risk_score,
+            originalityScore: result.risk_report?.originality_score,
+            isScreenshot: result.risk_report?.is_screenshot,
             uploadedAt: new Date().toISOString(),
+            previewUrl: previewUrl
         };
 
         setFiles(prev => [newFile, ...prev]);
+    };
+
+    const handleView = (file: any) => {
+        setSelectedFile(file);
+        setIsViewerOpen(true);
+    };
+
+    const handleWatermark = (file: any) => {
+        setSelectedFile(file);
+        setIsWatermarkOpen(true);
     };
 
     return (
@@ -41,100 +60,93 @@ export default function DashboardPage() {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                     {[
-                        { label: 'Total Files', value: '12', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
-                        { label: 'Certificates', value: '8', icon: Award, color: 'text-purple-600', bg: 'bg-purple-50' },
-                        { label: 'Storage Used', value: '45.2 MB', icon: HardDrive, color: 'text-green-600', bg: 'bg-green-50' },
-                        { label: 'Active Watermarks', value: '5', icon: Stamp, color: 'text-orange-600', bg: 'bg-orange-50' }
+                        { label: 'Total Files', value: files.length.toString(), icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
+                        { label: 'Certificates', value: files.filter(f => f.status === 'safe').length.toString(), icon: Award, color: 'text-purple-600', bg: 'bg-purple-50' },
+                        { label: 'Storage Used', value: (files.reduce((acc, f) => acc + f.size, 0) / (1024 * 1024)).toFixed(1) + ' MB', icon: HardDrive, color: 'text-green-600', bg: 'bg-green-50' },
+                        { label: 'Original Content', value: files.filter(f => !f.isScreenshot).length.toString(), icon: Stamp, color: 'text-orange-600', bg: 'bg-orange-50' }
                     ].map((stat, idx) => (
-                        <div key={idx} className="card p-6 flex items-center gap-5">
+                        <div key={idx} className="card p-6 flex items-center gap-5 translate-y-0 hover:-translate-y-1 transition-all duration-300">
                             <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center`}>
                                 <stat.icon className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{stat.label}</p>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
                                 <p className="text-2xl font-black text-gray-900">{stat.value}</p>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                <div className="grid lg:grid-cols-3 gap-8">
+                <div className="grid lg:grid-cols-3 gap-10">
                     {/* Left: Main Content */}
-                    <div className="lg:col-span-2 space-y-10">
+                    <div className="lg:col-span-2 space-y-12">
                         {/* Upload Section */}
                         <section id="upload" className="scroll-mt-32">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-bold text-gray-900">Upload & Protect</h2>
-                                <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold uppercase tracking-widest rounded-full">New Scan</span>
+                            <div className="flex items-center justify-between mb-8">
+                                <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
+                                    <div className="w-2 h-8 bg-blue-600 rounded-full" />
+                                    Protect New Work
+                                </h2>
+                                <span className="px-4 py-1.5 bg-blue-50 text-blue-600 text-[11px] font-bold uppercase tracking-widest rounded-full border border-blue-100">Live AI Scan</span>
                             </div>
                             <FileUploader onUploadComplete={handleUploadComplete} />
                         </section>
 
-                        {/* File List */}
-                        <div className="card overflow-hidden">
-                            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                                <h2 className="font-bold text-gray-900 font-bold">Your Vault</h2>
-                                <div className="relative">
-                                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        {/* File Inventory */}
+                        <section>
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="relative flex-1 max-w-md">
+                                    <Search className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
                                     <input
                                         type="text"
-                                        placeholder="Search files..."
-                                        className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                        placeholder="Search your private vault..."
+                                        className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm"
                                     />
                                 </div>
                             </div>
-
-                            {files.length === 0 ? (
-                                <div className="p-20 text-center">
-                                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <FileText className="w-10 h-10 text-gray-300" />
-                                    </div>
-                                    <h3 className="font-bold text-gray-900 mb-2">No files yet</h3>
-                                    <p className="text-gray-500 text-sm max-w-xs mx-auto mb-8">
-                                        Upload your first file to start protecting your work and generating certificates.
-                                    </p>
-                                    <button className="text-blue-600 font-bold text-sm hover:underline">
-                                        Learn how it works
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="divide-y divide-gray-50">
-                                    {files.map((file, idx) => (
-                                        <div key={idx} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded flex items-center justify-center">
-                                                    <FileText className="w-5 h-5" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-gray-900 text-sm">{file.name}</p>
-                                                    <p className="text-xs text-gray-400">Uploaded on {new Date(file.uploadedAt).toLocaleDateString()}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${file.status === 'safe' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                                                    }`}>
-                                                    {file.status}
-                                                </span>
-                                                <button className="p-2 text-gray-400 hover:text-gray-600">
-                                                    <ArrowRight className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                            <SafeVault
+                                files={files}
+                                onView={handleView}
+                                onWatermark={handleWatermark}
+                            />
+                        </section>
                     </div>
 
                     {/* Right: Security Help / Mentor */}
                     <div className="lg:col-span-1">
-                        <SecurityMentor context={{ files }} />
+                        <div className="sticky top-10">
+                            <SecurityMentor context={{ files }} />
+
+                            <div className="mt-8 p-6 bg-white rounded-[32px] border border-gray-100 shadow-sm">
+                                <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <Shield className="h-4 w-4 text-blue-600" />
+                                    Security Tip
+                                </h4>
+                                <p className="text-sm text-gray-500 leading-relaxed">
+                                    Always use the **CVBER Watermark** before sharing your original assets on social media. It creates a cryptographic link back to your vault.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Modals */}
+            <FileViewer
+                file={selectedFile}
+                isOpen={isViewerOpen}
+                onClose={() => setIsViewerOpen(false)}
+                onWatermark={() => {
+                    setIsViewerOpen(false);
+                    setIsWatermarkOpen(true);
+                }}
+            />
+
+            <WatermarkEngine
+                file={selectedFile}
+                isOpen={isWatermarkOpen}
+                onClose={() => setIsWatermarkOpen(false)}
+            />
         </div>
     );
 }
-
-
-
