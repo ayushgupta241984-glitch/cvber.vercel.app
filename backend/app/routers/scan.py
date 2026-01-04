@@ -21,6 +21,7 @@ def get_current_user():
     return {"id": "00000000-0000-0000-0000-000000000000", "email": "user@example.com"}
 
 
+@router.post("", response_model=ScanResponse)
 @router.post("/", response_model=ScanResponse)
 async def scan_file(
     file: UploadFile = File(...),
@@ -28,11 +29,6 @@ async def scan_file(
 ):
     """
     Scan uploaded file for security threats using AI analysis.
-    
-    - Accepts file upload
-    - Performs AI threat analysis
-    - Stores results in audit logs
-    - Returns structured risk report
     """
     try:
         # Generate scan ID
@@ -56,31 +52,36 @@ async def scan_file(
             file_type=file_type
         )
         
-        # Store in audit logs
-        audit_log = {
-            "id": str(uuid4()),
-            "user_id": current_user["id"],
-            "event_type": "scan",
-            "file_name": file.filename,
-            "risk_score": risk_report.overall_risk_score,
-            "metadata": {
-                "scan_id": str(scan_id),
-                "file_size": file_size,
-                "file_type": file_type,
-                "confidence_level": risk_report.confidence_level,
-                "threat_count": len(risk_report.threat_categories)
-            },
-            "created_at": datetime.utcnow().isoformat()
-        }
+        # Store in audit logs (OPTIONAL - Don't crash if table doesn't exist)
+        try:
+            audit_log = {
+                "id": str(uuid4()),
+                "user_id": current_user["id"],
+                "event_type": "scan",
+                "file_name": file.filename,
+                "risk_score": risk_report.overall_risk_score,
+                "metadata": {
+                    "scan_id": str(scan_id),
+                    "file_size": file_size,
+                    "file_type": file_type,
+                    "confidence_level": risk_report.confidence_level,
+                    "threat_count": len(risk_report.threat_categories)
+                },
+                "created_at": datetime.utcnow().isoformat()
+            }
+            supabase.table("audit_logs").insert(audit_log).execute()
+        except Exception as db_err:
+            print(f"Warning: Failed to log to Supabase: {db_err}")
         
-        supabase.table("audit_logs").insert(audit_log).execute()
-        
-        # Upload file to storage
-        file_path = await storage_service.upload_file(
-            file_buffer=file_buffer,
-            file_name=file.filename,
-            user_id=UUID(current_user["id"])
-        )
+        # Upload file to storage (OPTIONAL - Don't crash if bucket doesn't exist)
+        try:
+            file_path = await storage_service.upload_file(
+                file_buffer=file_buffer,
+                file_name=file.filename,
+                user_id=UUID(current_user["id"])
+            )
+        except Exception as storage_err:
+            print(f"Warning: Failed to upload to Storage: {storage_err}")
         
         return ScanResponse(
             scan_id=scan_id,
@@ -90,22 +91,22 @@ async def scan_file(
         )
         
     except Exception as e:
-        # Log error
-        error_log = {
-            "id": str(uuid4()),
-            "user_id": current_user["id"],
-            "event_type": "scan",
-            "file_name": file.filename,
-            "risk_score": None,
-            "metadata": {
-                "error": str(e),
-                "status": "failed"
-            },
-            "created_at": datetime.utcnow().isoformat()
-        }
-        
-        supabase.table("audit_logs").insert(error_log).execute()
-        
+        print(f"Scan Error: {e}")
+        # Final attempt to log error, but don't re-raise if it fails
+        try:
+            error_log = {
+                "id": str(uuid4()),
+                "user_id": current_user["id"],
+                "event_type": "scan",
+                "file_name": file.filename,
+                "risk_score": None,
+                "metadata": {"error": str(e), "status": "failed"},
+                "created_at": datetime.utcnow().isoformat()
+            }
+            supabase.table("audit_logs").insert(error_log).execute()
+        except:
+            pass
+            
         raise HTTPException(status_code=500, detail=f"Scan failed: {str(e)}")
 
 

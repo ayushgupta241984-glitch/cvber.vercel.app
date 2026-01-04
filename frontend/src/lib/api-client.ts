@@ -1,4 +1,5 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const API_BASE_URL = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
 
 export interface ScanResult {
     scan_id: string;
@@ -30,7 +31,7 @@ export const apiClient = {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch(`${API_BASE_URL}/scan/`, {
+        const response = await fetch(`${API_BASE_URL}/scan`, {
             method: 'POST',
             body: formData,
         });
