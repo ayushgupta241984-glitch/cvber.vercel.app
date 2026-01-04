@@ -4,7 +4,7 @@ import logging
 import asyncio
 import base64
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ class VertexAIService:
         if self.initialized:
             return True
             
-        # 1. Try Google AI Studio (Free)
+        # 1. Try Google AI Studio (Free & Reliable)
         if GENAI_AVAILABLE and self.is_valid_key(settings.google_api_key):
             try:
                 genai.configure(api_key=settings.google_api_key)
@@ -94,9 +94,28 @@ class VertexAIService:
         
         return False
     
+    def _rule_based_analysis(self, file_name: str) -> Dict[str, Any]:
+        """Apply hard-coded forensic rules before AI runs."""
+        is_screenshot_hint = "screenshot" in file_name.lower() or "screen shot" in file_name.lower()
+        
+        if is_screenshot_hint:
+            return {
+                "is_screenshot": True,
+                "originality_score": 15.0,
+                "forensic_details": "RULE-BASED: File name contains 'screenshot' patterns. Automatic flag for non-original content."
+            }
+        return {
+            "is_screenshot": False,
+            "originality_score": 100.0,
+            "forensic_details": "No obvious screenshot indicators in filename."
+        }
+
     async def analyze_file_threat(self, file_buffer: bytes, file_name: str, file_type: str) -> RiskReport:
         """Analyze a file for security threats and originality."""
         self.ensure_initialized()
+        
+        # Apply pre-scan rules (Hard fallback for screenshots)
+        rules = self._rule_based_analysis(file_name)
         
         prompt = f"""You are a senior digital forensics inspector for CVBER Free. 
 Analyze this file: {file_name} ({file_type}).
@@ -130,10 +149,11 @@ Check for:
 }}"""
 
         if not self.initialized:
-            return self._generate_mock_report(file_name, file_type, len(file_buffer))
+            return self._generate_mock_report(file_name, file_type, len(file_buffer), rules=rules)
         
         try:
             active_model = "unknown"
+            response_text = ""
             if self.provider == "google":
                 active_model = "gemini-1.5-flash"
                 response = await self.model.generate_content_async([prompt, {"mime_type": file_type, "data": file_buffer}])
@@ -160,8 +180,9 @@ Check for:
                             model=active_model,
                             response_format={"type": "json_object"}
                         )
-                    except Exception:
-                        # Fallback to smaller vision model if 90b hangs/fails
+                    except Exception as ge:
+                        logger.error(f"Groq 90b failed: {ge}")
+                        # Fallback to 11b
                         active_model = "llama-3.2-11b-vision-preview"
                         chat_completion = await self.groq_client.chat.completions.create(
                             messages=[{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:{file_type};base64,{base64_image}"}}]}],
@@ -187,25 +208,31 @@ Check for:
             
             data = json.loads(self._clean_json_response(response_text))
             
-            # Post-processing: If originality is low, add a specific threat
+            # Merge AI results with pre-scan rules (Rules win if AI is too generous)
+            is_screenshot = data.get("is_screenshot", False) or rules["is_screenshot"]
+            originality_score = data.get("originality_score", 100)
+            if rules["is_screenshot"]:
+                originality_score = min(originality_score, rules["originality_score"])
+            
+            description = data.get("forensic_details", rules["forensic_details"])
+            if is_screenshot and "Screenshot Detected" not in description:
+                description = f"Screenshot Detected: {description}"
+
+            # Post-processing: Add specific threat
             threats = [ThreatCategory(**c) for c in data.get("threat_categories", [])]
-            if data.get("originality_score", 100) < 50 or data.get("is_screenshot", False):
+            if is_screenshot:
                 threats.append(ThreatCategory(
                     name="Ownership Alert",
-                    severity="medium",
-                    confidence=0.9,
-                    description="File detected as a screenshot or non-original repost. This may affect intellectual property verification."
+                    severity="high",
+                    confidence=1.0,
+                    description="The file has been definitively flagged as a screenshot. Original intellectual property cannot be verified."
                 ))
-
-            description = data.get("forensic_details", "Ownership scan complete.")
-            if data.get("is_screenshot", False):
-                description = f"Screenshot Detected: {description}"
 
             # Final Risk Report
             return RiskReport(
                 overall_risk_score=data.get("overall_risk_score", 0),
-                originality_score=data.get("originality_score", 100),
-                is_screenshot=data.get("is_screenshot", False),
+                originality_score=originality_score,
+                is_screenshot=is_screenshot,
                 threat_categories=threats,
                 detailed_findings=[DetailedFinding(**f) for f in data.get("detailed_findings", [])],
                 recommendations=[Recommendation(**r) for r in data.get("recommendations", [])],
@@ -222,7 +249,7 @@ Check for:
             )
         except Exception as e:
             logger.error(f"Analysis failed: {e}")
-            return self._generate_mock_report(file_name, file_type, len(file_buffer), error=str(e))
+            return self._generate_mock_report(file_name, file_type, len(file_buffer), error=str(e), rules=rules)
 
     async def get_mentor_response(self, message: str, history: list = []) -> str:
         """Get a response from the Security Mentor."""
@@ -262,18 +289,31 @@ Check for:
         if text.endswith("```"): text = text[:-3]
         return text.strip()
 
-    def _generate_mock_report(self, file_name: str, file_type: str, file_size: int, error: str = None) -> RiskReport:
-        desc = "AI Offline" if not error else f"Error: {error[:50]}"
+    def _generate_mock_report(self, file_name: str, file_type: str, file_size: int, error: str = None, rules: Dict = None) -> RiskReport:
+        desc = "AI OFFLINE" if not error else f"ANALYSIS ERROR: {error[:30]}"
+        
+        # Merge with rules
+        is_screenshot = rules["is_screenshot"] if rules else "screenshot" in file_name.lower()
+        originality = rules["originality_score"] if rules else (15.0 if is_screenshot else 100.0)
+        forensic_summary = rules["forensic_details"] if rules else (f"{desc} | Screenshot flag" if is_screenshot else f"{desc} | Unknown")
+
         return RiskReport(
             overall_risk_score=0.0,
-            originality_score=100.0,
-            is_screenshot=False,
-            threat_categories=[],
-            detailed_findings=[DetailedFinding(category="System", description=desc)],
-            recommendations=[Recommendation(priority="high", action="Check Key", rationale="Enable AI")],
-            confidence_level=0.0,
+            originality_score=originality,
+            is_screenshot=is_screenshot,
+            threat_categories=[ThreatCategory(name="AI Offline", severity="medium", confidence=1.0, description="The AI scanning engine is currently unreachable. Results are based on local pre-scan rules.")],
+            detailed_findings=[DetailedFinding(category="System", description=desc, evidence=file_name)],
+            recommendations=[Recommendation(priority="high", action="Configure AI", rationale="Connect Google AI or Groq to enable pixel-level forensics.")],
+            confidence_level=0.5,
             scan_timestamp=datetime.utcnow(),
-            file_metadata={"file_name": file_name, "file_type": file_type, "file_size": file_size}
+            file_metadata={
+                "file_name": file_name, 
+                "file_type": file_type, 
+                "file_size": file_size,
+                "ai_provider": "local_pre_scanner",
+                "ai_model": "rule_v1",
+                "forensic_summary": forensic_summary
+            }
         )
 
 vertex_ai_service = VertexAIService()
