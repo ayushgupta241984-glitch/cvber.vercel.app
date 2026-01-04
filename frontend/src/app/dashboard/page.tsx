@@ -25,6 +25,9 @@ export default function DashboardPage() {
             riskScore: result.risk_report?.overall_risk_score,
             originalityScore: result.risk_report?.originality_score,
             isScreenshot: result.risk_report?.is_screenshot,
+            forensicSummary: result.risk_report?.file_metadata?.forensic_summary,
+            aiProvider: result.risk_report?.file_metadata?.ai_provider,
+            aiModel: result.risk_report?.file_metadata?.ai_model,
             uploadedAt: new Date().toISOString(),
             previewUrl: previewUrl
         };

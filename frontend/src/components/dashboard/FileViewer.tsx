@@ -10,6 +10,9 @@ interface FileViewerProps {
         riskScore?: number;
         originalityScore?: number;
         isScreenshot?: boolean;
+        forensicSummary?: string;
+        aiProvider?: string;
+        aiModel?: string;
     } | null;
     isOpen: boolean;
     onClose: () => void;
@@ -37,7 +40,9 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                             <h3 className="text-lg font-bold text-gray-900 leading-tight truncate max-w-[200px] md:max-w-md">
                                 {file.name}
                             </h3>
-                            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Protected Preview</p>
+                            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                                Forensic Preview {file.aiModel && `• ${file.aiModel}`}
+                            </p>
                         </div>
                     </div>
                     <button
@@ -77,7 +82,7 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                             <div className="card p-6 bg-white shadow-sm border border-gray-100">
                                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Integrity Report</h4>
 
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                     <div>
                                         <div className="flex justify-between text-xs font-bold mb-2">
                                             <span className="text-gray-600">Originality Score</span>
@@ -85,7 +90,7 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                                                 {file.originalityScore?.toFixed(0)}%
                                             </span>
                                         </div>
-                                        <div className="h-1.5 bg-gray-50 rounded-full overflow-hidden">
+                                        <div className="h-2 bg-gray-50 rounded-full overflow-hidden">
                                             <div
                                                 className={`h-full transition-all duration-1000 ${file.originalityScore && file.originalityScore > 70 ? 'bg-blue-600' : 'bg-orange-500'}`}
                                                 style={{ width: `${file.originalityScore}%` }}
@@ -93,10 +98,21 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                                         </div>
                                     </div>
 
+                                    {file.forensicSummary && (
+                                        <div className="space-y-2">
+                                            <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Forensic Analysis</h5>
+                                            <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <p className="text-xs text-gray-600 leading-relaxed font-medium italic">
+                                                    "{file.forensicSummary}"
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {file.isScreenshot && (
-                                        <div className="p-3 bg-yellow-50 border border-yellow-100 rounded-xl">
-                                            <p className="text-[10px] text-yellow-700 font-bold uppercase tracking-tighter mb-1">Ownership Alert</p>
-                                            <p className="text-xs text-yellow-800 font-medium">This file appears to be a screenshot. Protect your IP by applying a watermark before sharing.</p>
+                                        <div className="p-3 bg-red-50 border border-red-100 rounded-xl">
+                                            <p className="text-[10px] text-red-700 font-bold uppercase tracking-tighter mb-1 font-black">Ownership Violation</p>
+                                            <p className="text-xs text-red-800 font-medium leading-snug">Artifacts detected from a mobile or browser interface. This file is flagged as non-original.</p>
                                         </div>
                                     )}
                                 </div>
@@ -110,8 +126,8 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                                 Apply CVBER Watermark
                             </button>
 
-                            <p className="text-[10px] text-gray-400 text-center px-4">
-                                By watermarking, you burn a cryptographic seal into the pixels of your file.
+                            <p className="text-[10px] text-gray-400 text-center px-4 leading-relaxed">
+                                By watermarking, you burn a cryptographic seal into the pixels of your file using {file.aiProvider || 'AI'} verification.
                             </p>
                         </div>
                     </div>
