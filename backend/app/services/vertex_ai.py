@@ -112,7 +112,7 @@ class VertexAIService:
                 sample = file_buffer[:1500].decode('utf-8', errors='ignore')
                 chat_completion = await self.groq_client.chat.completions.create(
                     messages=[{"role": "user", "content": f"{prompt}\n\nFile Content Sample:\n{sample}"}],
-                    model="llama3-70b-8192",
+                    model="llama-3.3-70b-versatile",
                     response_format={"type": "json_object"}
                 )
                 response_text = chat_completion.choices[0].message.content
@@ -159,7 +159,7 @@ class VertexAIService:
                 
                 completion = await self.groq_client.chat.completions.create(
                     messages=messages,
-                    model="llama3-70b-8192",
+                    model="llama-3.3-70b-versatile",
                 )
                 return completion.choices[0].message.content
                 
