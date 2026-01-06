@@ -165,36 +165,34 @@ Check for:
                 response_text = response.text
                 
             elif self.provider == "groq":
+
                 if "image" in file_type:
-                    active_model = "llama-3.2-90b-vision-preview"
-                    base64_image = base64.b64encode(file_buffer).decode('utf-8')
-                    try:
-                        chat_completion = await self.groq_client.chat.completions.create(
-                            messages=[
-                                {
-                                    "role": "user",
-                                    "content": [
-                                        {"type": "text", "text": prompt},
-                                        {
-                                            "type": "image_url",
-                                            "image_url": {"url": f"data:{file_type};base64,{base64_image}"}
-                                        }
-                                    ]
-                                }
-                            ],
-                            model=active_model,
-                            response_format={"type": "json_object"}
-                        )
-                    except Exception as ge:
-                        logger.error(f"Groq 90b failed: {ge}")
-                        # Fallback to 11b
-                        active_model = "llama-3.2-11b-vision-preview"
-                        chat_completion = await self.groq_client.chat.completions.create(
-                            messages=[{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:{file_type};base64,{base64_image}"}}]}],
-                            model=active_model,
-                            response_format={"type": "json_object"}
-                        )
-                    response_text = chat_completion.choices[0].message.content
+                    # Groq Vision models (llama-3.2-90b/11b) are currently decommissioned/unstable.
+                    # Fallback to Rule-Based Pre-Scan for now to prevent crashes.
+                    logger.warning("Groq Vision models are decommissioned. Falling back to Rule-Based Pre-Scan.")
+                    description = f"Groq Vision Unavailable. {rules['forensic_details']}"
+                    
+                    return RiskReport(
+                        overall_risk_score=0.0,
+                        originality_score=rules["originality_score"],
+                        is_screenshot=rules["is_screenshot"],
+                        threat_categories=[
+                            ThreatCategory(name="Vision Offline", severity="medium", confidence=1.0, description="AI Vision is currently unavailable (Groq Decommissioned). Using forensic rule-based detection.")
+                        ],
+                        detailed_findings=[DetailedFinding(category="System", description=description, evidence=file_name)],
+                        recommendations=[Recommendation(priority="high", action="Use Google Key", rationale="Switch to Google AI Studio for reliable Vision & Search.")],
+                        confidence_level=0.5,
+                        scan_timestamp=datetime.utcnow(),
+                        file_metadata={
+                            "file_name": file_name, 
+                            "file_type": file_type, 
+                            "file_size": len(file_buffer),
+                            "ai_provider": "groq_fallback",
+                            "ai_model": "rule_based_v1",
+                            "forensic_summary": description,
+                            "web_detection": "inactive"
+                        }
+                    )
                 else:
                     active_model = "llama-3.3-70b-versatile"
                     sample = file_buffer[:2000].decode('utf-8', errors='ignore')
