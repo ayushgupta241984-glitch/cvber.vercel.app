@@ -1,7 +1,8 @@
 'use client';
 
-import { X, Shield, Download, ExternalLink } from 'lucide-react';
+import { X, Shield, Download, ExternalLink, Scale, FileText } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { generateLegalAffidavit } from './CertificateGenerator';
 
 interface FileViewerProps {
     file: {
@@ -21,11 +22,27 @@ interface FileViewerProps {
 }
 
 export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerProps) {
+    const [hasSignedWaiver, setHasSignedWaiver] = useState(false);
+
     if (!isOpen || !file) return null;
 
     // Smart Lock Logic: Disable watermark if score is low or screenshot detected
+    // It is "locked" if it's not original AND the user hasn't signed the waiver yet
     const isOriginal = (file.originalityScore ?? 0) > 50;
-    const isLocked = !isOriginal || file.isScreenshot;
+    const isLocked = (!isOriginal || file.isScreenshot) && !hasSignedWaiver;
+    const needsWaiver = (!isOriginal || file.isScreenshot);
+
+    const handleLegalWaiver = () => {
+        generateLegalAffidavit({
+            fileName: file.name,
+            originalityScore: file.originalityScore || 0,
+            aiProvider: file.aiProvider || 'Unknown',
+            aiModel: file.aiModel || 'Unknown',
+            forensicSummary: file.forensicSummary || 'Auto-flagged by system',
+            timestamp: new Date().toISOString()
+        });
+        setHasSignedWaiver(true);
+    };
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
@@ -128,7 +145,31 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                                         </div>
                                     )}
 
-                                    {isLocked && (
+                                    {needsWaiver && !hasSignedWaiver && (
+                                        <div className="p-3 bg-red-50 border border-red-100 rounded-xl animate-in slide-in-from-bottom-2 fade-in duration-500">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <Scale className="h-4 w-4 text-red-600" />
+                                                <p className="text-[10px] text-red-700 font-bold uppercase tracking-tighter font-black">Legal Waiver Required</p>
+                                            </div>
+                                            <p className="text-xs text-red-800 font-medium leading-snug">
+                                                Originality verification failed. To proceed, you must sign a generic Digital Affidavit claiming ownership under penalty of perjury.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {hasSignedWaiver && (
+                                        <div className="p-3 bg-green-50 border border-green-100 rounded-xl animate-in zoom-in-95 duration-300">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <FileText className="h-4 w-4 text-green-600" />
+                                                <p className="text-[10px] text-green-700 font-bold uppercase tracking-tighter font-black">Affidavit Generated</p>
+                                            </div>
+                                            <p className="text-xs text-green-800 font-medium leading-snug">
+                                                Legal waiver signed and downloaded. Watermark lock overridden.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {isLocked && !needsWaiver && (
                                         <div className="p-3 bg-red-50 border border-red-100 rounded-xl">
                                             <p className="text-[10px] text-red-700 font-bold uppercase tracking-tighter mb-1 font-black">Watermark Locked</p>
                                             <p className="text-xs text-red-800 font-medium leading-snug">
@@ -139,30 +180,29 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                                 </div>
                             </div>
 
-                            <button
-                                onClick={!isLocked ? onWatermark : undefined}
-                                disabled={isLocked}
-                                className={`w-full py-4 font-bold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-3 active:scale-[0.98] ${isLocked
-                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
-                                        : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
-                                    }`}
-                            >
-                                {isLocked ? (
-                                    <>
-                                        <X className="h-5 w-5" />
-                                        Protection Disabled
-                                    </>
-                                ) : (
-                                    <>
-                                        <Shield className="h-5 w-5" />
-                                        Apply CVBER Watermark
-                                    </>
-                                )}
-                            </button>
+                            {isLocked ? (
+                                <button
+                                    onClick={handleLegalWaiver}
+                                    className="w-full py-4 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all shadow-lg shadow-red-200 active:scale-[0.98] flex items-center justify-center gap-3 overflow-hidden relative"
+                                >
+                                    <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
+                                    <Scale className="h-5 w-5" />
+                                    Proceed with Legal Waiver
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={onWatermark}
+                                    className={`w-full py-4 font-bold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-3 active:scale-[0.98] ${hasSignedWaiver ? 'bg-gray-900 text-white hover:bg-black shadow-gray-300' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
+                                        }`}
+                                >
+                                    <Shield className="h-5 w-5" />
+                                    {hasSignedWaiver ? "Apply Protected Watermark" : "Apply CVBER Watermark"}
+                                </button>
+                            )}
 
                             <p className="text-[10px] text-gray-400 text-center px-4 leading-relaxed">
                                 {isLocked
-                                    ? "Originality verification failed. Watermarking is restricted for this file."
+                                    ? "By clicking 'Proceed', you agree to generate a court-admissible PDF affidavit verifying your identity and claim."
                                     : `By watermarking, you burn a cryptographic seal into the pixels of your file using ${file.aiProvider || 'AI'} verification.`}
                             </p>
                         </div>

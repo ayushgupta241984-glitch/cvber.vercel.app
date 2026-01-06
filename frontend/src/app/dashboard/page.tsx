@@ -1,18 +1,36 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileUploader } from '@/components/dashboard/FileUploader';
 import { SafeVault } from '@/components/dashboard/SafeVault';
 import { SecurityMentor } from '@/components/chat/SecurityMentor';
+import { ScreenshotGuard } from '@/components/security/ScreenshotGuard';
 import { FileViewer } from '@/components/dashboard/FileViewer';
 import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
-import { Shield, FileText, Award, HardDrive, Stamp, Upload, Search } from 'lucide-react';
+import { Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock } from 'lucide-react';
 
 export default function DashboardPage() {
     const [files, setFiles] = useState<any[]>([]);
     const [selectedFile, setSelectedFile] = useState<any>(null);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [isWatermarkOpen, setIsWatermarkOpen] = useState(false);
+
+    // Persistence: Load from Memory
+    useEffect(() => {
+        const saved = localStorage.getItem('cvber_vault_memory');
+        if (saved) {
+            try {
+                setFiles(JSON.parse(saved));
+            } catch (e) {
+                console.error("Memory corruption:", e);
+            }
+        }
+    }, []);
+
+    // Persistence: Save to Memory
+    useEffect(() => {
+        localStorage.setItem('cvber_vault_memory', JSON.stringify(files));
+    }, [files]);
 
     const handleUploadComplete = (result: any, rawFile: File) => {
         const previewUrl = URL.createObjectURL(rawFile);
@@ -45,111 +63,108 @@ export default function DashboardPage() {
         setIsWatermarkOpen(true);
     };
 
-    return (
-        <div className="bg-gray-50/50 min-h-screen">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                {/* Welcome Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Dashboard</h1>
-                        <p className="text-gray-500 font-medium">Manage and protect your creative work</p>
-                    </div>
-                    <a href="#upload" className="btn-primary flex items-center gap-2 self-start md:self-center py-3">
-                        <Upload className="w-5 h-5" />
-                        Upload New File
-                    </a>
-                </div>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                    {[
-                        { label: 'Total Files', value: files.length.toString(), icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
-                        { label: 'Certificates', value: files.filter(f => f.status === 'safe').length.toString(), icon: Award, color: 'text-purple-600', bg: 'bg-purple-50' },
-                        { label: 'Storage Used', value: (files.reduce((acc, f) => acc + f.size, 0) / (1024 * 1024)).toFixed(1) + ' MB', icon: HardDrive, color: 'text-green-600', bg: 'bg-green-50' },
-                        { label: 'Original Content', value: files.filter(f => !f.isScreenshot).length.toString(), icon: Stamp, color: 'text-orange-600', bg: 'bg-orange-50' }
-                    ].map((stat, idx) => (
-                        <div key={idx} className="card p-6 flex items-center gap-5 translate-y-0 hover:-translate-y-1 transition-all duration-300">
-                            <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center`}>
-                                <stat.icon className="w-6 h-6" />
+    return (
+        <ScreenshotGuard>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 md:p-8 font-sans">
+                <div className="w-full max-w-6xl space-y-8 animate-in fade-in duration-700 slide-in-from-bottom-4">
+
+                    {/* Header */}
+                    <header className="flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-4 group cursor-default">
+                            <div className="bg-blue-600 p-4 rounded-2xl shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform duration-300">
+                                <Shield className="h-8 w-8 text-white animate-pulse" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
-                                <p className="text-2xl font-black text-gray-900">{stat.value}</p>
+                                <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+                                    CVBER<span className="text-blue-600">.</span>FREE
+                                </h1>
+                                <p className="text-sm font-medium text-gray-400 tracking-widest uppercase">
+                                    Secure Asset Vault
+                                </p>
                             </div>
                         </div>
-                    ))}
-                </div>
 
-                <div className="grid lg:grid-cols-3 gap-10">
-                    {/* Left: Main Content */}
-                    <div className="lg:col-span-2 space-y-12">
-                        {/* Upload Section */}
-                        <section id="upload" className="scroll-mt-32">
-                            <div className="flex items-center justify-between mb-8">
-                                <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
-                                    <div className="w-2 h-8 bg-blue-600 rounded-full" />
-                                    Protect New Work
-                                </h2>
-                                <span className="px-4 py-1.5 bg-blue-50 text-blue-600 text-[11px] font-bold uppercase tracking-widest rounded-full border border-blue-100">Live AI Scan</span>
+                        <div className="flex items-center gap-3">
+                            <div className="flex -space-x-2 mr-4">
+                                {[...Array(3)].map((_, i) => (
+                                    <div key={i} className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white" />
+                                ))}
                             </div>
+                            <div className="px-4 py-2 bg-white rounded-full border border-gray-100 shadow-sm text-xs font-bold text-gray-500 flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                SYSTEM ONLINE
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[
+                            { label: 'Protected Assets', value: files.length, color: 'text-blue-600' },
+                            { label: 'Threats Blocked', value: '0', color: 'text-red-500' },
+                            { label: 'Network Status', value: 'SECURE', color: 'text-green-600' },
+                            { label: 'Blockchain Sync', value: 'LIVE', color: 'text-purple-600' },
+                        ].map((stat, i) => (
+                            <div key={i} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{stat.label}</p>
+                                <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="grid lg:grid-cols-[1fr_350px] gap-8">
+                        {/* Main Vault Area */}
+                        <div className="space-y-6">
                             <FileUploader onUploadComplete={handleUploadComplete} />
-                        </section>
 
-                        {/* File Inventory */}
-                        <section>
-                            <div className="flex items-center justify-between mb-8">
-                                <div className="relative flex-1 max-w-md">
-                                    <Search className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search your private vault..."
-                                        className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm"
-                                    />
-                                </div>
-                            </div>
                             <SafeVault
                                 files={files}
                                 onView={handleView}
                                 onWatermark={handleWatermark}
                             />
-                        </section>
-                    </div>
+                        </div>
 
-                    {/* Right: Security Help / Mentor */}
-                    <div className="lg:col-span-1">
-                        <div className="sticky top-10">
-                            <SecurityMentor context={{ files }} />
+                        {/* Sidebar */}
+                        <div className="space-y-6">
+                            <SecurityMentor />
 
-                            <div className="mt-8 p-6 bg-white rounded-[32px] border border-gray-100 shadow-sm">
-                                <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                    <Shield className="h-4 w-4 text-blue-600" />
-                                    Security Tip
-                                </h4>
-                                <p className="text-sm text-gray-500 leading-relaxed">
-                                    Always use the **CVBER Watermark** before sharing your original assets on social media. It creates a cryptographic link back to your vault.
-                                </p>
+                            {/* Quick Actions */}
+                            <div className="bg-blue-600 rounded-[32px] p-8 text-white shadow-xl shadow-blue-200 relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-800" />
+                                <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
+
+                                <div className="relative z-10">
+                                    <Lock className="h-8 w-8 mb-4 border-2 border-white/20 rounded-xl p-1.5" />
+                                    <h3 className="text-xl font-bold mb-2">Enterprise Grade</h3>
+                                    <p className="text-blue-100 text-sm mb-6 leading-relaxed">
+                                        Upgrade to unlock advanced C2PA signing, legal logs, and batch processing.
+                                    </p>
+                                    <button className="w-full py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors text-sm">
+                                        View Plans
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <FileViewer
+                    file={selectedFile}
+                    isOpen={isViewerOpen}
+                    onClose={() => setIsViewerOpen(false)}
+                    onWatermark={() => {
+                        setIsViewerOpen(false);
+                        setIsWatermarkOpen(true);
+                    }}
+                />
+
+                <WatermarkEngine
+                    file={selectedFile}
+                    isOpen={isWatermarkOpen}
+                    onClose={() => setIsWatermarkOpen(false)}
+                />
             </div>
-
-            {/* Modals */}
-            <FileViewer
-                file={selectedFile}
-                isOpen={isViewerOpen}
-                onClose={() => setIsViewerOpen(false)}
-                onWatermark={() => {
-                    setIsViewerOpen(false);
-                    setIsWatermarkOpen(true);
-                }}
-            />
-
-            <WatermarkEngine
-                file={selectedFile}
-                isOpen={isWatermarkOpen}
-                onClose={() => setIsWatermarkOpen(false)}
-            />
-        </div>
+        </ScreenshotGuard>
     );
 }
