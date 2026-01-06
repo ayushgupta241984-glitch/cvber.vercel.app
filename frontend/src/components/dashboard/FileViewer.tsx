@@ -13,6 +13,7 @@ interface FileViewerProps {
         forensicSummary?: string;
         aiProvider?: string;
         aiModel?: string;
+        webDetection?: string;
     } | null;
     isOpen: boolean;
     onClose: () => void;
@@ -21,6 +22,10 @@ interface FileViewerProps {
 
 export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerProps) {
     if (!isOpen || !file) return null;
+
+    // Smart Lock Logic: Disable watermark if score is low or screenshot detected
+    const isOriginal = (file.originalityScore ?? 0) > 50;
+    const isLocked = !isOriginal || file.isScreenshot;
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
@@ -40,9 +45,17 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                             <h3 className="text-lg font-bold text-gray-900 leading-tight truncate max-w-[200px] md:max-w-md">
                                 {file.name}
                             </h3>
-                            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
-                                Forensic Preview {file.aiModel && `• ${file.aiModel}`}
-                            </p>
+                            <div className="flex items-center gap-2">
+                                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                                    Forensic Preview {file.aiModel && `• ${file.aiModel}`}
+                                </p>
+                                {file.webDetection === 'active' && (
+                                    <span className="px-1.5 py-0.5 bg-green-50 text-green-700 text-[9px] font-bold uppercase tracking-wider rounded border border-green-200 flex items-center gap-1">
+                                        <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
+                                        Web Verified
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <button
@@ -86,13 +99,13 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                                     <div>
                                         <div className="flex justify-between text-xs font-bold mb-2">
                                             <span className="text-gray-600">Originality Score</span>
-                                            <span className={file.originalityScore && file.originalityScore > 70 ? 'text-blue-600' : 'text-orange-600'}>
+                                            <span className={isOriginal ? 'text-blue-600' : 'text-orange-600'}>
                                                 {file.originalityScore?.toFixed(0)}%
                                             </span>
                                         </div>
                                         <div className="h-2 bg-gray-50 rounded-full overflow-hidden">
                                             <div
-                                                className={`h-full transition-all duration-1000 ${file.originalityScore && file.originalityScore > 70 ? 'bg-blue-600' : 'bg-orange-500'}`}
+                                                className={`h-full transition-all duration-1000 ${isOriginal ? 'bg-blue-600' : 'bg-orange-500'}`}
                                                 style={{ width: `${file.originalityScore}%` }}
                                             />
                                         </div>
@@ -105,29 +118,52 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                                                 <p className="text-xs text-gray-600 leading-relaxed font-medium italic">
                                                     "{file.forensicSummary}"
                                                 </p>
+                                                {file.webDetection === 'active' && !isOriginal && (
+                                                    <div className="mt-2 pt-2 border-t border-gray-200 flex items-center gap-1.5 text-[10px] text-gray-500 font-bold uppercase">
+                                                        <span className="w-1.5 h-1.5 bg-orange-500 rounded-full" />
+                                                        Web Match Confirmed
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     )}
 
-                                    {file.isScreenshot && (
+                                    {isLocked && (
                                         <div className="p-3 bg-red-50 border border-red-100 rounded-xl">
-                                            <p className="text-[10px] text-red-700 font-bold uppercase tracking-tighter mb-1 font-black">Ownership Violation</p>
-                                            <p className="text-xs text-red-800 font-medium leading-snug">Artifacts detected from a mobile or browser interface. This file is flagged as non-original.</p>
+                                            <p className="text-[10px] text-red-700 font-bold uppercase tracking-tighter mb-1 font-black">Watermark Locked</p>
+                                            <p className="text-xs text-red-800 font-medium leading-snug">
+                                                To protect the ecosystem, we cannot watermark content that appears to be unoriginal or a direct screenshot.
+                                            </p>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
                             <button
-                                onClick={onWatermark}
-                                className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-[0.98] flex items-center justify-center gap-3"
+                                onClick={!isLocked ? onWatermark : undefined}
+                                disabled={isLocked}
+                                className={`w-full py-4 font-bold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-3 active:scale-[0.98] ${isLocked
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
+                                        : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
+                                    }`}
                             >
-                                <Shield className="h-5 w-5" />
-                                Apply CVBER Watermark
+                                {isLocked ? (
+                                    <>
+                                        <X className="h-5 w-5" />
+                                        Protection Disabled
+                                    </>
+                                ) : (
+                                    <>
+                                        <Shield className="h-5 w-5" />
+                                        Apply CVBER Watermark
+                                    </>
+                                )}
                             </button>
 
                             <p className="text-[10px] text-gray-400 text-center px-4 leading-relaxed">
-                                By watermarking, you burn a cryptographic seal into the pixels of your file using {file.aiProvider || 'AI'} verification.
+                                {isLocked
+                                    ? "Originality verification failed. Watermarking is restricted for this file."
+                                    : `By watermarking, you burn a cryptographic seal into the pixels of your file using ${file.aiProvider || 'AI'} verification.`}
                             </p>
                         </div>
                     </div>

@@ -60,7 +60,8 @@ class VertexAIService:
         if GENAI_AVAILABLE and self.is_valid_key(settings.google_api_key):
             try:
                 genai.configure(api_key=settings.google_api_key)
-                self.model = genai.GenerativeModel('gemini-1.5-flash')
+                genai.configure(api_key=settings.google_api_key)
+                self.model = genai.GenerativeModel('gemini-1.5-flash', tools='google_search_retrieval')
                 self.initialized = True
                 self.provider = "google"
                 logger.info("Google AI Studio (Gemini) initialized")
@@ -128,10 +129,14 @@ Check for:
 - **Bottom Edge**: Mobile navigation bar (Home/Back/Recent), Browser footer, or Taskbar.
 - **Watermarks**: Look for TikTok, Instagram, or Getty Images logos.
 
-### STEP 2: SCORING RULES
+### STEP 2: WEB VERIFICATION (GROUNDING)
+- Use Google Search to check if this image (or a very similar one) exists on the public web.
+- If you find matches on stock sites, social media, or other public sources, flag it as a REPOST.
+
+### STEP 3: SCORING RULES
 - **IS_SCREENSHOT**: Set to `true` if ANY of the above UI elements are present. 
 - **ORIGINALITY_SCORE**: 
-  - 0-20: Obvious screenshot with status bars or browser UI.
+  - 0-20: Obvious screenshot or DIRECT web match found (repost).
   - 21-50: Clear repost (platform logos, heavy compression, low res).
   - 51-89: Possibly original but looks like common stock or social media content.
   - 90-100: High-fidelity original creation/photo with no UI artifacts.
@@ -244,7 +249,8 @@ Check for:
                     "file_size": len(file_buffer),
                     "ai_provider": self.provider,
                     "ai_model": active_model,
-                    "forensic_summary": description
+                    "forensic_summary": description,
+                    "web_detection": "active" if self.provider == "google" else "inactive"
                 }
             )
         except Exception as e:
