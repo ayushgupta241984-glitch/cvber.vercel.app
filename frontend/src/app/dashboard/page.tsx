@@ -63,6 +63,11 @@ export default function DashboardPage() {
         setIsWatermarkOpen(true);
     };
 
+    const handleDelete = (file: any) => {
+        if (confirm(`Are you sure you want to delete "${file.name}"?`)) {
+            setFiles(prev => prev.filter(f => f.id !== file.id));
+        }
+    };
 
     return (
         <ScreenshotGuard>
@@ -122,6 +127,7 @@ export default function DashboardPage() {
                                 files={files}
                                 onView={handleView}
                                 onWatermark={handleWatermark}
+                                onDelete={handleDelete}
                             />
                         </div>
 
