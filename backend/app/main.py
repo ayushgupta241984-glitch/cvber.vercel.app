@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import scan, auth, mentor
+from app.routers import scan, auth, mentor, enforcement
 
 import os
 import json
@@ -52,6 +52,7 @@ else:
 app.include_router(scan.router)
 app.include_router(auth.router)
 app.include_router(mentor.router)
+app.include_router(enforcement.router)
 
 
 @app.get("/")
