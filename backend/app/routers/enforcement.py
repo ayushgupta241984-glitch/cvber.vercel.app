@@ -287,3 +287,55 @@ async def get_asset_history(asset_id: str):
 async def export_evidence_packet(asset_id: str):
     """Export evidence packet for legal proceedings"""
     return event_log.export_evidence_packet(asset_id)
+
+
+# ============== BLOCKCHAIN TIMESTAMPS ==============
+
+from app.services.blockchain import blockchain_service
+
+class BlockchainTimestampRequest(BaseModel):
+    asset_name: str
+    file_hash: str  # Pre-computed SHA-256 hash of file
+
+
+@router.post("/blockchain/timestamp")
+async def create_blockchain_timestamp(request: BlockchainTimestampRequest):
+    """
+    Create a FREE blockchain timestamp using OpenTimestamps.
+    Anchors to Bitcoin blockchain at no cost.
+    """
+    # Convert hash to bytes for timestamping
+    try:
+        file_bytes = bytes.fromhex(request.file_hash)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid hash format")
+    
+    proof = await blockchain_service.create_timestamp(file_bytes, request.asset_name)
+    
+    return {
+        "success": True,
+        "proof": proof.dict(),
+        "message": "Timestamp submitted to Bitcoin blockchain via OpenTimestamps",
+        "note": "Proof will be confirmed after next Bitcoin block (~10 min to 2 hours)"
+    }
+
+
+@router.get("/blockchain/verify/{proof_id}")
+async def verify_blockchain_timestamp(proof_id: str):
+    """Verify a blockchain timestamp"""
+    return await blockchain_service.verify_timestamp(proof_id)
+
+
+@router.post("/blockchain/hash-proof")
+async def create_hash_proof(request: BlockchainTimestampRequest):
+    """
+    Create an immediate hash proof document.
+    Synchronous - no blockchain submission, but creates verifiable proof.
+    """
+    try:
+        file_bytes = bytes.fromhex(request.file_hash)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid hash format")
+    
+    proof = blockchain_service.create_hash_proof(file_bytes, request.asset_name)
+    return proof
