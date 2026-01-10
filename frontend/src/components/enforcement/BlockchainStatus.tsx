@@ -21,14 +21,22 @@ export function BlockchainStatus() {
 
     // Load proofs from localStorage
     useEffect(() => {
-        const saved = localStorage.getItem('cvber_blockchain_proofs');
-        if (saved) {
-            try {
-                setProofs(JSON.parse(saved));
-            } catch (e) {
-                console.error('Failed to load blockchain proofs:', e);
+        const loadProofs = () => {
+            const saved = localStorage.getItem('cvber_blockchain_proofs');
+            if (saved) {
+                try {
+                    setProofs(JSON.parse(saved));
+                } catch (e) {
+                    console.error('Failed to load blockchain proofs:', e);
+                }
             }
-        }
+        };
+
+        loadProofs();
+
+        // Listen for updates from upload flow
+        window.addEventListener('blockchain-update', loadProofs);
+        return () => window.removeEventListener('blockchain-update', loadProofs);
     }, []);
 
     // Save proofs to localStorage
@@ -177,10 +185,10 @@ export function BlockchainStatus() {
                                             </div>
                                             <div className="flex flex-col items-end gap-2">
                                                 <span className={`px-2 py-1 text-[10px] font-bold rounded-full ${proof.status === 'confirmed'
-                                                        ? 'bg-green-500/20 text-green-300'
-                                                        : proof.status === 'pending'
-                                                            ? 'bg-yellow-500/20 text-yellow-300'
-                                                            : 'bg-gray-500/20 text-gray-300'
+                                                    ? 'bg-green-500/20 text-green-300'
+                                                    : proof.status === 'pending'
+                                                        ? 'bg-yellow-500/20 text-yellow-300'
+                                                        : 'bg-gray-500/20 text-gray-300'
                                                     }`}>
                                                     {getStatusLabel(proof.status)}
                                                 </span>

@@ -33,13 +33,20 @@ export default function DashboardPage() {
         localStorage.setItem('cvber_vault_memory', JSON.stringify(files));
     }, [files]);
 
-    const handleUploadComplete = (result: any, rawFile: File) => {
+    const handleUploadComplete = async (result: any, rawFile: File) => {
         const previewUrl = URL.createObjectURL(rawFile);
+
+        // Compute SHA-256 hash of the file
+        const arrayBuffer = await rawFile.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
         const newFile = {
             id: result.scan_id,
             name: rawFile.name,
             size: rawFile.size,
+            hash: fileHash, // Store the hash
             status: result.risk_report ? (result.risk_report.overall_risk_score < 30 ? 'safe' : 'warning') : 'scanning',
             riskScore: result.risk_report?.overall_risk_score,
             originalityScore: result.risk_report?.originality_score,
@@ -52,6 +59,41 @@ export default function DashboardPage() {
         };
 
         setFiles(prev => [newFile, ...prev]);
+
+        // Create blockchain timestamp
+        try {
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+            const response = await fetch(`${backendUrl}/api/enforcement/blockchain/timestamp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    asset_name: rawFile.name,
+                    file_hash: fileHash
+                })
+            });
+
+            if (response.ok) {
+                const proofData = await response.json();
+
+                // Save proof to blockchain proofs storage
+                const existingProofs = JSON.parse(localStorage.getItem('cvber_blockchain_proofs') || '[]');
+                existingProofs.unshift({
+                    proof_id: proofData.proof?.proof_id,
+                    asset_name: rawFile.name,
+                    asset_hash: fileHash,
+                    timestamp: new Date().toISOString(),
+                    blockchain: 'bitcoin',
+                    status: proofData.proof?.status || 'pending',
+                    verification_url: `${window.location.origin}/verify/${fileHash}`
+                });
+                localStorage.setItem('cvber_blockchain_proofs', JSON.stringify(existingProofs));
+
+                // Force re-render of BlockchainStatus
+                window.dispatchEvent(new Event('blockchain-update'));
+            }
+        } catch (error) {
+            console.error('Blockchain timestamp failed:', error);
+        }
     };
 
     const handleView = (file: any) => {
