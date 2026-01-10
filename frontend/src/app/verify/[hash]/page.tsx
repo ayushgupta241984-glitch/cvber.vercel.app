@@ -232,13 +232,13 @@ export default function VerifyPage() {
                             Download Court Certificate
                         </button>
                         <a
-                            href="https://opentimestamps.org/verify"
+                            href="https://opentimestamps.org"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
                         >
                             <ExternalLink className="h-4 w-4" />
-                            Verify on OpenTimestamps
+                            Learn About OpenTimestamps
                         </a>
                     </div>
                 </div>
