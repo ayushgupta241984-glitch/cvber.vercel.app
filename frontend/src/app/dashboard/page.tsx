@@ -8,6 +8,7 @@ import { ScreenshotGuard } from '@/components/security/ScreenshotGuard';
 import { FileViewer } from '@/components/dashboard/FileViewer';
 import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
 import { Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock } from 'lucide-react';
+import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
 
 export default function DashboardPage() {
     const [files, setFiles] = useState<any[]>([]);
@@ -133,6 +134,7 @@ export default function DashboardPage() {
 
                         {/* Sidebar */}
                         <div className="space-y-6">
+                            <BlockchainStatus />
                             <SecurityMentor />
 
                             {/* Quick Actions */}
