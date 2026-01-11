@@ -21,7 +21,7 @@ export default function Navbar() {
                                 </svg>
                             </div>
                             <span className="text-xl font-bold bg-clip-text text-gray-900">
-                                CVBER Free
+                                CVBER
                             </span>
                         </Link>
                     </div>
@@ -37,7 +37,7 @@ export default function Navbar() {
                             Log In
                         </Link>
                         <Link href="/register" className="btn-primary py-2 px-4 text-sm">
-                            Get Started Free
+                            Get Started
                         </Link>
                     </div>
                 </div>
