@@ -20,7 +20,7 @@ export default function Home() {
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <Link href="/register" className="btn-primary text-center">
-                                    Get Started Free
+                                    Get Started
                                 </Link>
                                 <Link href="/#how-it-works" className="btn-secondary text-center">
                                     See How It Works
@@ -124,7 +124,7 @@ export default function Home() {
                     <div className="relative z-10">
                         <h2 className="text-4xl font-bold mb-6">Start Protecting Your Work Today</h2>
                         <p className="text-blue-100 mb-10 max-w-xl mx-auto text-lg leading-relaxed">
-                            Join thousands of creators who trust CVBER to protect their creative work with certificates of origin.
+                            Join thousands of creators who trust Cvber to protect their creative work with certificates of origin.
                         </p>
                         <Link href="/register" className="inline-flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 font-bold py-4 px-10 rounded-xl transition-all shadow-lg active:scale-95 group">
                             Get Started <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

@@ -21,7 +21,7 @@ export default function Navbar() {
                                 </svg>
                             </div>
                             <span className="text-xl font-bold bg-clip-text text-gray-900">
-                                CVBER
+                                Cvber
                             </span>
                         </Link>
                     </div>

@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "CVBER - AI-Powered Cybersecurity Platform",
+    title: "Cvber - AI-Powered Cybersecurity Platform",
     description: "Protect your files with AI-powered threat detection and C2PA digital authenticity verification",
 };
 

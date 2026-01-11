@@ -65,7 +65,7 @@ export default function LoginPage() {
                     <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
                         Welcome Back
                     </h1>
-                    <p className="text-gray-500 mt-2">Sign in to your CVBER account</p>
+                    <p className="text-gray-500 mt-2">Sign in to your CVBER Free account</p>
                 </div>
 
                 {/* Login Form */}
