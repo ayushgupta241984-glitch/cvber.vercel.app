@@ -70,7 +70,7 @@ export default function RegisterPage() {
                     <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
                         Create Account
                     </h1>
-                    <p className="text-gray-500 mt-2">Join CVBER Free today</p>
+                    <p className="text-gray-500 mt-2">Join Cvber today</p>
                 </div>
 
                 {/* Register Form */}
