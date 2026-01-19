@@ -63,7 +63,7 @@ export default function Navbar() {
                     <div className="flex items-center gap-4">
                         {user ? (
                             <>
-                                <span className="text-sm font-medium text-gray-900">
+                                <span className="text-sm font-medium text-gray-900 capitalize">
                                     Hi, {user.full_name || 'User'}
                                 </span>
                                 <button

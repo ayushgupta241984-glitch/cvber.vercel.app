@@ -1,5 +1,29 @@
+'use client';
+
 import Link from 'next/link';
 import { Shield, Check, ArrowRight, Upload, Stamp, Award } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+function HeroButton() {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        setIsLoggedIn(!!localStorage.getItem('access_token'));
+    }, []);
+
+    if (isLoggedIn) {
+        return (
+            <Link href="/dashboard" className="btn-primary text-center">
+                Go to Dashboard
+            </Link>
+        );
+    }
+    return (
+        <Link href="/register" className="btn-primary text-center">
+            Get Started
+        </Link>
+    );
+}
 
 export default function Home() {
     return (
@@ -19,9 +43,8 @@ export default function Home() {
                                 blockchain-level security.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <Link href="/register" className="btn-primary text-center">
-                                    Get Started
-                                </Link>
+                                {/* Enhanced Get Started Button - uses client-side logic in a separate component would be best, but for simplicity: */}
+                                <HeroButton />
                                 <Link href="/#how-it-works" className="btn-secondary text-center">
                                     See How It Works
                                 </Link>
