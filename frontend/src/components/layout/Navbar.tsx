@@ -2,9 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 export default function Navbar() {
     const pathname = usePathname();
+    const [user, setUser] = useState<{ name: string } | null>(null);
+
+    useEffect(() => {
+        // Check for token to determine auth state
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            // In a real app, we'd fetch the user profile here.
+            // For now, consistent with keeping it simple or if profile fetch fails
+            setUser({ name: "User" });
+        }
+    }, [pathname]); // Re-check on path change in case they just logged in
+
+    const handleLogout = () => {
+        localStorage.removeItem('access_token');
+        setUser(null);
+        window.location.href = '/login';
+    };
 
     const isAuthPage = pathname === "/login" || pathname === "/register";
     if (isAuthPage) return null;
@@ -33,12 +51,31 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">
-                            Log In
-                        </Link>
-                        <Link href="/register" className="btn-primary py-2 px-4 text-sm">
-                            Get Started
-                        </Link>
+                        {user ? (
+                            <>
+                                <span className="text-sm font-medium text-gray-900">
+                                    Hi, {user.name}
+                                </span>
+                                <button
+                                    onClick={handleLogout}
+                                    className="text-sm font-medium text-gray-600 hover:text-red-600 transition-colors"
+                                >
+                                    Sign Out
+                                </button>
+                                <Link href="/dashboard" className="btn-primary py-2 px-4 text-sm">
+                                    Dashboard
+                                </Link>
+                            </>
+                        ) : (
+                            <>
+                                <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">
+                                    Log In
+                                </Link>
+                                <Link href="/register" className="btn-primary py-2 px-4 text-sm">
+                                    Get Started
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

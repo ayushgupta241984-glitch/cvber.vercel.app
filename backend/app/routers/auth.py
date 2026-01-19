@@ -74,6 +74,10 @@ async def register(request: RegisterRequest):
             supabase.table("profiles").insert(profile).execute()
         except Exception as profile_error:
             # Profile creation is optional - log but don't fail
+            # Check if it is a missing table error to give better logs
+            error_msg = str(profile_error)
+            if "relation \"public.profiles\" does not exist" in error_msg or "42P01" in error_msg:
+                print(f"CRITICAL WARNING: Database schema not initialized. 'profiles' table missing. Run migrations!")
             print(f"Warning: Could not create profile: {profile_error}")
         
         # Create JWT tokens
@@ -159,4 +163,10 @@ async def get_current_user_profile():
         return response.data
         
     except Exception as e:
+        error_msg = str(e)
+        if "relation \"public.profiles\" does not exist" in error_msg or "42P01" in error_msg:
+             raise HTTPException(
+                 status_code=503, 
+                 detail="Database schema not initialized. Please run migrations."
+             )
         raise HTTPException(status_code=500, detail=f"Failed to fetch profile: {str(e)}")

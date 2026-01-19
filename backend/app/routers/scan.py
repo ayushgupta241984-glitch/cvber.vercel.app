@@ -5,6 +5,7 @@ from app.models.schemas import ScanResponse, RiskReport, VerifyRequest, VerifyRe
 from app.services.vertex_ai import vertex_ai_service
 from app.services.c2pa_service import c2pa_service
 from app.services.storage import storage_service
+from app.services.metadata_engine import metadata_engine
 from supabase import create_client
 from app.config import settings
 
@@ -41,6 +42,25 @@ async def scan_file(
         # Validate file size (max 50MB)
         if file_size > 50 * 1024 * 1024:
             raise HTTPException(status_code=400, detail="File size exceeds 50MB limit")
+        
+        # Inject Digital ID (Metadata)
+        # TODO: Get real user info from DB profile
+        creator_info = {
+            "name": current_user.get("email", "Cvber User").split('@')[0], 
+            "copyright_notice": f"© {datetime.now().year} {current_user.get('email', 'Cvber User')}. All rights reserved."
+        }
+        
+        try:
+            # Modify the buffer in-memory
+            file_buffer = metadata_engine.inject_metadata_in_memory(
+                file_buffer=file_buffer,
+                file_name=file.filename,
+                creator_info=creator_info
+            )
+            # Update size after injection
+            file_size = len(file_buffer)
+        except Exception as e:
+            print(f"Metadata warning: {e}")
         
         # Get file type
         file_type = file.content_type or "application/octet-stream"
