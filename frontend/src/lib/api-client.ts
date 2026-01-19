@@ -79,7 +79,14 @@ export const apiClient = {
         });
 
         if (!response.ok) {
-            throw new Error('Login failed');
+            let errorMessage = 'Login failed';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.detail || errorData.message || errorMessage;
+            } catch (e) {
+                // If response is not JSON, stick to default
+            }
+            throw new Error(errorMessage);
         }
 
         return response.json();
@@ -95,7 +102,14 @@ export const apiClient = {
         });
 
         if (!response.ok) {
-            throw new Error('Registration failed');
+            let errorMessage = 'Registration failed';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.detail || errorData.message || errorMessage;
+            } catch (e) {
+                // If response is not JSON
+            }
+            throw new Error(errorMessage);
         }
 
         return response.json();
