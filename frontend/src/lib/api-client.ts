@@ -116,4 +116,21 @@ export const apiClient = {
 
         return response.json();
     },
+
+    async getUserProfile(): Promise<any> {
+        const token = localStorage.getItem('access_token');
+        if (!token) throw new Error('No token found');
+
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch profile');
+        }
+
+        return response.json();
+    },
 };

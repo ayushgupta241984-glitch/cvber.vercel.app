@@ -143,14 +143,29 @@ async def login(request: LoginRequest):
         raise HTTPException(status_code=401, detail=f"Login failed: {str(e)}")
 
 
-@router.get("/me", response_model=UserProfile)
-async def get_current_user_profile():
-    """Get current user profile.
-    TODO: Implement JWT token validation from headers."""
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
-        # Placeholder - extract user_id from JWT token
-        user_id = "00000000-0000-0000-0000-000000000000"
-        
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    return user_id
+
+@router.get("/me", response_model=UserProfile)
+async def get_current_user_profile(user_id: str = Depends(get_current_user)):
+    """Get current user profile."""
+    try:
         response = supabase.table("profiles")\
             .select("*")\
             .eq("id", user_id)\

@@ -3,25 +3,35 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { apiClient } from "@/lib/api-client";
 
 export default function Navbar() {
     const pathname = usePathname();
-    const [user, setUser] = useState<{ name: string } | null>(null);
+    const [user, setUser] = useState<{ full_name: string } | null>(null);
 
     useEffect(() => {
-        // Check for token to determine auth state
-        const token = localStorage.getItem('access_token');
-        if (token) {
-            // In a real app, we'd fetch the user profile here.
-            // For now, consistent with keeping it simple or if profile fetch fails
-            setUser({ name: "User" });
-        }
-    }, [pathname]); // Re-check on path change in case they just logged in
+        const checkAuth = async () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                try {
+                    const profile = await apiClient.getUserProfile();
+                    setUser(profile);
+                } catch (err) {
+                    console.error("Failed to load user", err);
+                    // Optionally clear token if invalid
+                    // localStorage.removeItem('access_token');
+                }
+            } else {
+                setUser(null);
+            }
+        };
+        checkAuth();
+    }, [pathname]);
 
     const handleLogout = () => {
         localStorage.removeItem('access_token');
         setUser(null);
-        window.location.href = '/login';
+        window.location.href = '/';
     };
 
     const isAuthPage = pathname === "/login" || pathname === "/register";
@@ -54,7 +64,7 @@ export default function Navbar() {
                         {user ? (
                             <>
                                 <span className="text-sm font-medium text-gray-900">
-                                    Hi, {user.name}
+                                    Hi, {user.full_name || 'User'}
                                 </span>
                                 <button
                                     onClick={handleLogout}
