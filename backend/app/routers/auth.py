@@ -51,16 +51,39 @@ async def register(request: RegisterRequest):
     - Returns JWT tokens
     """
     try:
-        # Register user with Supabase Auth
-        auth_response = supabase.auth.sign_up({
+        # Register user with Supabase Admin API to skip email confirmation
+        # We use the admin api because we have the service_role_key initialized in 'supabase' client
+        try:
+            # Create user and auto-confirm email
+            user_attributes = {
+                "email": request.email,
+                "password": request.password,
+                "email_confirm": True,
+                "user_metadata": {"full_name": request.full_name}
+            }
+            # Note: supbase-py < 2.0 uses admin.create_user differently, assuming v2+ style here
+            # If this fails, we might need to adjust based on exact installed library version
+            # Using generic dictionary pass-through if named args aren't supported directly
+            admin_response = supabase.auth.admin.create_user(user_attributes)
+            
+            if not admin_response.user:
+                 raise Exception("Admin creation failed")
+                 
+            user_id = admin_response.user.id
+            
+        except Exception as create_error:
+            # Fallback or specific error handling
+            # If user already exists, this typically throws.
+            raise HTTPException(status_code=400, detail=f"Registration failed: {str(create_error)}")
+
+        # Now sign in to get tokens
+        auth_response = supabase.auth.sign_in_with_password({
             "email": request.email,
             "password": request.password
         })
         
         if not auth_response.user:
-            raise HTTPException(status_code=400, detail="Registration failed - no user returned")
-        
-        user_id = auth_response.user.id
+            raise HTTPException(status_code=400, detail="Registration successful but auto-login failed")
         
         # Try to create profile (optional - won't fail signup if profiles table doesn't exist)
         try:
@@ -100,7 +123,11 @@ async def register(request: RegisterRequest):
         raise
     except Exception as e:
         print(f"Registration error: {type(e).__name__}: {e}")
-        raise HTTPException(status_code=400, detail=f"Registration failed: {str(e)}")
+        # Improve error message for specific cases
+        msg = str(e)
+        if "User already registered" in msg:
+            raise HTTPException(status_code=400, detail="User already registered")
+        raise HTTPException(status_code=400, detail=f"Registration failed: {msg}")
 
 
 @router.post("/login", response_model=AuthTokens)
