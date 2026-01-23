@@ -4,7 +4,7 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cvber.app";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cvber-free-las-app.vercel.app";
 
 export const metadata: Metadata = {
     // Basic metadata
