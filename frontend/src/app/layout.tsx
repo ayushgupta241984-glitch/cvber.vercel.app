@@ -4,7 +4,7 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cvber-free-las-app.vercel.app";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cvber.vercel.app";
 
 export const metadata: Metadata = {
     // Basic metadata
@@ -86,7 +86,7 @@ export const metadata: Metadata = {
     // Verification
     // Verification
     other: {
-        "google-site-verification": "REF_PBrYt3OzmL27-be2Fo5BQvIKJZ9nEL7W6pBl_Ls",
+        "google-site-verification": "NDtNvgZra404JNma95WkYr6Q5Wdr110e2T_2cIdBRL0",
     },
 };
 
