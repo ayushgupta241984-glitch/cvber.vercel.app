@@ -58,37 +58,37 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+        <div className="min-h-screen bg-[#0A0A0F] flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <div className="text-center mb-10">
                     <Link href="/" className="inline-flex items-center justify-center mb-6 group">
-                        <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform">
+                        <div className="p-3 bg-purple-600 rounded-2xl text-white shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
                             <Shield className="h-8 w-8" />
                         </div>
                     </Link>
-                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                    <h1 className="text-3xl font-extrabold text-white tracking-tight">
                         Create Account
                     </h1>
-                    <p className="text-gray-500 mt-2">Join Cvber today</p>
+                    <p className="text-zinc-500 mt-2">Join Cvber today</p>
                 </div>
 
                 {/* Register Form */}
-                <div className="bg-white border border-gray-100 rounded-3xl p-8 shadow-xl shadow-gray-100/50">
+                <div className="bg-[#12121A] border border-zinc-800 rounded-3xl p-8 shadow-2xl shadow-purple-500/5">
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Full Name */}
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            <label className="block text-sm font-semibold text-zinc-400 mb-2">
                                 Full Name
                             </label>
                             <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
                                 <input
                                     type="text"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
                                     required
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl pl-11 pr-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
                                     placeholder="John Doe"
                                 />
                             </div>
@@ -96,17 +96,17 @@ export default function RegisterPage() {
 
                         {/* Email */}
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            <label className="block text-sm font-semibold text-zinc-400 mb-2">
                                 Email Address
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl pl-11 pr-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
                                     placeholder="you@example.com"
                                 />
                             </div>
@@ -114,17 +114,17 @@ export default function RegisterPage() {
 
                         {/* Password */}
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            <label className="block text-sm font-semibold text-zinc-400 mb-2">
                                 Password
                             </label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl pl-11 pr-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium"
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -132,9 +132,9 @@ export default function RegisterPage() {
 
                         {/* Error Message */}
                         {error && (
-                            <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 animate-shake">
+                            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 animate-shake">
                                 <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
-                                <p className="text-red-600 text-sm font-medium">{error}</p>
+                                <p className="text-red-400 text-sm font-medium">{error}</p>
                             </div>
                         )}
 
@@ -153,10 +153,10 @@ export default function RegisterPage() {
                     {/* Divider */}
                     <div className="relative my-8">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-100" />
+                            <div className="w-full border-t border-zinc-800" />
                         </div>
                         <div className="relative flex justify-center text-xs">
-                            <span className="px-4 bg-white text-gray-400 uppercase font-bold tracking-wider">Or continue with</span>
+                            <span className="px-4 bg-[#12121A] text-zinc-500 uppercase font-bold tracking-wider">Or continue with</span>
                         </div>
                     </div>
 
@@ -164,7 +164,7 @@ export default function RegisterPage() {
                     <button
                         onClick={handleGoogleSignIn}
                         type="button"
-                        className="w-full bg-white border border-gray-200 rounded-xl py-3 text-gray-700 font-semibold flex items-center justify-center gap-3 hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95"
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 text-zinc-300 font-semibold flex items-center justify-center gap-3 hover:bg-zinc-800 hover:border-zinc-700 transition-all active:scale-95 shadow-sm"
                     >
                         <svg className="h-5 w-5" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -176,9 +176,9 @@ export default function RegisterPage() {
                     </button>
 
                     {/* Sign In Link */}
-                    <p className="text-center text-gray-500 mt-8 text-sm">
+                    <p className="text-center text-zinc-500 mt-8 text-sm">
                         Already have an account?{' '}
-                        <Link href="/login" className="text-blue-600 hover:text-blue-700 font-bold">
+                        <Link href="/login" className="text-purple-400 hover:text-purple-300 font-bold transition-colors">
                             Sign In
                         </Link>
                     </p>
