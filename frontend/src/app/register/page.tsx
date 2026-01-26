@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Shield, Mail, Lock, User, AlertCircle } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase';
+import Logo from '@/components/common/Logo';
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -46,9 +47,7 @@ export default function RegisterPage() {
                 {/* Logo */}
                 <div className="text-center mb-10">
                     <Link href="/" className="inline-flex items-center justify-center mb-6 group">
-                        <div className="p-3 bg-purple-600 rounded-2xl text-white shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
-                            <Shield className="h-8 w-8" />
-                        </div>
+                        <Logo size="lg" />
                     </Link>
                     <h1 className="text-3xl font-extrabold text-white tracking-tight">
                         Create Account

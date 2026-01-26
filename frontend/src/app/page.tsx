@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Shield, Check, ArrowRight, Upload, Stamp, Award } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import Logo from '@/components/common/Logo';
 
 function HeroButton() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -54,9 +55,7 @@ export default function Home() {
                         <div className="relative lg:ml-10">
                             <div className="card p-8 bg-[#12121A]/80 backdrop-blur-xl relative z-10 border-purple-500/20">
                                 <div className="flex items-center gap-4 mb-8">
-                                    <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
-                                        <Shield className="w-6 h-6" />
-                                    </div>
+                                    <Logo size="md" />
                                     <div>
                                         <h3 className="font-bold text-white">Certificate of Origin</h3>
                                         <p className="text-sm text-zinc-500 font-mono">CVB-2024-001234</p>
@@ -154,7 +153,7 @@ export default function Home() {
                     </div>
                     {/* Decorative elements */}
                     <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                        <Shield className="w-64 h-64 -mr-20 -mt-20" />
+                        <Logo size="xl" className="scale-[3]" />
                     </div>
                 </div>
             </section>
