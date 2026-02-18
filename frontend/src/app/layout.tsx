@@ -77,7 +77,15 @@ export const metadata: Metadata = {
         },
     },
 
-    // Icons automatically detected by Next.js in src/app/icon.svg and public/favicon.ico
+    // Icons - Google requires PNG favicon ≥48px, SVG is ignored by Googlebot
+    icons: {
+        icon: [
+            { url: "/icon.png", type: "image/png", sizes: "512x512" },
+            { url: "/favicon.svg", type: "image/svg+xml" },
+        ],
+        apple: "/apple-touch-icon.png",
+        shortcut: "/icon.png",
+    },
 
     // Verification
     other: {

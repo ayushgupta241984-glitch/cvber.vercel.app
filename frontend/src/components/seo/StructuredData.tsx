@@ -65,6 +65,59 @@ export default function StructuredData() {
         }
     };
 
+    const websiteSchema = {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Cvber",
+        "alternateName": ["CVBER", "Cvber App"],
+        "url": "https://cvber.vercel.app",
+        "description": "AI-powered content protection for digital creators",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://cvber.vercel.app/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    };
+
+    const faqSchema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "How does CVBER protect my art from AI theft?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "CVBER uses C2PA signatures to prove origin and automated web monitoring to detect unauthorized AI training or re-posting. By embedding provenance data, your work carries its ownership rights even if metadata is stripped."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How to copyright my work for free?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Our platform provides cryptographic proof of creation, acting as a permanent digital record of authorship."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I use CVBER for automated DMCA takedowns?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes. Our platform generates legally-compliant DMCA takedown notices tailored for YouTube, Instagram, TikTok, and other major platforms."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is my art being used by AI?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Use our theft-monitor tools to scan dataset caches and reverse-image search for unauthorized use of your creative work."
+                }
+            }
+        ]
+    };
+
     return (
         <>
             <script
@@ -74,6 +127,14 @@ export default function StructuredData() {
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
             />
         </>
     );

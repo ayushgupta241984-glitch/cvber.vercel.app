@@ -9,6 +9,7 @@
 
 ## What is CVBER?
 
+
 **CVBER** (pronounced "Cyber") is a comprehensive full-stack cybersecurity platform designed specifically for **digital creators, artists, and content owners**. It combines cutting-edge AI technology, industry-standard digital signatures, and automated enforcement tools to help you:
 
 -  **Prove ownership** of your digital assets with C2PA authenticity verification
