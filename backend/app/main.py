@@ -10,7 +10,7 @@ import json
 app = FastAPI(
     title="CVBER Free API",
     description="Cybersecurity platform with AI-powered threat detection and C2PA verification",
-    version="1.0.0"
+    version="1.0.1"
 )
 
 # Initialize Google Cloud Credentials (Legacy JSON) if provided via Env
