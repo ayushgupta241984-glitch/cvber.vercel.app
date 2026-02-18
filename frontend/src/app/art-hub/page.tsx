@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { Search, ShieldAlert, Sparkles, Hash, Gavel, HelpCircle, ChevronRight } from 'lucide-react';
 
 export const metadata = {
-    title: "Artist Protection FAQ - How to Stop Art Theft & AI Scraping | Cvber",
-    description: "Find answers to common questions about digital art theft, AI scraping, NFT unauthorized minting, and how to file DMCA takedowns."
+    title: "Art Hub | Artist Protection Knowledge Base - Cvber",
+    description: "Your central resource for digital art protection, AI scraping defense, NFT security, and DMCA takedown guides."
 };
 
 const faqCategories = [
@@ -107,10 +107,10 @@ export default function FAQPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <div className="text-center mb-16">
                     <h1 className="text-4xl lg:text-6xl font-extrabold text-white mb-6">
-                        Artist Protection <span className="text-purple-500 text-glow">Knowledge Hub</span>
+                        Artist <span className="text-purple-500 text-glow">Art Hub</span>
                     </h1>
                     <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
-                        Everything you need to know about protecting your creative legacy in the digital age.
+                        Your central command for protecting your creative legacy in the digital age.
                     </p>
                 </div>
 
@@ -157,8 +157,8 @@ export default function FAQPage() {
                 {/* Bottom CTA */}
                 <div className="mt-32 p-12 rounded-3xl bg-gradient-to-br from-purple-900/20 to-zinc-900 border border-purple-500/20 text-center">
                     <HelpCircle className="w-12 h-12 text-purple-400 mx-auto mb-6" />
-                    <h2 className="text-3xl font-bold text-white mb-4">Still have questions?</h2>
-                    <p className="text-zinc-400 mb-10 text-lg">Our AI security mentor is available 24/7 to help you navigate copyright issues.</p>
+                    <h2 className="text-3xl font-bold text-white mb-4">Explore the Art Hub</h2>
+                    <p className="text-zinc-400 mb-10 text-lg">Our AI security mentor is available 24/7 if you need more custom advice.</p>
                     <div className="flex justify-center gap-4">
                         <Link href="/register" className="btn-primary py-3 px-8 rounded-xl font-bold">Start Protecting Work</Link>
                         <Link href="/features" className="bg-zinc-900 text-white border border-zinc-800 py-3 px-8 rounded-xl font-bold hover:bg-zinc-800 transition-colors">View Features</Link>

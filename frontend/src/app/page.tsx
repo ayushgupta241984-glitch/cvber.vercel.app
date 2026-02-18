@@ -167,17 +167,17 @@ export default function Home() {
                             {
                                 title: "Stop AI Scraping",
                                 desc: "Worried about models training on your style? Our C2PA signatures and technical metadata block bad-actor crawlers.",
-                                link: "/faq#ai"
+                                link: "/art-hub#ai"
                             },
                             {
                                 title: "Report NFT Theft",
                                 desc: "Found your art minted without permission? We automate the DMCA process to get stolen assets delisted from marketplaces fast.",
-                                link: "/faq#nft"
+                                link: "/art-hub#nft"
                             },
                             {
                                 title: "Secure Watermarking",
                                 desc: "Learn why simple watermarks aren't enough and how embedded digital provenance is the new standard for pros.",
-                                link: "/faq#theft"
+                                link: "/art-hub#theft"
                             }
                         ].map((box, idx) => (
                             <div key={idx} className="p-8 rounded-2xl bg-[#0F0F16] border border-zinc-800 group hover:border-purple-500/30 transition-all">
@@ -191,8 +191,8 @@ export default function Home() {
                     </div>
 
                     <div className="inline-flex items-center gap-8 p-1 px-1 rounded-2xl bg-zinc-900 border border-zinc-800">
-                        <Link href="/faq" className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-10 rounded-xl transition-all shadow-lg shadow-purple-500/20 text-sm">
-                            View Full Artist Protection FAQ
+                        <Link href="/art-hub" className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-10 rounded-xl transition-all shadow-lg shadow-purple-500/20 text-sm">
+                            Enter the Art Hub
                         </Link>
                     </div>
                 </div>

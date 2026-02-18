@@ -52,7 +52,7 @@ export default function Navbar() {
                     <div className="hidden md:flex items-center gap-8">
                         <Link href="/features" className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors">Features</Link>
                         <Link href="/how-it-works" className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors">How It Works</Link>
-                        <Link href="/faq" className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors">FAQ</Link>
+                        <Link href="/art-hub" className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors">Art Hub</Link>
                         <Link href="/verify" className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors">Verify</Link>
                     </div>
 
