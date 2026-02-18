@@ -24,45 +24,46 @@ export default function Logo({ className = "", size = "md" }: LogoProps) {
                 viewBox="0 0 100 100"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="relative z-10 w-full h-full drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]"
+                className="relative z-10 w-full h-full drop-shadow-[0_0_12px_rgba(168,85,247,0.6)]"
             >
-                {/* Outermost Hexagon/Shield Shape */}
+                {/* Modern Hexagonal Shield with bevel effect */}
                 <path
-                    d="M50 5L90 25V75L50 95L10 75V25L50 5Z"
-                    stroke="currentColor"
-                    strokeWidth="3"
+                    d="M50 5L92 27V73L50 95L8 73V27L50 5Z"
+                    stroke="url(#shield-gradient)"
+                    strokeWidth="4"
                     strokeLinejoin="round"
-                    className="text-purple-500"
+                    className="filter drop-shadow-[0_0_4px_rgba(168,85,247,0.4)]"
                 />
 
-                {/* Inner Protective Nodes */}
-                <circle cx="50" cy="5" r="3" fill="currentColor" className="text-purple-400" />
-                <circle cx="90" cy="25" r="3" fill="currentColor" className="text-purple-400" />
-                <circle cx="90" cy="75" r="3" fill="currentColor" className="text-purple-400" />
-                <circle cx="50" cy="95" r="3" fill="currentColor" className="text-purple-400" />
-                <circle cx="10" cy="75" r="3" fill="currentColor" className="text-purple-400" />
-                <circle cx="10" cy="25" r="3" fill="currentColor" className="text-purple-400" />
+                <defs>
+                    <linearGradient id="shield-gradient" x1="50" y1="5" x2="50" y2="95" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#A855F7" />
+                        <stop offset="1" stopColor="#6366F1" />
+                    </linearGradient>
+                </defs>
 
-                {/* Stylized 'C' with a circuit/digital flair */}
+                {/* Cyber-Eye / Lens center representing "monitoring" */}
+                <circle cx="50" cy="50" r="28" stroke="currentColor" strokeWidth="2" className="text-zinc-800" />
+                <circle cx="50" cy="50" r="18" fill="currentColor" className="text-purple-500/20" />
+
+                {/* Stylized 'V' or Iris core */}
                 <path
-                    d="M70 35C65 25 55 22 50 22C34.5 22 22 34.5 22 50C22 65.5 34.5 78 50 78C55 78 65 75 70 65"
+                    d="M35 45L50 65L65 45"
                     stroke="currentColor"
-                    strokeWidth="8"
+                    strokeWidth="6"
                     strokeLinecap="round"
+                    strokeLinejoin="round"
                     className="text-white"
                 />
 
-                {/* Glowing Core Dot */}
-                <circle cx="50" cy="50" r="4" fill="currentColor" className="text-purple-500 animate-pulse" />
+                {/* Glowing Pulse Dot */}
+                <circle cx="50" cy="50" r="5" fill="currentColor" className="text-purple-400 animate-pulse" />
 
-                {/* Data Flow Line */}
-                <path
-                    d="M70 50L85 50"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    className="text-purple-400 opacity-70"
-                />
+                {/* Circuit lines */}
+                <path d="M50 5V20" stroke="currentColor" strokeWidth="2" className="text-purple-400/50" />
+                <path d="M50 80V95" stroke="currentColor" strokeWidth="2" className="text-purple-400/50" />
+                <path d="M8 27L25 35" stroke="currentColor" strokeWidth="2" className="text-purple-400/50" />
+                <path d="M92 27L75 35" stroke="currentColor" strokeWidth="2" className="text-purple-400/50" />
             </svg>
         </div>
     );

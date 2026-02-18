@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Shield, Check, ArrowRight, Upload, Stamp, Award } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Logo from '@/components/common/Logo';
+import StructuredData from '@/components/seo/StructuredData';
 
 function HeroButton() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -29,6 +30,7 @@ function HeroButton() {
 export default function Home() {
     return (
         <div className="flex flex-col bg-[#0A0A0F]">
+            <StructuredData />
             {/* Hero Section */}
             <section className="relative pt-20 pb-24 overflow-hidden">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -39,9 +41,9 @@ export default function Home() {
                                 <span className="text-purple-500 text-glow">Creative Work</span>
                             </h1>
                             <p className="text-xl text-zinc-400 mb-10 leading-relaxed max-w-xl">
-                                Generate certificates of origin for your files. Add custom
-                                watermarks and verify authenticity instantly with
-                                blockchain-level security.
+                                Professional AI-powered protection for digital artists, photographers, and creators.
+                                Generate certificates of origin, detect AI theft, and automate DMCA takedowns
+                                with blockchain-backed security.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <HeroButton />
@@ -111,6 +113,116 @@ export default function Home() {
                 </div>
             </section>
 
+            {/* QUICK CONFIRMATION BANNER */}
+            <div className="bg-purple-600/10 border-y border-purple-500/20 py-4 text-center">
+                <span className="text-purple-400 font-bold tracking-widest text-xs uppercase">✨ SEO Update v1.1 - Protection Suite Live</span>
+            </div>
+
+            {/* Premium Showcase Gallery - Visual SEO */}
+            <section className="py-24 bg-[#0A0A0F]">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl font-bold text-white mb-4">Enterprise-Grade Protection for Every Medium</h2>
+                        <p className="text-zinc-500 max-w-2xl mx-auto text-lg leading-relaxed">
+                            Professional <strong>provenance solutions</strong> for digital artists, photographers, and 3D creators.
+                            Verifiable across all platforms.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {[
+                            { title: 'Digital Art', category: 'Illustration', alt: 'Premium digital art protected with CVBER C2PA provenance signature', color: 'from-purple-500/20' },
+                            { title: 'Photography', category: 'Photography', alt: 'High-resolution photography with embedded copyright metadata', color: 'from-blue-500/20' },
+                            { title: 'Video content', category: 'Cinematography', alt: 'Professional video clip with blockchain-backed authenticity ID', color: 'from-pink-500/20' },
+                            { title: '3D Assets', category: '3D Modeling', alt: 'Verifiable 3D model with ownership attestation', color: 'from-indigo-500/20' }
+                        ].map((asset, idx) => (
+                            <div key={idx} className="group relative overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 p-1">
+                                <div className={`aspect-[4/5] rounded-xl bg-gradient-to-b ${asset.color} to-zinc-900 flex items-center justify-center relative overflow-hidden`}>
+                                    <Logo size="lg" className="opacity-20 group-hover:opacity-40 transition-opacity scale-150" />
+                                    <div role="img" aria-label={asset.alt} title={asset.title} className="absolute inset-0 z-10 cursor-help" />
+                                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/0 transition-all duration-500" />
+                                </div>
+                                <div className="p-4">
+                                    <span className="text-[10px] uppercase tracking-widest text-purple-500 font-bold mb-1 block">{asset.category}</span>
+                                    <h3 className="text-white font-bold">{asset.title}</h3>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* FAQ Section - Long-tail Search Terms */}
+            <section className="py-24 bg-[#08080C] border-t border-zinc-800/30">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <h2 className="text-3xl font-bold text-white mb-12">Search Queries & FAQ</h2>
+                    <div className="grid md:grid-cols-2 gap-8 text-left">
+                        {[
+                            { q: "How to stop art theft from AI?", a: "CVBER labels your work with C2PA metadata, proving ownership and warning crawlers." },
+                            { q: "How to copyright my work for free?", a: "Our platform provides cryptographic proof of creation, acting as a permanent digital record." },
+                            { q: "Protect images from being saved?", a: "While users can screenshot, our blockchain attestation proves you are the original creator of that asset." },
+                            { q: "Is my art being used by AI?", a: "Use our theft-monitor tools to scan dataset caches and reverse-image search for unauthorized use." }
+                        ].map((item, idx) => (
+                            <div key={idx} className="p-8 rounded-2xl bg-[#0F0F16] border border-zinc-800 hover:border-purple-500/30 transition-all">
+                                <h3 className="text-lg font-bold text-white mb-4">{item.q}</h3>
+                                <p className="text-zinc-400 text-sm leading-relaxed">{item.a}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Why CVBER Section - Higher visibility for SEO */}
+            <section className="py-24 bg-[#08080C] border-b border-zinc-800/30">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid md:grid-cols-2 gap-16 items-center">
+                        <div>
+                            <h2 className="text-3xl font-bold text-white mb-6">Why Professional Creators Choose CVBER</h2>
+                            <div className="space-y-6 text-zinc-400 text-lg">
+                                <p>
+                                    In the age of generative AI, protecting your intellectual property is more critical than ever.
+                                    CVBER provides the industry's most robust suite of <strong>content protection tools</strong>
+                                    specifically designed for the modern digital landscape.
+                                </p>
+                                <p>
+                                    Our platform leverages the <strong>C2PA (Coalition for Content Provenance and Authenticity)</strong>
+                                    standard, used by companies like Adobe and Microsoft, to ensure your work carries its
+                                    originality data wherever it goes on the web.
+                                </p>
+                                <ul className="space-y-3">
+                                    <li className="flex items-start gap-3">
+                                        <Check className="w-5 h-5 text-purple-500 mt-1" />
+                                        <span><strong>AI Theft Detection:</strong> Monitor platforms for unauthorized AI training and remixing.</span>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <Check className="w-5 h-5 text-purple-500 mt-1" />
+                                        <span><strong>Automated DMCA:</strong> Generate legally-compliant takedown notices in seconds.</span>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <Check className="w-5 h-5 text-purple-500 mt-1" />
+                                        <span><strong>Digital Provenance:</strong> Cryptographic proof of ownership for every file.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-6">
+                            {[
+                                { title: 'Digital Art', desc: 'Secure your illustrations and concept art.' },
+                                { title: 'Photography', desc: 'Embed provenance in high-res images.' },
+                                { title: 'Video Content', desc: 'Protect your clips with digital IDs.' },
+                                { title: '3D Assets', desc: 'Verify ownership of complex 3D models.' }
+                            ].map((item, idx) => (
+                                <div key={idx} className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-purple-500/50 transition-colors">
+                                    <h4 className="text-white font-bold mb-2">{item.title}</h4>
+                                    <p className="text-xs text-zinc-500">{item.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
             {/* How It Works Section */}
             <section id="how-it-works" className="py-24">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -138,6 +250,7 @@ export default function Home() {
                     </div>
                 </div>
             </section>
+
 
             {/* Call to Action Section */}
             <section className="py-20 px-4">
