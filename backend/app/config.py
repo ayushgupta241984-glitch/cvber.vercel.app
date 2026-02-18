@@ -46,11 +46,13 @@ class Settings(BaseSettings):
             return ["*"]
         return [origin.strip() for origin in self.allowed_origins.split(',') if origin.strip()]
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-        # Don't fail if .env is missing
-        env_file_encoding = 'utf-8'
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": False,
+        "env_file_encoding": "utf-8",
+        "extra": "ignore"
+    }
+    # Deployment Trigger: 2026-02-18-01:10
 
 
 settings = Settings()
