@@ -120,12 +120,16 @@ async def register(request: RegisterRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Registration error: {type(e).__name__}: {e}")
+        import traceback
+        tb = traceback.format_exc()
+        print(f"Registration error:\n{tb}")
         # Improve error message for specific cases
         msg = str(e)
         if "User already registered" in msg:
             raise HTTPException(status_code=400, detail="User already registered")
-        raise HTTPException(status_code=400, detail=f"Registration failed: {msg}")
+        
+        # Include raw error for debugging the "User not allowed" issue
+        raise HTTPException(status_code=400, detail=f"Registration failed: {msg} (Traceback: {tb[:200]}...)")
 
 
 @router.post("/login", response_model=AuthTokens)
