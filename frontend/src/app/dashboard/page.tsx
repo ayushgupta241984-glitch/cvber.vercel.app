@@ -7,10 +7,11 @@ import { SecurityMentor } from '@/components/chat/SecurityMentor';
 import { ScreenshotGuard } from '@/components/security/ScreenshotGuard';
 import { FileViewer } from '@/components/dashboard/FileViewer';
 import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
-import { Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock } from 'lucide-react';
+import { Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash } from 'lucide-react';
 import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
 
 export default function DashboardPage() {
+    const [activeTab, setActiveTab] = useState<'ai' | 'blockchain'>('ai');
     const [files, setFiles] = useState<any[]>([]);
     const [selectedFile, setSelectedFile] = useState<any>(null);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -114,89 +115,135 @@ export default function DashboardPage() {
 
     return (
         <ScreenshotGuard>
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 md:p-8 font-sans">
-                <div className="w-full max-w-6xl space-y-8 animate-in fade-in duration-700 slide-in-from-bottom-4">
+            <div className="min-h-screen bg-[#0A0A0F] text-white flex flex-col p-4 md:p-8 font-sans">
+                <div className="w-full max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
 
                     {/* Header */}
-                    <header className="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <header className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-zinc-900 pb-8">
                         <div className="flex items-center gap-4 group cursor-default">
-                            <div className="bg-blue-600 p-4 rounded-2xl shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform duration-300">
-                                <Shield className="h-8 w-8 text-white animate-pulse" />
+                            <div className="bg-purple-600 p-3 rounded-2xl shadow-lg shadow-purple-900/40">
+                                <Shield className="h-6 w-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-                                    CVBER<span className="text-blue-600">.</span>FREE
+                                <h1 className="text-2xl font-black text-white tracking-tight">
+                                    CVBER<span className="text-purple-500">.</span>HUB
                                 </h1>
-                                <p className="text-sm font-medium text-gray-400 tracking-widest uppercase">
-                                    Secure Asset Vault
+                                <p className="text-[10px] font-bold text-zinc-500 tracking-[0.2em] uppercase">
+                                    Professional Security Command
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                            <div className="flex -space-x-2 mr-4">
-                                {[...Array(3)].map((_, i) => (
-                                    <div key={i} className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white" />
-                                ))}
-                            </div>
-                            <div className="px-4 py-2 bg-white rounded-full border border-gray-100 shadow-sm text-xs font-bold text-gray-500 flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                SYSTEM ONLINE
-                            </div>
+                        {/* Hub Switcher */}
+                        <div className="flex p-1 bg-zinc-900/50 border border-zinc-800 rounded-2xl">
+                            <button
+                                onClick={() => setActiveTab('ai')}
+                                className={`flex items-center gap-3 px-6 py-2.5 rounded-xl transition-all font-bold text-sm ${activeTab === 'ai' ? 'bg-purple-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}
+                            >
+                                <Bot className="w-4 h-4" />
+                                AI Hub
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('blockchain')}
+                                className={`flex items-center gap-3 px-6 py-2.5 rounded-xl transition-all font-bold text-sm ${activeTab === 'blockchain' ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}
+                            >
+                                <Hash className="w-4 h-4" />
+                                Blockchain Hub
+                            </button>
                         </div>
                     </header>
 
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[
-                            { label: 'Protected Assets', value: files.length, color: 'text-blue-600' },
-                            { label: 'Threats Blocked', value: '0', color: 'text-red-500' },
-                            { label: 'Network Status', value: 'SECURE', color: 'text-green-600' },
-                            { label: 'Blockchain Sync', value: 'LIVE', color: 'text-purple-600' },
-                        ].map((stat, i) => (
-                            <div key={i} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{stat.label}</p>
-                                <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+                    {activeTab === 'ai' ? (
+                        <div className="grid lg:grid-cols-[1fr_400px] gap-8">
+                            {/* AI Protection & Tracking Center */}
+                            <div className="space-y-6">
+                                <div className="p-8 rounded-[32px] bg-zinc-900/30 border border-zinc-800/50 backdrop-blur-xl">
+                                    <div className="flex items-center justify-between mb-8">
+                                        <div>
+                                            <h2 className="text-2xl font-bold mb-1">AI Intelligence Desk</h2>
+                                            <p className="text-zinc-500 text-sm">Real-time threat monitoring and image tracking</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
+                                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                                            <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Tracking Active</span>
+                                        </div>
+                                    </div>
+
+                                    <FileUploader onUploadComplete={handleUploadComplete} />
+
+                                    <div className="mt-8 border-t border-zinc-800 pt-8">
+                                        <SafeVault
+                                            files={files}
+                                            onView={handleView}
+                                            onWatermark={handleWatermark}
+                                            onDelete={handleDelete}
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                        ))}
-                    </div>
 
-                    <div className="grid lg:grid-cols-[1fr_350px] gap-8">
-                        {/* Main Vault Area */}
-                        <div className="space-y-6">
-                            <FileUploader onUploadComplete={handleUploadComplete} />
+                            {/* Sidebar - Dedicated AI Mentor */}
+                            <div className="space-y-6">
+                                <SecurityMentor context={{ files }} />
 
-                            <SafeVault
-                                files={files}
-                                onView={handleView}
-                                onWatermark={handleWatermark}
-                                onDelete={handleDelete}
-                            />
-                        </div>
-
-                        {/* Sidebar */}
-                        <div className="space-y-6">
-                            <BlockchainStatus />
-                            <SecurityMentor />
-
-                            {/* Quick Actions */}
-                            <div className="bg-blue-600 rounded-[32px] p-8 text-white shadow-xl shadow-blue-200 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-800" />
-                                <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
-
-                                <div className="relative z-10">
-                                    <Lock className="h-8 w-8 mb-4 border-2 border-white/20 rounded-xl p-1.5" />
-                                    <h3 className="text-xl font-bold mb-2">Enterprise Grade</h3>
-                                    <p className="text-blue-100 text-sm mb-6 leading-relaxed">
-                                        Upgrade to unlock advanced C2PA signing, legal logs, and batch processing.
+                                <div className="p-6 rounded-3xl bg-gradient-to-br from-purple-600/10 to-transparent border border-purple-500/20">
+                                    <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+                                        <Search className="w-4 h-4 text-purple-400" />
+                                        Advanced Tracking
+                                    </h3>
+                                    <p className="text-zinc-400 text-xs leading-relaxed">
+                                        Ask the mentor to "Search for unauthorized use" of your protected work. Our AI scans millions of auction sites, portfolios, and AI training sets.
                                     </p>
-                                    <button className="w-full py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors text-sm">
-                                        View Plans
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="grid lg:grid-cols-[1fr_400px] gap-8">
+                            {/* Blockchain Ledger Area */}
+                            <div className="space-y-6">
+                                <div className="p-8 rounded-[32px] bg-zinc-900/30 border border-zinc-800/50 backdrop-blur-xl">
+                                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                                        <Lock className="w-6 h-6 text-orange-500" />
+                                        Immutable Ownership Ledger
+                                    </h2>
+                                    <p className="text-zinc-400 mb-8 max-w-2xl">
+                                        Your work is cryptographically anchored to the Bitcoin blockchain via OP_RETURN. This creates a permanent, legally recognizable proof of existence timestamp.
+                                    </p>
+
+                                    <div className="grid md:grid-cols-2 gap-4 mb-8">
+                                        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800">
+                                            <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-2">Network Status</p>
+                                            <p className="text-xl font-bold">Mainnet Connected</p>
+                                        </div>
+                                        <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800">
+                                            <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-2">Total Proofs</p>
+                                            <p className="text-xl font-bold">{files.length} Anchors</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Placeholder for Historical Proofs component */}
+                                    <div className="p-12 border-2 border-dashed border-zinc-800 rounded-3xl text-center">
+                                        <Hash className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+                                        <p className="text-zinc-500 font-medium">Select an asset from the vault to view blockchain proof history</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Sidebar - Blockchain Info */}
+                            <div className="space-y-6">
+                                <BlockchainStatus />
+                                <div className="p-8 rounded-3xl bg-orange-600 shadow-xl shadow-orange-900/20 text-white">
+                                    <h3 className="text-xl font-bold mb-2">Legal Admissibility</h3>
+                                    <p className="text-orange-100 text-sm leading-relaxed mb-6">
+                                        Download certified legal logs that combine your C2PA manifest with blockchain transaction hashes for court-ready evidence.
+                                    </p>
+                                    <button className="w-full py-3 bg-white text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-colors text-sm">
+                                        Download Log Template
                                     </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 <FileViewer

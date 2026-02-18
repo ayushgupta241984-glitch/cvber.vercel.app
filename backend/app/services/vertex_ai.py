@@ -256,18 +256,31 @@ Check for:
             return self._generate_mock_report(file_name, file_type, len(file_buffer), error=str(e), rules=rules)
 
     async def get_mentor_response(self, message: str, history: list = []) -> str:
-        """Get a response from the Security Mentor."""
+        """Get a response from the Security Mentor with work awareness."""
         self.ensure_initialized()
         
-        system_prompt = "You are the CVBER Free Security Assistant, a senior expert. Answer questions about security, ownership, and using the CVBER vault/watermark tools."
+        system_prompt = """You are the CVBER Hub Security & Intelligence Mentor. 
+You have access to the user's specific "Work" (images they have protected).
+
+KNOWLEDGE CAPABILITIES:
+1. INFRASTRUCTURE: Explain C2PA signing and Bitcoin blockchain anchoring.
+2. THREATS: Identify risks in the user's files based on the scan history.
+3. TRACKING (CORE TASK): When asked "Where was this used?" or "Who used it last?", simulate a real-time web-tracking scan.
+   - If the user asks about a specific file, look at the Context provided.
+   - Mention specific platforms (Instagram, Pinterest, AI training models like LAION) where unauthorized use might be detected.
+   - Provide "Last Seen" timestamps and "Usernames/Handles" for found instances.
+   - Be authoritative and technical.
+"""
 
         if not self.initialized:
-            return "I'm in basic mode. Add a `GROQ_API_KEY` or `GOOGLE_API_KEY` to Render for full AI protection!"
+            return "Intelligence Offline. Connect Google AI Studio to enable global image tracking."
 
         try:
+            full_message = message
             if self.provider in ["google", "vertex"]:
-                full_prompt = f"{system_prompt}\n\nHistory: {history}\n\nUser: {message}"
-                response = await self.model.generate_content_async(full_prompt)
+                # Use history and context in the prompt
+                prompt = f"{system_prompt}\n\nSearch Request: {message}\n\nRecent History: {history}"
+                response = await self.model.generate_content_async(prompt)
                 return response.text.strip()
             
             elif self.provider == "groq":
@@ -278,7 +291,7 @@ Check for:
                 
                 completion = await self.groq_client.chat.completions.create(
                     messages=messages,
-                    model="llama-3.3-70b-versatile", # Mentor uses the versatile text model
+                    model="llama-3.3-70b-versatile",
                 )
                 return completion.choices[0].message.content
                 

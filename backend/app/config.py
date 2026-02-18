@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     supabase_anon_key: str = "placeholder-anon-key"
     supabase_service_role_key: str = "placeholder-service-role-key"
     
+    # Backend
+    backend_url: str = "http://localhost:8000"
+    
     # JWT
     jwt_secret: str = "dev-secret-key-change-in-production"
     jwt_algorithm: str = "HS256"

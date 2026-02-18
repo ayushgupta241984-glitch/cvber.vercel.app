@@ -61,13 +61,11 @@ async def register(request: RegisterRequest):
                 "email_confirm": True,
                 "user_metadata": {"full_name": request.full_name}
             }
-            # Note: supbase-py < 2.0 uses admin.create_user differently, assuming v2+ style here
-            # If this fails, we might need to adjust based on exact installed library version
-            # Using generic dictionary pass-through if named args aren't supported directly
-            admin_response = supabase.auth.admin.create_user(user_attributes)
+            # Note: supabase-py v2+ often expects keyword arguments
+            admin_response = supabase.auth.admin.create_user(attributes=user_attributes)
             
             if not admin_response.user:
-                 raise Exception("Admin creation failed")
+                 raise Exception("Admin creation failed: No user returned")
                  
             user_id = admin_response.user.id
             
@@ -77,7 +75,7 @@ async def register(request: RegisterRequest):
             raise HTTPException(status_code=400, detail=f"Registration failed: {str(create_error)}")
 
         # Now sign in to get tokens
-        auth_response = supabase.auth.sign_in_with_password({
+        auth_response = supabase.auth.sign_in_with_password(credentials={
             "email": request.email,
             "password": request.password
         })
@@ -140,7 +138,7 @@ async def login(request: LoginRequest):
     """
     try:
         # Authenticate with Supabase
-        auth_response = supabase.auth.sign_in_with_password({
+        auth_response = supabase.auth.sign_in_with_password(credentials={
             "email": request.email,
             "password": request.password
         })
