@@ -70,9 +70,13 @@ async def register(request: RegisterRequest):
             user_id = admin_response.user.id
             
         except Exception as create_error:
-            # Fallback or specific error handling
-            # If user already exists, this typically throws.
-            raise HTTPException(status_code=400, detail=f"Registration failed: {str(create_error)}")
+            import traceback
+            tb = traceback.format_exc()
+            print(f"Admin Registration internal error:\n{tb}")
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Admin creation failed: {str(create_error)} (Type: {type(create_error).__name__})"
+            )
 
         # Now sign in to get tokens
         auth_response = supabase.auth.sign_in_with_password(credentials={
