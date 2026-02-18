@@ -47,7 +47,7 @@ export default function Home() {
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <HeroButton />
-                                <Link href="/#how-it-works" className="btn-secondary text-center">
+                                <Link href="/how-it-works" className="btn-secondary text-center">
                                     See How It Works
                                 </Link>
                             </div>
