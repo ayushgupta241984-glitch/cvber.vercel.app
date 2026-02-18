@@ -11,8 +11,11 @@ async def check_supabase():
     status = {
         "url": settings.supabase_url,
         "url_match": settings.supabase_url == os.getenv("SUPABASE_URL"),
-        "service_key_status": "present" if settings.supabase_service_role_key and len(settings.supabase_service_role_key) > 50 else "invalid/missing",
+        "service_key_len": len(settings.supabase_service_role_key),
         "service_key_placeholder": "placeholder" in settings.supabase_service_role_key.lower(),
+        "raw_env_url": os.getenv("SUPABASE_URL"),
+        "raw_env_service_key_len": len(os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")),
+        "raw_env_service_key_prefix": os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")[:5],
         "env_file_exists": os.path.exists(".env"),
         "connectivity": "unknown"
     }
