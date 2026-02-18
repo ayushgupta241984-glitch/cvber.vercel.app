@@ -152,22 +152,48 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* FAQ Section - Long-tail Search Terms */}
+            {/* Artist Protection Hub Teaser - High SEO Value */}
             <section className="py-24 bg-[#08080C] border-t border-zinc-800/30">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h2 className="text-3xl font-bold text-white mb-12">Search Queries & FAQ</h2>
-                    <div className="grid md:grid-cols-2 gap-8 text-left">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <h2 className="text-3xl lg:text-5xl font-bold text-white mb-6">Built by Artists, <span className="text-purple-500">For Artists</span></h2>
+                    <p className="text-zinc-400 max-w-2xl mx-auto text-lg leading-relaxed mb-16">
+                        In subreddits like <strong>r/artbusiness</strong> and <strong>r/DigitalArt</strong>, the conversation is clear:
+                        Artists are tired of <strong>AI scraping</strong>, <strong>NFT theft</strong>, and <strong>unauthorized reposts</strong>.
+                        Cvber is the technical answer to these systemic problems.
+                    </p>
+
+                    <div className="grid md:grid-cols-3 gap-8 text-left mb-16">
                         {[
-                            { q: "How to stop art theft from AI?", a: "CVBER labels your work with C2PA metadata, proving ownership and warning crawlers." },
-                            { q: "How to copyright my work for free?", a: "Our platform provides cryptographic proof of creation, acting as a permanent digital record." },
-                            { q: "Protect images from being saved?", a: "While users can screenshot, our blockchain attestation proves you are the original creator of that asset." },
-                            { q: "Is my art being used by AI?", a: "Use our theft-monitor tools to scan dataset caches and reverse-image search for unauthorized use." }
-                        ].map((item, idx) => (
-                            <div key={idx} className="p-8 rounded-2xl bg-[#0F0F16] border border-zinc-800 hover:border-purple-500/30 transition-all">
-                                <h3 className="text-lg font-bold text-white mb-4">{item.q}</h3>
-                                <p className="text-zinc-400 text-sm leading-relaxed">{item.a}</p>
+                            {
+                                title: "Stop AI Scraping",
+                                desc: "Worried about models training on your style? Our C2PA signatures and technical metadata block bad-actor crawlers.",
+                                link: "/faq#ai"
+                            },
+                            {
+                                title: "Report NFT Theft",
+                                desc: "Found your art minted without permission? We automate the DMCA process to get stolen assets delisted from marketplaces fast.",
+                                link: "/faq#nft"
+                            },
+                            {
+                                title: "Secure Watermarking",
+                                desc: "Learn why simple watermarks aren't enough and how embedded digital provenance is the new standard for pros.",
+                                link: "/faq#theft"
+                            }
+                        ].map((box, idx) => (
+                            <div key={idx} className="p-8 rounded-2xl bg-[#0F0F16] border border-zinc-800 group hover:border-purple-500/30 transition-all">
+                                <h3 className="text-xl font-bold text-white mb-4">{box.title}</h3>
+                                <p className="text-zinc-400 text-sm leading-relaxed mb-6">{box.desc}</p>
+                                <Link href={box.link} className="inline-flex items-center gap-2 text-purple-400 text-xs font-bold uppercase tracking-widest hover:text-purple-300 transition-colors">
+                                    Read Guide <ArrowRight className="w-3 h-3" />
+                                </Link>
                             </div>
                         ))}
+                    </div>
+
+                    <div className="inline-flex items-center gap-8 p-1 px-1 rounded-2xl bg-zinc-900 border border-zinc-800">
+                        <Link href="/faq" className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-10 rounded-xl transition-all shadow-lg shadow-purple-500/20 text-sm">
+                            View Full Artist Protection FAQ
+                        </Link>
                     </div>
                 </div>
             </section>
