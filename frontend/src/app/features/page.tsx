@@ -3,8 +3,8 @@ import { Shield, Check, FileCode, Zap, Globe, Lock } from 'lucide-react';
 import Logo from '@/components/common/Logo';
 
 export const metadata = {
-    title: "Cvber Features | Enterprise-Grade Content Protection",
-    description: "Explore Cvber's powerful suite of tools including AI theft detection, C2PA provenance signing, and automated DMCA enforcement."
+    title: "Art Protection Features | AI Theft Defense & C2PA Certificates",
+    description: "Explore Cvber's powerful suite of tools including AI theft detection, C2PA provenance signing, and automated DMCA enforcement to protect your art online."
 };
 
 export default function FeaturesPage() {
@@ -13,6 +13,9 @@ export default function FeaturesPage() {
             {/* Header */}
             <section className="py-20 px-4">
                 <div className="max-w-4xl mx-auto text-center">
+                    <Link href="/" className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 mb-8 font-medium transition-colors">
+                        Explore Complete Art Protection
+                    </Link>
                     <h1 className="text-4xl lg:text-6xl font-extrabold text-white mb-6">
                         Advanced <span className="text-purple-500 text-glow">Content Protection</span>
                     </h1>

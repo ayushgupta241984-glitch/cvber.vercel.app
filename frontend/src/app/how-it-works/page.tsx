@@ -3,8 +3,8 @@ import { Upload, Stamp, Award, ArrowRight, ShieldCheck, Search } from 'lucide-re
 import Logo from '@/components/common/Logo';
 
 export const metadata = {
-    title: "How It Works | Cvber - Digital Content Protection",
-    description: "Learn how to protect your creative work in three simple steps using AI threat detection and C2PA provenance."
+    title: "How to Protect Your Art Online | 3-Step Security Guide",
+    description: "Learn how to protect your creative work in three simple steps using AI threat detection and C2PA provenance signatures."
 };
 
 export default function HowItWorksPage() {
@@ -13,6 +13,9 @@ export default function HowItWorksPage() {
             {/* Hero Section */}
             <section className="py-20 px-4">
                 <div className="max-w-4xl mx-auto text-center">
+                    <Link href="/" className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 mb-8 font-medium transition-colors">
+                        Protect Your Art Today
+                    </Link>
                     <h1 className="text-4xl lg:text-7xl font-extrabold text-white mb-6 leading-tight">
                         Security in <span className="text-purple-500 text-glow">Three Steps</span>
                     </h1>

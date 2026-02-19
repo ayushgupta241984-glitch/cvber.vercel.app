@@ -106,11 +106,15 @@ export default function FAQPage() {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <div className="text-center mb-16">
+                    <Link href="/" className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 mb-8 font-medium transition-colors group">
+                        <ChevronRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
+                        Back to Art Protection Home
+                    </Link>
                     <h1 className="text-4xl lg:text-6xl font-extrabold text-white mb-6">
-                        Artist <span className="text-purple-500 text-glow">Art Hub</span>
+                        Digital Art <span className="text-purple-500 text-glow">Protection Hub</span>
                     </h1>
                     <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
-                        Your central command for protecting your creative legacy in the digital age.
+                        Your central command for protecting your creative legacy and securing your art online.
                     </p>
                 </div>
 
