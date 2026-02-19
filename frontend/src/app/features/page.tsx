@@ -90,7 +90,7 @@ export default function FeaturesPage() {
                         ].map((asset, idx) => (
                             <div key={idx} className="group relative overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 p-1">
                                 <div className={`aspect-[4/5] rounded-xl bg-gradient-to-b ${asset.color} to-zinc-900 flex items-center justify-center relative overflow-hidden`}>
-                                    <Logo size="lg" className="opacity-20 group-hover:opacity-40 transition-opacity" />
+                                    <Logo size="lg" alt={asset.alt} className="opacity-20 group-hover:opacity-40 transition-opacity" />
                                     <div role="img" aria-label={asset.alt} title={asset.title} className="absolute inset-0 z-10 cursor-help" />
                                 </div>
                                 <div className="p-4 text-left">

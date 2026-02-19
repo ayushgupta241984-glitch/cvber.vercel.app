@@ -47,7 +47,7 @@ export default function RegisterPage() {
                 {/* Logo */}
                 <div className="text-center mb-10">
                     <Link href="/" className="inline-flex items-center justify-center mb-6 group">
-                        <Logo size="lg" />
+                        <Logo size="lg" alt="CVBER - AI Art Protection Signup" />
                     </Link>
                     <h1 className="text-3xl font-extrabold text-white tracking-tight">
                         Create Account
