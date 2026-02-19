@@ -1,0 +1,31 @@
+# CVBER - AI-Powered Art Protection
+
+CVBER is a professional-grade cybersecurity platform specifically designed for digital creators, photographers, and artists to protect their intellectual property against AI theft, NFT fraud, and unauthorized distribution.
+
+## Key Features
+
+- **Certificates of Origin**: Cryptographically-signed provenance reports for digital assets.
+- **C2PA Integration**: Industry-standard content credentials (Adobe/Microsoft standard).
+- **Automated DMCA Enforcement**: 1-click generation and submission of takedown notices.
+- **AI-Theft Monitoring**: 24/7 web scanning for unauthorized AI training and style scraping.
+- **Digital Provenance**: Immutable metadata manifests that survive file sharing and light editing.
+
+## Technical Standards
+
+- **Standard**: C2PA (Coalition for Content Provenance and Authenticity)
+- **Infrastructure**: Blockchain-backed timestamps and cryptographic signing
+- **Protocol**: Automated legal notice generation (DMCA)
+
+## Target Audience
+
+- Digital Artists & Illustrators
+- Professional Photographers
+- 3D Modelers & Game Developers
+- Video Creators & Motion Designers
+
+## Links
+
+- [Features](https://cvber.vercel.app/features)
+- [How It Works](https://cvber.vercel.app/how-it-works)
+- [Art Protection Hub](https://cvber.vercel.app/art-hub)
+- [Verification Tool](https://cvber.vercel.app/verify)

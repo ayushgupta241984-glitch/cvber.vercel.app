@@ -10,73 +10,21 @@ export default function StructuredData() {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
         "name": "CVBER",
-        "operatingSystem": "Web",
         "applicationCategory": "SecurityApplication",
-        "offers": {
-            "@type": "Offer",
-            "price": "0.00",
-            "priceCurrency": "USD"
-        },
-        "description": "AI-powered cybersecurity platform for digital creators. Protect, prove, and enforce digital ownership with C2PA and blockchain technology.",
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.9",
-            "ratingCount": "2150"
-        }
-    };
-
-    const serviceSchema = {
-        "@context": "https://schema.org",
-        "@type": "SecurityService",
-        "name": "CVBER Content Protection",
-        "description": "Digital content protection including C2PA signing, theft monitoring, and DMCA automation.",
-        "provider": {
-            "@type": "Organization",
-            "name": "CVBER",
-            "url": "https://cvber.vercel.app"
-        },
-        "areaServed": "Worldwide",
-        "hasOfferCatalog": {
-            "@type": "OfferCatalog",
-            "name": "Protection Services",
-            "itemListElement": [
-                {
-                    "@type": "Offer",
-                    "itemOffered": {
-                        "@type": "Service",
-                        "name": "C2PA Provenance Signing"
-                    }
-                },
-                {
-                    "@type": "Offer",
-                    "itemOffered": {
-                        "@type": "Service",
-                        "name": "Automated Theft Monitoring"
-                    }
-                },
-                {
-                    "@type": "Offer",
-                    "itemOffered": {
-                        "@type": "Service",
-                        "name": "DMCA Enforcement Automation"
-                    }
-                }
-            ]
-        }
-    };
-
-    const websiteSchema = {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "Cvber",
-        "alternateName": ["CVBER", "Cvber App"],
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "description": "AI-powered art protection platform with certificates of origin, automated DMCA takedowns, and AI theft detection.",
         "url": "https://cvber.vercel.app",
-        "description": "AI-powered content protection for digital creators",
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": "https://cvber.vercel.app/?q={search_term_string}",
-            "query-input": "required name=search_term_string"
-        }
+        "operatingSystem": "Web",
+        "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "reviewCount": "2000" }
+    };
+
+    const organizationSchema = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "CVBER",
+        "url": "https://cvber.vercel.app",
+        "description": "Art protection platform for digital artists, photographers and creators.",
+        "sameAs": ["https://twitter.com/cvber", "https://instagram.com/cvber"]
     };
 
     const faqSchema = {
@@ -85,35 +33,23 @@ export default function StructuredData() {
         "mainEntity": [
             {
                 "@type": "Question",
-                "name": "How does CVBER protect my art from AI theft?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "CVBER uses C2PA signatures to prove origin and automated web monitoring to detect unauthorized AI training or re-posting. By embedding provenance data, your work carries its ownership rights even if metadata is stripped."
-                }
+                "name": "How do I protect my digital art from being stolen online?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Use a combination of copyright registration, digital watermarking, C2PA provenance certificates, and automated DMCA monitoring tools like CVBER to protect your art across all platforms." }
             },
             {
                 "@type": "Question",
-                "name": "How to copyright my work for free?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "Our platform provides cryptographic proof of creation, acting as a permanent digital record of authorship."
-                }
+                "name": "What is a Certificate of Origin for art?",
+                "acceptedAnswer": { "@type": "Answer", "text": "A Certificate of Origin is a cryptographically-signed document that proves you created a specific artwork at a specific time, using verifiable blockchain-backed metadata." }
             },
             {
                 "@type": "Question",
-                "name": "Can I use CVBER for automated DMCA takedowns?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "Yes. Our platform generates legally-compliant DMCA takedown notices tailored for YouTube, Instagram, TikTok, and other major platforms."
-                }
+                "name": "How do I report stolen NFT art?",
+                "acceptedAnswer": { "@type": "Answer", "text": "File a DMCA takedown with the NFT marketplace (like OpenSea or Rarible), report to the platform's IP team, and use tools like CVBER to automate the delisting process." }
             },
             {
                 "@type": "Question",
-                "name": "Is my art being used by AI?",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "Use our theft-monitor tools to scan dataset caches and reverse-image search for unauthorized use of your creative work."
-                }
+                "name": "Can AI companies train on my artwork without permission?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Currently this is a legal gray area, but you can opt out of AI training datasets and use C2PA signatures to signal that your work should not be scraped." }
             }
         ]
     };
@@ -126,11 +62,7 @@ export default function StructuredData() {
             />
             <script
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
-            />
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
             />
             <script
                 type="application/ld+json"

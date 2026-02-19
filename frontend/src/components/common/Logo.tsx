@@ -5,9 +5,10 @@ import React from 'react';
 interface LogoProps {
     className?: string;
     size?: 'sm' | 'md' | 'lg' | 'xl';
+    alt?: string;
 }
 
-export default function Logo({ className = "", size = "md" }: LogoProps) {
+export default function Logo({ className = "", size = "md", alt = "CVBER Logo" }: LogoProps) {
     const sizeClasses = {
         sm: "w-6 h-6",
         md: "w-8 h-8",
@@ -16,7 +17,11 @@ export default function Logo({ className = "", size = "md" }: LogoProps) {
     };
 
     return (
-        <div className={`relative flex items-center justify-center ${sizeClasses[size]} ${className}`}>
+        <div
+            className={`relative flex items-center justify-center ${sizeClasses[size]} ${className}`}
+            role="img"
+            aria-label={alt}
+        >
             {/* Background Glow */}
             <div className="absolute inset-0 bg-purple-500/20 blur-[8px] rounded-lg animate-pulse-slow" />
 
