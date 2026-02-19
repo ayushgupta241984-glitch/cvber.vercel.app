@@ -9,7 +9,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cvber.vercel.app";
 export const metadata: Metadata = {
     // Basic metadata
     title: {
-        default: "How to Protect Your Art Online | CVBER — AI Copyright & DMCA Protection",
+        default: "How to Protect Your Art Online | CVBER — AI Copyright, DMCA & AI Security",
         template: "%s | CVBER"
     },
     description: "Protect your art from AI theft, NFT fraud & unauthorized reposts. Generate certificates of origin & automate DMCA takedowns. Free to start.",
@@ -43,8 +43,8 @@ export const metadata: Metadata = {
         locale: "en_US",
         url: siteUrl,
         siteName: "Cvber",
-        title: "Cvber - Protect Your Creative Work with AI-Powered Security",
-        description: "Generate certificates of origin, detect theft, and enforce your copyright with AI. Join 2,000+ creators protecting their work.",
+        title: "How to Protect Your Art Online | CVBER — AI-Powered Art Security & DMCA",
+        description: "Protect your art from AI theft. Generate certificates of origin, detect scraping, and automate DMCA takedowns with blockchain-backed security.",
         images: [
             {
                 url: `${siteUrl}/og-image.png`,
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     // Twitter Card
     twitter: {
         card: "summary_large_image",
-        title: "Cvber - Digital Art & Content Protection",
+        title: "How to Protect Your Art Online | CVBER — AI Art Protection Tool",
         description: "AI-powered content protection with C2PA signatures, theft monitoring, and DMCA automation.",
         images: [`${siteUrl}/og-image.png`],
         creator: "@cvberapp",
