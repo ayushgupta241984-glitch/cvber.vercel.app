@@ -34,7 +34,9 @@ export const metadata: Metadata = {
     // Canonical URL
     metadataBase: new URL(siteUrl),
     alternates: {
-        canonical: "/",
+        languages: {
+            "en-US": "/",
+        },
     },
 
     // Open Graph (Facebook, LinkedIn, etc.)
