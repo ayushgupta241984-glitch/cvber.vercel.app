@@ -29,58 +29,115 @@ function HeroButton() {
 
 export default function Home() {
     return (
-        <div className="flex flex-col bg-[#0A0A0F]">
+        <div className="flex flex-col bg-black min-h-screen font-sans selection:bg-purple-500/30">
             <StructuredData />
-            {/* Immersive 3D Hero Section */}
-            <section className="relative min-h-[90vh] flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#9333EA] via-[#A855F7] to-[#7E22CE]">
-                {/* Background Giant Typography */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none">
-                    <h1 className="text-[38vw] md:text-[25vw] font-black text-white/20 mix-blend-overlay tracking-tighter leading-none whitespace-nowrap">
-                        PROTECT
-                    </h1>
+
+            {/* Cinematic Full-Screen Hero */}
+            <section className="relative h-screen min-h-[800px] flex flex-col justify-between overflow-hidden">
+                {/* Background Image & Overlays */}
+                <div className="absolute inset-0 z-0 select-none pointer-events-none">
+                    <img
+                        src="/cinematic-bg.png"
+                        alt="Cinematic Cyber Defense Background"
+                        className="w-full h-full object-cover object-center scale-105"
+                    />
+                    {/* Dark gradient overlay for text legibility */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30"></div>
                 </div>
 
-                {/* 3D Centerpiece Elements */}
-                <div className="relative z-10 flex flex-col items-center justify-center h-full mt-12 md:mt-0 w-full max-w-7xl mx-auto px-6">
-                    {/* The 3D Shield image */}
-                    <div className="relative w-full max-w-[280px] sm:max-w-[350px] md:max-w-[500px] flex items-center justify-center animate-float group cursor-pointer z-20">
-                        {/* Interactive Glow Behind Shield */}
-                        <div className="absolute inset-0 bg-white/20 blur-[60px] md:blur-[100px] rounded-full font-black scale-50 group-hover:scale-110 transition-all duration-700 pointer-events-none" />
-                        <img
-                            src="/hero-shield.png"
-                            alt="CVBER 3D Futuristic Shield"
-                            className="w-[120%] h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)] md:drop-shadow-[0_40px_80px_rgba(0,0,0,0.8)] group-hover:scale-105 transition-transform duration-700 relative z-10"
-                        />
-                        <div className="absolute bottom-4 md:bottom-10 px-4 py-2 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full text-white text-[10px] uppercase tracking-widest font-bold z-20 opacity-0 group-hover:opacity-100 group-hover:-translate-y-4 transition-all duration-300">
-                            Quantum Encrypted
+                {/* Top Navigation (Absolute floating) */}
+                <nav className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-6">
+                    <div className="flex items-center">
+                        <Logo size="md" className="text-white hover:text-white/80 transition-colors" />
+                    </div>
+                    {/* Center Glass Pill Nav */}
+                    <div className="hidden md:flex items-center gap-8 px-8 py-3 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-sm font-medium text-zinc-300">
+                        <Link href="/" className="text-white hover:text-purple-400 transition-colors">Home</Link>
+                        <Link href="/product" className="hover:text-white transition-colors">Product</Link>
+                        <div className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors">
+                            Features <span className="text-[10px] opacity-50">▼</span>
+                        </div>
+                        <Link href="/tech" className="hover:text-white transition-colors">Tech</Link>
+                        <Link href="/about" className="hover:text-white transition-colors">About</Link>
+                    </div>
+                    <div>
+                        <Link href="/register" className="px-6 py-2.5 rounded-full bg-white text-black text-sm font-bold hover:bg-zinc-200 transition-colors">
+                            Sign Up
+                        </Link>
+                    </div>
+                </nav>
+
+                {/* Main Hero Content Container */}
+                <div className="relative z-10 flex-1 flex items-center px-8 md:px-16 w-full max-w-[1600px] mx-auto">
+
+                    {/* Left Split: Typography and CTAs */}
+                    <div className="max-w-2xl w-full">
+
+                        {/* Status Badge */}
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-md border border-white/20 mb-8 mt-20 opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                            <span className="flex w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            <span className="text-xs font-semibold text-white tracking-wide">100k+ Protected Creators</span>
+                        </div>
+
+                        {/* Massive Headline */}
+                        <h1 className="text-5xl md:text-7xl lg:text-[80px] font-semibold text-white tracking-tight leading-[1.05] mb-6 opacity-0 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+                            Digital Ownership<br />
+                            Redefined Forever
+                        </h1>
+
+                        {/* Subtext */}
+                        <p className="text-lg md:text-xl text-zinc-300 font-medium mb-10 max-w-xl leading-relaxed opacity-0 animate-fade-in-up" style={{ animationDelay: '600ms' }}>
+                            Deploy the world's most advanced digital defense. Neural-net monitoring, zero-knowledge proofs, automated DMCA takedowns, and seamless AI integration.
+                        </p>
+
+                        {/* Dual CTAs */}
+                        <div className="flex flex-wrap items-center gap-4 opacity-0 animate-fade-in-up" style={{ animationDelay: '800ms' }}>
+                            <Link href="/register" className="px-8 py-3.5 rounded-full bg-white text-black font-semibold tracking-wide hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(255,255,255,0.4)]">
+                                Secure Your Art
+                            </Link>
+                            <button className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-white/5 backdrop-blur-md border border-white/20 text-white font-semibold tracking-wide hover:bg-white/10 transition-colors group">
+                                Watch Demo
+                                <span className="flex items-center justify-center w-5 h-5 rounded-full border border-white/40 group-hover:bg-white group-hover:text-black transition-colors pl-0.5 text-[10px]">
+                                    ▶
+                                </span>
+                            </button>
                         </div>
                     </div>
 
-                    {/* Editorial Foreground UI - Bottom Left & Right */}
-                    <div className="absolute inset-x-0 bottom-8 md:bottom-12 flex flex-col-reverse md:flex-row justify-between items-center md:items-end px-6 md:px-12 z-30 gap-8 md:gap-0">
-
-                        <div className="max-w-sm text-center md:text-left">
-                            <h2 className="text-white font-bold tracking-widest uppercase text-xs md:text-sm mb-2 md:mb-3 opacity-90 mix-blend-overlay mix-blend-screen hidden md:block">
-                                Enterprise Protection
-                            </h2>
-                            <p className="text-white/80 text-xs leading-relaxed font-medium hidden md:block">
-                                Professional AI-powered defense for digital creators. The quality is absolute, backed natively, and the code is a dream. The utility scope is excellent. Thank you! We strive to earn and keep your trust.
+                    {/* Right Split: Floating Feature Card */}
+                    <div className="hidden lg:flex flex-1 justify-end opacity-0 animate-fade-in-up" style={{ animationDelay: '1000ms' }}>
+                        <div className="max-w-xs p-6 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.5)] transform translate-y-[-10%] hover:border-white/20 hover:-translate-y-[12%] transition-all duration-500">
+                            <h3 className="text-white font-bold text-lg mb-2">CVBER Neural Ultra</h3>
+                            <p className="text-sm text-zinc-400 leading-relaxed font-medium">
+                                Premium invisible watermarking, ultra-sharp neural net tracking, often with quantum-friendly neon accents in our defense algorithms.
                             </p>
-                            <div className="flex gap-3 mt-0 md:mt-6 justify-center md:justify-start">
-                                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.1)] text-white hover:bg-white hover:text-purple-600 transition-colors cursor-pointer animate-float">
-                                    <ArrowRight className="w-4 h-4 rotate-180" />
-                                </div>
-                                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.1)] text-white hover:bg-white hover:text-purple-600 transition-colors cursor-pointer animate-float-delayed">
-                                    <ArrowRight className="w-4 h-4" />
-                                </div>
-                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bottom Glassmorphic Stats Bar */}
+                <div className="relative z-20 w-full border-t border-white/10 bg-black/20 backdrop-blur-2xl px-8 py-8 md:py-10 opacity-0 animate-fade-in-up" style={{ animationDelay: '1200ms' }}>
+                    <div className="max-w-[1600px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 divide-x divide-transparent md:divide-white/10">
+
+                        <div className="flex flex-col items-center md:items-start md:px-8 text-center md:text-left">
+                            <span className="text-3xl lg:text-4xl font-bold text-white mb-2">24%</span>
+                            <span className="text-xs text-zinc-400 font-medium uppercase tracking-widest leading-tight">Theft Reduction<br />in 2026</span>
                         </div>
 
-                        <div className="text-center md:text-right flex flex-col items-center md:items-end p-4 md:p-0 bg-black/40 md:bg-transparent rounded-2xl md:rounded-none backdrop-blur-md md:backdrop-blur-none border border-white/10 md:border-transparent mt-4 md:mt-0">
-                            <HeroButton />
-                            <Link href="/how-it-works" className="mt-4 md:mt-6 text-white uppercase tracking-widest text-[10px] md:text-[11px] font-black flex items-center gap-2 hover:text-white/70 transition-colors group">
-                                EXPLORE ALL <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </Link>
+                        <div className="flex flex-col items-center md:items-start md:px-8 text-center md:text-left border-white/10 border-l md:border-l-0 pl-8 md:pl-0">
+                            <span className="text-3xl lg:text-4xl font-bold text-white mb-2">10K+</span>
+                            <span className="text-xs text-zinc-400 font-medium uppercase tracking-widest leading-tight">Digital Assets<br />Secured Globally</span>
+                        </div>
+
+                        <div className="flex flex-col items-center md:items-start md:px-8 text-center md:text-left border-t border-white/10 md:border-t-0 pt-8 md:pt-0 mt-4 md:mt-0">
+                            <span className="text-3xl lg:text-4xl font-bold text-zinc-300 mb-2">50K+</span>
+                            <span className="text-xs text-zinc-400 font-medium uppercase tracking-widest leading-tight">AI Scraping Bots<br />Blocked Daily</span>
+                        </div>
+
+                        <div className="flex flex-col items-center md:items-start md:px-8 text-center md:text-left border-t border-l border-white/10 md:border-t-0 pt-8 md:pt-0 mt-4 md:mt-0 pl-8 md:pl-0">
+                            <span className="text-3xl lg:text-4xl font-bold text-zinc-300 mb-2">99.9%</span>
+                            <span className="text-xs text-zinc-400 font-medium uppercase tracking-widest leading-tight">Uptime &<br />Reliability SLA</span>
                         </div>
 
                     </div>
