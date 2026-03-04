@@ -112,35 +112,35 @@ export default function HowItWorksPage() {
             </section>
 
             {/* Tech Deep Dive */}
-            <section className="relative z-10 py-32 px-6 border-y border-white/5 bg-white/[0.01]">
+            <section className="relative z-10 py-16 md:py-32 px-4 md:px-6 border-y border-white/5 bg-white/[0.01]">
                 <div className="max-w-7xl mx-auto">
-                    <div className="grid md:grid-cols-2 gap-24 items-center">
+                    <div className="grid md:grid-cols-2 gap-12 md:gap-24 items-center">
                         <motion.div
                             initial={{ opacity: 0, x: -30 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
                         >
-                            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-10 uppercase italic">Built for the <br /><span className="text-purple-500">AI Era.</span></h2>
-                            <p className="text-zinc-500 text-xl font-medium leading-relaxed mb-10">
+                            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 md:mb-10 uppercase italic">Built for the <br /><span className="text-purple-500">AI Era.</span></h2>
+                            <p className="text-zinc-500 text-base md:text-xl font-medium leading-relaxed mb-8 md:mb-10">
                                 Traditional copyright is a defensive relic. In an era where AI can scrape millions of records per minute, you need an offensive digital wall.
                             </p>
-                            <div className="space-y-6">
-                                <div className="flex gap-6 p-8 rounded-[2rem] bg-[#0D0D10] border border-white/5">
-                                    <div className="shrink-0 w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                                        <ShieldCheck className="w-6 h-6 text-green-500" />
+                            <div className="space-y-4 md:space-y-6">
+                                <div className="flex gap-4 md:gap-6 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-[#0D0D10] border border-white/5">
+                                    <div className="shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                                        <ShieldCheck className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
                                     </div>
                                     <div>
-                                        <h4 className="text-white font-bold mb-2 uppercase tracking-wide">C2PA Standard Compliance</h4>
-                                        <p className="text-zinc-500 text-sm font-medium">Industry-standard protocols used by Adobe and Microsoft for universal verification.</p>
+                                        <h4 className="text-white font-bold mb-1 md:mb-2 uppercase tracking-wide text-sm md:text-base">C2PA Standard Compliance</h4>
+                                        <p className="text-zinc-500 text-xs md:text-sm font-medium">Industry-standard protocols used by Adobe and Microsoft for universal verification.</p>
                                     </div>
                                 </div>
-                                <div className="flex gap-6 p-8 rounded-[2rem] bg-[#0D0D10] border border-white/5">
-                                    <div className="shrink-0 w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                                        <Search className="w-6 h-6 text-purple-500" />
+                                <div className="flex gap-4 md:gap-6 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-[#0D0D10] border border-white/5">
+                                    <div className="shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                                        <Search className="w-5 h-5 md:w-6 md:h-6 text-purple-500" />
                                     </div>
                                     <div>
-                                        <h4 className="text-white font-bold mb-2 uppercase tracking-wide">Neural Monitoring</h4>
-                                        <p className="text-zinc-500 text-sm font-medium">Detection of fingerprints even if the image is cropped, filtered, or heavily compressed.</p>
+                                        <h4 className="text-white font-bold mb-1 md:mb-2 uppercase tracking-wide text-sm md:text-base">Neural Monitoring</h4>
+                                        <p className="text-zinc-500 text-xs md:text-sm font-medium">Detection of fingerprints even if the image is cropped, filtered, or heavily compressed.</p>
                                     </div>
                                 </div>
                             </div>
@@ -150,10 +150,38 @@ export default function HowItWorksPage() {
                             initial={{ opacity: 0, scale: 0.9 }}
                             whileInView={{ opacity: 1, scale: 1 }}
                             viewport={{ once: true }}
-                            className="relative aspect-square rounded-[4rem] bg-gradient-to-br from-purple-500/20 to-transparent border border-white/5 overflow-hidden flex items-center justify-center"
+                            className="relative aspect-square rounded-[3rem] md:rounded-[4rem] bg-[#0D0D10] border border-white/5 overflow-hidden flex items-center justify-center"
                         >
-                            <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:30px_30px]" />
-                            <Logo className="w-48 h-48 relative z-10 opacity-40 drop-shadow-[0_0_50px_rgba(168,85,247,0.3)]" />
+                            {/* Premium animated neural grid visual */}
+                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#4c1d95_0%,#1e0a3c_40%,transparent_70%)]" />
+                            <div className="absolute inset-0 bg-grid-white/[0.04] bg-[size:24px_24px]" />
+                            {/* Animated rings */}
+                            {[1, 2, 3, 4].map((r) => (
+                                <motion.div
+                                    key={r}
+                                    animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.6, 0.3] }}
+                                    transition={{ duration: 3 + r, repeat: Infinity, delay: r * 0.5 }}
+                                    className="absolute rounded-full border border-purple-500/30"
+                                    style={{ inset: `${r * 10}%` }}
+                                />
+                            ))}
+                            {/* Node dots */}
+                            {[
+                                { x: '20%', y: '30%' }, { x: '70%', y: '20%' }, { x: '80%', y: '65%' },
+                                { x: '30%', y: '75%' }, { x: '50%', y: '50%' }, { x: '15%', y: '55%' }
+                            ].map((pos, i) => (
+                                <motion.div
+                                    key={i}
+                                    animate={{ opacity: [0.4, 1, 0.4], scale: [1, 1.3, 1] }}
+                                    transition={{ duration: 2 + i * 0.3, repeat: Infinity, delay: i * 0.4 }}
+                                    className="absolute w-2 h-2 md:w-3 md:h-3 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]"
+                                    style={{ left: pos.x, top: pos.y }}
+                                />
+                            ))}
+                            <div className="relative z-10 text-center py-4">
+                                <div className="text-[10px] font-black text-purple-500/60 uppercase tracking-[0.3em] mb-2">Neural Grid Active</div>
+                                <div className="text-2xl md:text-4xl font-black text-white/10 italic uppercase tracking-tighter">Monitoring</div>
+                            </div>
                         </motion.div>
                     </div>
                 </div>

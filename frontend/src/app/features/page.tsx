@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Shield, Check, FileCode, Zap, Globe, Lock, ArrowRight } from "lucide-react";
-import Logo from "@/components/common/Logo";
 import { motion } from "framer-motion";
 
 export default function FeaturesPage() {
@@ -149,34 +148,89 @@ export default function FeaturesPage() {
                 </div>
             </section>
 
-            {/* Visual Showcase */}
-            <section className="relative z-10 py-32 px-6 border-t border-white/5">
+            {/* Visual Showcase — Premium CSS Art Cards */}
+            <section className="relative z-10 py-16 md:py-32 px-4 md:px-6 border-t border-white/5">
                 <div className="max-w-7xl mx-auto">
-                    <div className="flex flex-col md:flex-row justify-between items-end gap-10 mb-20">
-                        <div className="max-w-xl">
-                            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase italic">Protected<br />Mediums</h2>
-                            <p className="text-zinc-500 font-medium text-lg leading-relaxed">From single concept arts to massive photography portfolios, CVBER scales to your creative ambition.</p>
-                        </div>
+                    <div className="mb-12 md:mb-20">
+                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4 md:mb-6 uppercase italic">Protected<br />Mediums</h2>
+                        <p className="text-zinc-500 font-medium text-base md:text-lg leading-relaxed max-w-lg">From single concept arts to massive photography portfolios, CVBER scales to your creative ambition.</p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8">
                         {[
-                            { title: 'Digital Art', category: 'Illustration', color: 'from-purple-500/10', icon: Shield },
-                            { title: 'Photography', category: 'Portfolio', color: 'from-blue-500/10', icon: Shield },
-                            { title: 'Video content', category: 'Motion', color: 'from-pink-500/10', icon: Shield },
-                            { title: '3D Assets', category: 'Environments', color: 'from-indigo-500/10', icon: Shield }
+                            {
+                                title: 'Digital Art',
+                                category: 'Illustration',
+                                visual: (
+                                    <div className="absolute inset-0 overflow-hidden rounded-[2rem]">
+                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,#7c3aed_0%,transparent_60%)]" />
+                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,#4c1d95_0%,transparent_60%)]" />
+                                        <div className="absolute inset-0 bg-grid-white/[0.04] bg-[size:20px_20px]" />
+                                        <div className="absolute top-1/4 left-1/4 w-24 h-24 md:w-32 md:h-32 border border-purple-500/30 rounded-full animate-pulse" />
+                                        <div className="absolute top-1/3 left-1/3 w-16 h-16 md:w-20 md:h-20 border border-purple-400/20 rounded-full" />
+                                        <div className="absolute bottom-1/4 right-1/4 w-8 h-8 md:w-12 md:h-12 bg-purple-500/30 rounded-full blur-sm" />
+                                    </div>
+                                )
+                            },
+                            {
+                                title: 'Photography',
+                                category: 'Portfolio',
+                                visual: (
+                                    <div className="absolute inset-0 overflow-hidden rounded-[2rem]">
+                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#1e3a8a_0%,transparent_70%)]" />
+                                        <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0deg,#1d4ed8/10_90deg,transparent_180deg)]" />
+                                        {[...Array(5)].map((_, i) => (
+                                            <div key={i} className="absolute inset-0 border border-blue-500/10 rounded-[2rem]" style={{ margin: `${i * 14}%` }} />
+                                        ))}
+                                        <div className="absolute bottom-1/3 right-1/3 w-12 h-12 md:w-16 md:h-16 bg-blue-500/20 rounded-full blur-md" />
+                                    </div>
+                                )
+                            },
+                            {
+                                title: 'Video Content',
+                                category: 'Motion',
+                                visual: (
+                                    <div className="absolute inset-0 overflow-hidden rounded-[2rem]">
+                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,#9d174d_0%,transparent_60%)]" />
+                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,#831843_0%,transparent_60%)]" />
+                                        {[...Array(4)].map((_, i) => (
+                                            <div key={i} className="absolute h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" style={{ top: `${25 + i * 18}%`, left: 0, right: 0 }} />
+                                        ))}
+                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 border-4 border-pink-500/60 rounded-sm rotate-45" />
+                                    </div>
+                                )
+                            },
+                            {
+                                title: '3D Assets',
+                                category: 'Environments',
+                                visual: (
+                                    <div className="absolute inset-0 overflow-hidden rounded-[2rem]">
+                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#312e81_0%,transparent_70%)]" />
+                                        <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent_30%,#4f46e5/15_50%,transparent_70%)]" />
+                                        {[...Array(3)].map((_, i) => (
+                                            <div key={i} className="absolute border border-indigo-500/20" style={{
+                                                inset: `${10 + i * 15}%`,
+                                                transform: `rotate(${45 + i * 15}deg)`,
+                                                borderRadius: '4px'
+                                            }} />
+                                        ))}
+                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-indigo-500/30 blur-lg rounded-sm" />
+                                    </div>
+                                )
+                            }
                         ].map((asset, idx) => (
                             <motion.div
                                 key={idx}
                                 whileHover={{ y: -10 }}
-                                className="group relative overflow-hidden rounded-[2.5rem] bg-zinc-900/40 border border-white/5 p-4 transition-all hover:bg-zinc-900/60"
+                                className="group relative overflow-hidden rounded-[2rem] md:rounded-[2.5rem] bg-[#0D0D10] border border-white/5 hover:border-white/10 transition-all cursor-default"
                             >
-                                <div className={`aspect-[4/5] rounded-[2rem] bg-gradient-to-b ${asset.color} to-transparent flex items-center justify-center relative overflow-hidden mb-6`}>
-                                    <Logo className="w-16 h-16 opacity-10 group-hover:scale-125 transition-transform duration-700" />
+                                <div className="aspect-[3/4] relative">
+                                    {asset.visual}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D10] via-transparent to-transparent" />
                                 </div>
-                                <div className="px-4 pb-4">
-                                    <span className="text-[10px] uppercase tracking-[0.2em] text-purple-500 font-bold mb-2 block">{asset.category}</span>
-                                    <h3 className="text-xl font-bold text-white tracking-tight italic">{asset.title}</h3>
+                                <div className="px-4 md:px-6 pb-4 md:pb-6 -mt-4 relative z-10">
+                                    <span className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-purple-500 font-black mb-1 block">{asset.category}</span>
+                                    <h3 className="text-base md:text-xl font-black text-white tracking-tight italic">{asset.title}</h3>
                                 </div>
                             </motion.div>
                         ))}

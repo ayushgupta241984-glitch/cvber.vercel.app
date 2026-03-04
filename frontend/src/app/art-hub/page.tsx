@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search, ShieldAlert, Sparkles, Hash, Gavel, HelpCircle, ChevronRight, Zap } from "lucide-react";
+import { Search, Sparkles, Gavel, ChevronRight, Zap, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 const faqCategories = [
@@ -103,12 +103,12 @@ export default function FAQPage() {
                         transition={{ delay: 0.2 }}
                         className="lg:col-span-3 hidden lg:block"
                     >
-                        <nav className="sticky top-40 space-y-4">
+                        <nav className="sticky top-40 space-y-3">
                             {faqCategories.map((cat) => (
                                 <Link
                                     key={cat.id}
                                     href={`#${cat.id}`}
-                                    className="flex items-center justify-between p-5 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-purple-500/20 text-zinc-500 hover:text-white transition-all group"
+                                    className="flex items-center justify-between p-4 md:p-5 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-purple-500/20 text-zinc-500 hover:text-white transition-all group"
                                 >
                                     <div className="flex items-center gap-3">
                                         <cat.icon className="w-4 h-4 group-hover:text-purple-500 transition-colors" />
@@ -156,23 +156,18 @@ export default function FAQPage() {
                     initial={{ opacity: 0, y: 40 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="mt-40 p-20 rounded-[4rem] bg-gradient-to-br from-[#0D0D10] to-black border border-white/5 text-center relative overflow-hidden"
+                    className="mt-24 md:mt-40 p-12 md:p-20 rounded-[3rem] md:rounded-[4rem] bg-gradient-to-br from-[#0D0D10] to-black border border-white/5 text-center relative overflow-hidden"
                 >
                     <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:30px_30px]" />
                     <div className="relative z-10">
-                        <div className="w-16 h-16 bg-purple-500/10 border border-purple-500/20 rounded-2xl flex items-center justify-center mx-auto mb-8">
-                            <Zap className="w-8 h-8 text-purple-500" />
+                        <div className="w-14 h-14 md:w-16 md:h-16 bg-purple-500/10 border border-purple-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 md:mb-8">
+                            <Zap className="w-7 h-7 md:w-8 md:h-8 text-purple-500" />
                         </div>
-                        <h2 className="text-4xl md:text-6xl font-black text-white mb-8 uppercase italic leading-none">Need more help?</h2>
-                        <p className="text-zinc-500 mb-12 text-xl font-medium max-w-xl mx-auto">Our security mentors are available 24/7 to help you navigate specific copyright clusters.</p>
-                        <div className="flex flex-col sm:flex-row justify-center gap-6">
-                            <Link href="/register" className="px-10 py-5 bg-white text-black rounded-full font-black text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all active:scale-95 shadow-2xl">
-                                Secure Portfolio
-                            </Link>
-                            <Link href="/contact" className="px-10 py-5 bg-zinc-900 text-white border border-white/10 rounded-full font-black text-xs uppercase tracking-[0.2em] hover:bg-zinc-800 transition-all active:scale-95">
-                                Contact Support
-                            </Link>
-                        </div>
+                        <h2 className="text-3xl md:text-6xl font-black text-white mb-6 md:mb-8 uppercase italic leading-none">Need more help?</h2>
+                        <p className="text-zinc-500 mb-8 md:mb-12 text-base md:text-xl font-medium max-w-xl mx-auto">Our security mentors can help you navigate specific copyright issues and content protection scenarios.</p>
+                        <Link href="/register" className="px-8 md:px-10 py-4 md:py-5 bg-white text-black rounded-full font-black text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all active:scale-95 shadow-2xl inline-flex items-center gap-3">
+                            Secure Your Portfolio <ArrowRight className="w-4 h-4" />
+                        </Link>
                     </div>
                 </motion.div>
             </div>
