@@ -149,10 +149,6 @@ export default function Home() {
                             {isLoggedIn ? "Go to Dashboard" : "Secure Your Assets"}
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </Link>
-                        <button className="px-10 py-5 bg-zinc-900/40 hover:bg-zinc-900 border border-white/5 rounded-full font-bold text-sm uppercase tracking-widest transition-all flex items-center gap-3 backdrop-blur-xl group">
-                            <Play className="w-4 h-4 fill-current group-hover:text-purple-400 transition-colors" />
-                            Watch Demo
-                        </button>
                     </motion.div>
                 </motion.div>
             </section>

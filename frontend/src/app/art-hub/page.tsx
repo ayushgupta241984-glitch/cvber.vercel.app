@@ -1,15 +1,13 @@
-import Link from 'next/link';
-import { Search, ShieldAlert, Sparkles, Hash, Gavel, HelpCircle, ChevronRight } from 'lucide-react';
+"use client";
 
-export const metadata = {
-    title: "Art Hub | Artist Protection Knowledge Base - Cvber",
-    description: "Your central resource for digital art protection, AI scraping defense, NFT security, and DMCA takedown guides."
-};
+import Link from "next/link";
+import { Search, ShieldAlert, Sparkles, Hash, Gavel, HelpCircle, ChevronRight, Zap } from "lucide-react";
+import { motion } from "framer-motion";
 
 const faqCategories = [
     {
-        id: 'theft',
-        name: 'Detecting & Finding Theft',
+        id: "theft",
+        name: "Detecting & Finding Theft",
         icon: Search,
         questions: [
             {
@@ -31,8 +29,8 @@ const faqCategories = [
         ]
     },
     {
-        id: 'ai',
-        name: 'AI Scraping & Style Theft',
+        id: "ai",
+        name: "AI Scraping & Style Theft",
         icon: Sparkles,
         questions: [
             {
@@ -44,14 +42,14 @@ const faqCategories = [
                 a: "This is a developing legal area, but many artists are now using technical 'anti-scraping' measures and opting out of common datasets."
             },
             {
-                q: "What is the best resolution to upload art so it can't be stolen?",
+                q: "What is the best resolution to upload art?",
                 a: "We recommend 800-1200px on the longest side. It looks great on social media but is too low-resolution for high-quality commercial printing."
             }
         ]
     },
     {
-        id: 'legal',
-        name: 'Legal Tools & DMCA',
+        id: "legal",
+        name: "Legal Tools & DMCA",
         icon: Gavel,
         questions: [
             {
@@ -67,107 +65,116 @@ const faqCategories = [
                 a: "Yes, if you have registered your copyright. Otherwise, DMCA takedowns are your fastest and most effective tool for removal."
             }
         ]
-    },
-    {
-        id: 'nft',
-        name: 'NFTs & Scams',
-        icon: Hash,
-        questions: [
-            {
-                q: "Someone minted my art as an NFT without permission — what now?",
-                a: "Contact the NFT marketplace (OpenSea, Rarible, etc.) and file a DMCA notice. Most major platforms will delist stolen assets promptly."
-            },
-            {
-                q: "How to prevent NFT art theft?",
-                a: "Watermarking and posting low-res versions are the first lines of defense. Registering your work early creates a timestamp of first creation."
-            }
-        ]
     }
 ];
 
 export default function FAQPage() {
     return (
-        <div className="flex flex-col bg-[#0A0A0F] pt-24 min-h-screen">
-            {/* SEO JSON-LD Hidden */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
-                        "@context": "https://schema.org",
-                        "@type": "FAQPage",
-                        "mainEntity": faqCategories.flatMap(c => c.questions.map(q => ({
-                            "@type": "Question",
-                            "name": q.q,
-                            "acceptedAnswer": { "@type": "Answer", "text": q.a }
-                        })))
-                    })
-                }}
-            />
+        <div className="relative min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 overflow-x-hidden font-sans">
+            {/* Persistent Grid Background */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
+                <div className="absolute inset-x-0 top-0 h-[800px] bg-gradient-to-b from-purple-500/10 via-transparent to-transparent opacity-60" />
+            </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                <div className="text-center mb-16">
-                    <Link href="/" className="inline-flex items-center gap-2 text-purple-500 hover:text-purple-400 mb-8 font-medium transition-colors group">
-                        <ChevronRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
-                        Back to Art Protection Home
-                    </Link>
-                    <h1 className="text-4xl lg:text-6xl font-extrabold text-white mb-6">
-                        Digital Art <span className="text-purple-500 text-glow">Protection Hub</span>
+            <div className="max-w-7xl mx-auto px-6 pt-[20vh] pb-32 relative z-10">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center mb-24"
+                >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-purple-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-10">
+                        Knowledge Repository v2.0
+                    </div>
+                    <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-8 uppercase italic leading-none">
+                        Art <br /> <span className="text-glow">Protection Hub.</span>
                     </h1>
-                    <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
-                        Your central command for protecting your creative legacy and securing your art online.
+                    <p className="text-lg md:text-xl text-zinc-500 max-w-2xl mx-auto font-medium">
+                        Your essential guide to digital sovereignty. Master the tools of protection,
+                        defense, and active enforcement in the AI age.
                     </p>
-                </div>
+                </motion.div>
 
-                <div className="grid lg:grid-cols-4 gap-12">
+                <div className="grid lg:grid-cols-12 gap-16">
                     {/* Sidebar Nav */}
-                    <div className="lg:col-span-1 border-r border-zinc-800/50 pr-8 hidden lg:block">
-                        <nav className="sticky top-32 space-y-2">
-                            {faqCategories.map(cat => (
-                                <a
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="lg:col-span-3 hidden lg:block"
+                    >
+                        <nav className="sticky top-40 space-y-4">
+                            {faqCategories.map((cat) => (
+                                <Link
                                     key={cat.id}
                                     href={`#${cat.id}`}
-                                    className="flex items-center gap-3 p-3 rounded-xl text-zinc-400 hover:bg-zinc-900 hover:text-white transition-all"
+                                    className="flex items-center justify-between p-5 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-purple-500/20 text-zinc-500 hover:text-white transition-all group"
                                 >
-                                    <cat.icon className="w-4 h-4" />
-                                    <span className="text-sm font-medium">{cat.name}</span>
-                                </a>
+                                    <div className="flex items-center gap-3">
+                                        <cat.icon className="w-4 h-4 group-hover:text-purple-500 transition-colors" />
+                                        <span className="text-xs font-black uppercase tracking-widest">{cat.name}</span>
+                                    </div>
+                                    <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                                </Link>
                             ))}
                         </nav>
-                    </div>
+                    </motion.div>
 
                     {/* FAQ Content */}
-                    <div className="lg:col-span-3 space-y-24">
-                        {faqCategories.map(cat => (
-                            <section key={cat.id} id={cat.id} className="scroll-mt-32">
-                                <div className="flex items-center gap-4 mb-10 pb-4 border-b border-zinc-900">
-                                    <div className="w-10 h-10 bg-purple-600/10 rounded-xl flex items-center justify-center">
-                                        <cat.icon className="w-5 h-5 text-purple-400" />
+                    <div className="lg:col-span-9 space-y-32">
+                        {faqCategories.map((cat, catIdx) => (
+                            <motion.section
+                                key={cat.id}
+                                id={cat.id}
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: catIdx * 0.1 }}
+                                className="scroll-mt-40"
+                            >
+                                <div className="flex items-center gap-6 mb-12 pb-6 border-b border-white/5">
+                                    <div className="w-12 h-12 bg-purple-500/10 border border-purple-500/20 rounded-2xl flex items-center justify-center">
+                                        <cat.icon className="w-6 h-6 text-purple-500" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-white">{cat.name}</h2>
+                                    <h2 className="text-3xl font-black text-white italic uppercase tracking-tight">{cat.name}</h2>
                                 </div>
-                                <div className="space-y-6">
+                                <div className="space-y-8">
                                     {cat.questions.map((item, qidx) => (
-                                        <div key={qidx} className="p-8 rounded-2xl bg-zinc-900/30 border border-zinc-800 hover:border-purple-500/20 transition-all">
-                                            <h3 className="text-lg font-bold text-white mb-4 leading-snug">{item.q}</h3>
-                                            <p className="text-zinc-400 leading-relaxed">{item.a}</p>
+                                        <div key={qidx} className="p-10 rounded-[2.5rem] bg-[#0D0D10] border border-white/5 hover:border-white/10 transition-all group shadow-xl">
+                                            <h3 className="text-xl font-black text-white mb-6 leading-snug uppercase tracking-tight italic group-hover:text-purple-400 transition-colors">{item.q}</h3>
+                                            <p className="text-zinc-500 font-medium leading-relaxed text-lg">{item.a}</p>
                                         </div>
                                     ))}
                                 </div>
-                            </section>
+                            </motion.section>
                         ))}
                     </div>
                 </div>
 
                 {/* Bottom CTA */}
-                <div className="mt-32 p-12 rounded-3xl bg-gradient-to-br from-purple-900/20 to-zinc-900 border border-purple-500/20 text-center">
-                    <HelpCircle className="w-12 h-12 text-purple-400 mx-auto mb-6" />
-                    <h2 className="text-3xl font-bold text-white mb-4">Explore the Art Hub</h2>
-                    <p className="text-zinc-400 mb-10 text-lg">Our AI security mentor is available 24/7 if you need more custom advice.</p>
-                    <div className="flex justify-center gap-4">
-                        <Link href="/register" className="btn-primary py-3 px-8 rounded-xl font-bold">Start Protecting Work</Link>
-                        <Link href="/features" className="bg-zinc-900 text-white border border-zinc-800 py-3 px-8 rounded-xl font-bold hover:bg-zinc-800 transition-colors">View Features</Link>
+                <motion.div
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="mt-40 p-20 rounded-[4rem] bg-gradient-to-br from-[#0D0D10] to-black border border-white/5 text-center relative overflow-hidden"
+                >
+                    <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:30px_30px]" />
+                    <div className="relative z-10">
+                        <div className="w-16 h-16 bg-purple-500/10 border border-purple-500/20 rounded-2xl flex items-center justify-center mx-auto mb-8">
+                            <Zap className="w-8 h-8 text-purple-500" />
+                        </div>
+                        <h2 className="text-4xl md:text-6xl font-black text-white mb-8 uppercase italic leading-none">Need more help?</h2>
+                        <p className="text-zinc-500 mb-12 text-xl font-medium max-w-xl mx-auto">Our security mentors are available 24/7 to help you navigate specific copyright clusters.</p>
+                        <div className="flex flex-col sm:flex-row justify-center gap-6">
+                            <Link href="/register" className="px-10 py-5 bg-white text-black rounded-full font-black text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all active:scale-95 shadow-2xl">
+                                Secure Portfolio
+                            </Link>
+                            <Link href="/contact" className="px-10 py-5 bg-zinc-900 text-white border border-white/10 rounded-full font-black text-xs uppercase tracking-[0.2em] hover:bg-zinc-800 transition-all active:scale-95">
+                                Contact Support
+                            </Link>
+                        </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
         </div>
     );
