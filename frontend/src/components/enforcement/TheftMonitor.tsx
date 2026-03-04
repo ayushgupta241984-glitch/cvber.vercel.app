@@ -40,40 +40,47 @@ export function TheftMonitor({ alerts, totalLoss, onTakeAction }: TheftMonitorPr
     };
 
     return (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="card-premium overflow-hidden group">
             {/* Header */}
-            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-red-50">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-red-100 rounded-2xl">
-                            <Eye className="h-6 w-6 text-red-600" />
+            <div className="p-8 border-b border-zinc-800/50 bg-gradient-to-br from-purple-500/5 to-transparent relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
+                    <Eye className="h-24 w-24 text-purple-500" />
+                </div>
+
+                <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center gap-6">
+                        <div className="p-4 bg-purple-500/10 rounded-2xl border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+                            <Eye className="h-7 w-7 text-purple-400" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900">Watchtower</h3>
-                            <p className="text-sm text-gray-500">Active theft monitoring</p>
+                            <h3 className="text-xl font-bold text-white tracking-tight">Watchtower</h3>
+                            <p className="text-sm text-zinc-500 mt-1">Real-time asset monitoring & threat detection</p>
                         </div>
                     </div>
 
                     {/* Total Loss */}
                     <div className="text-right">
-                        <p className="text-xs font-bold text-gray-400 uppercase">Est. Revenue Loss</p>
-                        <p className="text-2xl font-black text-red-600">${totalLoss.toFixed(2)}</p>
+                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1">Est. Revenue Loss</p>
+                        <p className="text-3xl font-black text-white text-glow-purple">
+                            <span className="text-purple-500 text-sm align-top mr-1">$</span>
+                            {totalLoss.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
                     </div>
                 </div>
 
                 {/* Filter Tabs */}
-                <div className="flex gap-2 mt-4">
+                <div className="flex gap-3 mt-8">
                     {['all', 'new', 'actioned'].map((f) => (
                         <button
                             key={f}
                             onClick={() => setFilter(f as any)}
-                            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-full transition-all ${filter === f
-                                    ? 'bg-red-600 text-white'
-                                    : 'bg-white text-gray-500 hover:bg-gray-50'
+                            className={`px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-300 border ${filter === f
+                                ? 'bg-purple-600 border-purple-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)]'
+                                : 'bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
                                 }`}
                         >
                             {f} {f === 'new' && alerts.filter(a => a.status === 'new').length > 0 && (
-                                <span className="ml-1 px-1.5 py-0.5 bg-white/20 rounded-full">
+                                <span className="ml-2 px-1.5 py-0.5 bg-white/10 rounded-md text-[10px]">
                                     {alerts.filter(a => a.status === 'new').length}
                                 </span>
                             )}
@@ -83,23 +90,27 @@ export function TheftMonitor({ alerts, totalLoss, onTakeAction }: TheftMonitorPr
             </div>
 
             {/* Alerts List */}
-            <div className="divide-y divide-gray-50 max-h-[400px] overflow-auto">
+            <div className="divide-y divide-zinc-800/50 max-h-[500px] overflow-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
                 {filteredAlerts.length === 0 ? (
-                    <div className="p-12 text-center">
-                        <Bell className="h-12 w-12 text-gray-200 mx-auto mb-4" />
-                        <p className="text-gray-400 font-medium">No theft alerts</p>
-                        <p className="text-sm text-gray-300">Your content is safe... for now</p>
+                    <div className="p-16 text-center">
+                        <div className="w-16 h-16 bg-zinc-900/50 rounded-full flex items-center justify-center mx-auto mb-6 border border-zinc-800">
+                            <Bell className="h-8 w-8 text-zinc-700" />
+                        </div>
+                        <p className="text-zinc-300 font-bold text-lg mb-2">Operational Calm</p>
+                        <p className="text-sm text-zinc-600 max-w-[200px] mx-auto">No theft alerts detected in the current monitoring cycle.</p>
                     </div>
                 ) : (
                     filteredAlerts.map((alert) => (
-                        <div key={alert.alert_id} className="p-4 hover:bg-gray-50 transition-colors">
-                            <div className="flex items-start gap-4">
-                                <div className="text-2xl">{getPlatformIcon(alert.platform)}</div>
+                        <div key={alert.alert_id} className="p-6 hover:bg-white/[0.02] transition-colors relative group/item">
+                            <div className="flex items-start gap-6">
+                                <div className="p-3 bg-zinc-900 rounded-xl border border-zinc-800 text-2xl group-hover/item:border-purple-500/30 transition-colors">
+                                    {getPlatformIcon(alert.platform)}
+                                </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <p className="font-bold text-gray-900 truncate">{alert.asset_name}</p>
+                                    <div className="flex items-center gap-3 mb-1.5">
+                                        <p className="font-bold text-lg text-white truncate">{alert.asset_name}</p>
                                         {alert.status === 'new' && (
-                                            <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold uppercase rounded-full">
+                                            <span className="px-2.5 py-0.5 bg-purple-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-[0_0_10px_rgba(168,85,247,0.4)]">
                                                 New
                                             </span>
                                         )}
@@ -108,30 +119,37 @@ export function TheftMonitor({ alerts, totalLoss, onTakeAction }: TheftMonitorPr
                                         href={alert.found_url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-sm text-blue-600 hover:text-blue-800 truncate block"
+                                        className="text-sm text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1.5 group/link"
                                     >
-                                        {alert.found_url}
+                                        <span className="truncate">{alert.found_url}</span>
+                                        <ArrowRight className="h-3 w-3 inline opacity-0 group-hover/link:opacity-100 -translate-x-1 group-hover/link:translate-x-0 transition-all" />
                                     </a>
-                                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                                    <div className="flex items-center gap-6 mt-4">
                                         {alert.estimated_views && (
-                                            <span className="flex items-center gap-1">
-                                                <Globe className="h-3 w-3" />
-                                                {alert.estimated_views.toLocaleString()} views
-                                            </span>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-zinc-600 uppercase font-black tracking-widest leading-none mb-1">Impact</span>
+                                                <span className="text-sm text-zinc-200 font-bold flex items-center gap-1.5">
+                                                    <Globe className="h-3.5 w-3.5 text-zinc-500" />
+                                                    {alert.estimated_views.toLocaleString()} <span className="text-zinc-500 font-normal">views</span>
+                                                </span>
+                                            </div>
                                         )}
                                         {alert.estimated_revenue_loss && (
-                                            <span className="flex items-center gap-1 text-red-500 font-medium">
-                                                <DollarSign className="h-3 w-3" />
-                                                ${alert.estimated_revenue_loss.toFixed(2)} lost
-                                            </span>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-zinc-600 uppercase font-black tracking-widest leading-none mb-1">Loss</span>
+                                                <span className="text-sm text-white font-bold flex items-center gap-1.5">
+                                                    <DollarSign className="h-3.5 w-3.5 text-purple-500" />
+                                                    {alert.estimated_revenue_loss.toFixed(2)}
+                                                </span>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => onTakeAction(alert)}
-                                    className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-xl hover:bg-red-700 transition-colors flex items-center gap-1"
+                                    className="px-6 py-3 bg-zinc-900 border border-zinc-800 hover:border-purple-500 text-white text-xs font-bold rounded-xl transition-all hover:bg-purple-600 flex items-center gap-2 group/btn active:scale-95"
                                 >
-                                    Take Action <ArrowRight className="h-3 w-3" />
+                                    Take Action <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
                                 </button>
                             </div>
                         </div>

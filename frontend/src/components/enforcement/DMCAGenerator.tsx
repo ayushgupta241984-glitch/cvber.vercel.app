@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Scale, FileText, AlertTriangle, Send, Copy, Check, ExternalLink } from 'lucide-react';
+import { Scale, FileText, AlertTriangle, Send, Copy, Check, ExternalLink, ArrowRight } from 'lucide-react';
 
 interface DMCAGeneratorProps {
     asset: {
@@ -70,55 +70,55 @@ export function DMCAGenerator({ asset, onClose }: DMCAGeneratorProps) {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
 
-            <div className="relative w-full max-w-2xl bg-gray-900 rounded-3xl shadow-2xl border border-gray-800 overflow-hidden">
+            <div className="card-premium w-full max-w-2xl shadow-2xl overflow-hidden relative border-purple-500/20">
                 {/* Header */}
-                <div className="p-6 border-b border-gray-800 bg-gradient-to-r from-red-900/20 to-orange-900/20">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-red-500/20 rounded-2xl">
-                            <Scale className="h-6 w-6 text-red-400" />
+                <div className="p-8 border-b border-zinc-800/50 bg-gradient-to-r from-purple-500/10 to-transparent">
+                    <div className="flex items-center gap-6">
+                        <div className="p-4 bg-purple-500/10 rounded-2xl border border-purple-500/20">
+                            <Scale className="h-7 w-7 text-purple-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-white">DMCA Takedown Generator</h2>
-                            <p className="text-sm text-gray-400">Automated enforcement for stolen content</p>
+                            <h2 className="text-2xl font-bold text-white tracking-tight">Enforcement Engine</h2>
+                            <p className="text-sm text-zinc-500 mt-1">Legally-compliant DMCA takedown automation</p>
                         </div>
                     </div>
 
                     {/* Progress Steps */}
-                    <div className="flex items-center gap-2 mt-6">
+                    <div className="flex items-center gap-2 mt-8">
                         {['Platform', 'Details', 'Generate'].map((label, idx) => (
                             <div key={idx} className="flex items-center gap-2 flex-1">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step > idx + 1 ? 'bg-green-500 text-white' :
-                                        step === idx + 1 ? 'bg-red-500 text-white' :
-                                            'bg-gray-700 text-gray-400'
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black transition-all duration-500 border ${step > idx + 1 ? 'bg-green-500 border-green-400 text-white' :
+                                    step === idx + 1 ? 'bg-purple-600 border-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]' :
+                                        'bg-zinc-900 border-zinc-800 text-zinc-600'
                                     }`}>
                                     {step > idx + 1 ? '✓' : idx + 1}
                                 </div>
-                                <span className={`text-xs font-medium ${step >= idx + 1 ? 'text-white' : 'text-gray-500'}`}>
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${step >= idx + 1 ? 'text-zinc-200' : 'text-zinc-600'}`}>
                                     {label}
                                 </span>
-                                {idx < 2 && <div className={`flex-1 h-0.5 ${step > idx + 1 ? 'bg-green-500' : 'bg-gray-700'}`} />}
+                                {idx < 2 && <div className={`flex-1 h-[2px] rounded-full mx-2 ${step > idx + 1 ? 'bg-green-500/50' : 'bg-zinc-800'}`} />}
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 max-h-[60vh] overflow-auto">
+                <div className="p-8 max-h-[60vh] overflow-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
                     {step === 1 && (
-                        <div className="space-y-4">
-                            <p className="text-gray-400 text-sm mb-6">Select the platform where your content was stolen:</p>
-                            <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-6">
+                            <p className="text-zinc-500 text-sm font-medium">Identify the origin of infringement:</p>
+                            <div className="grid grid-cols-2 gap-4">
                                 {platforms.map((p) => (
                                     <button
                                         key={p.id}
                                         onClick={() => setPlatform(p.id)}
-                                        className={`p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${platform === p.id
-                                                ? 'border-red-500 bg-red-500/10 text-white'
-                                                : 'border-gray-700 hover:border-gray-600 text-gray-300'
+                                        className={`p-6 rounded-2xl border-2 transition-all duration-300 flex items-center gap-4 group/p ${platform === p.id
+                                            ? 'border-purple-500 bg-purple-500/10 text-white shadow-[0_0_20px_rgba(168,85,247,0.1)]'
+                                            : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 text-zinc-500 hover:text-zinc-300'
                                             }`}
                                     >
-                                        <span className="text-2xl">{p.icon}</span>
-                                        <span className="font-medium">{p.name}</span>
+                                        <span className="text-3xl group-hover/p:scale-110 transition-transform">{p.icon}</span>
+                                        <span className="font-bold tracking-tight">{p.name}</span>
                                     </button>
                                 ))}
                             </div>
@@ -126,53 +126,58 @@ export function DMCAGenerator({ asset, onClose }: DMCAGeneratorProps) {
                     )}
 
                     {step === 2 && (
-                        <div className="space-y-5">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                                    Infringing URL *
-                                </label>
-                                <input
-                                    type="url"
-                                    value={infringementUrl}
-                                    onChange={(e) => setInfringementUrl(e.target.value)}
-                                    placeholder="https://example.com/stolen-content"
-                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-8">
+                            <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                                        Your Name *
+                                    <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-3">
+                                        Evidence URL
                                     </label>
                                     <input
-                                        type="text"
-                                        value={ownerName}
-                                        onChange={(e) => setOwnerName(e.target.value)}
-                                        placeholder="John Doe"
-                                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                        type="url"
+                                        value={infringementUrl}
+                                        onChange={(e) => setInfringementUrl(e.target.value)}
+                                        placeholder="https://platform.com/stolen-post-id"
+                                        className="w-full px-5 py-4 bg-zinc-900/50 border border-zinc-800 rounded-xl text-white placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                                        Your Email *
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={ownerEmail}
-                                        onChange={(e) => setOwnerEmail(e.target.value)}
-                                        placeholder="john@example.com"
-                                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                    />
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-3">
+                                            Legal Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={ownerName}
+                                            onChange={(e) => setOwnerName(e.target.value)}
+                                            placeholder="Full legal name"
+                                            className="w-full px-5 py-4 bg-zinc-900/50 border border-zinc-800 rounded-xl text-white placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-3">
+                                            Active Email
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={ownerEmail}
+                                            onChange={(e) => setOwnerEmail(e.target.value)}
+                                            placeholder="Contact email"
+                                            className="w-full px-5 py-4 bg-zinc-900/50 border border-zinc-800 rounded-xl text-white placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-                                <div className="flex items-start gap-3">
-                                    <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
+                            <div className="p-5 bg-purple-500/5 border border-purple-500/20 rounded-2xl relative overflow-hidden group/alert">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform">
+                                    <AlertTriangle className="h-16 w-16 text-purple-500" />
+                                </div>
+                                <div className="flex items-start gap-4 relative z-10">
+                                    <AlertTriangle className="h-5 w-5 text-purple-500 mt-1" />
                                     <div>
-                                        <p className="text-sm text-yellow-200 font-medium">Legal Notice</p>
-                                        <p className="text-xs text-yellow-300/70 mt-1">
-                                            By generating this DMCA notice, you confirm under penalty of perjury that you are the copyright owner.
+                                        <p className="text-sm text-purple-200 font-bold tracking-tight">Legal Verification Requirement</p>
+                                        <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                                            By proceeding, you attest under penalty of perjury that you are the primary copyright holder or authorized agent for this work.
                                         </p>
                                     </div>
                                 </div>
@@ -181,72 +186,83 @@ export function DMCAGenerator({ asset, onClose }: DMCAGeneratorProps) {
                     )}
 
                     {step === 3 && generatedNotice && (
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                    <span className="text-sm font-medium text-green-400">Notice Generated</span>
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)] animate-pulse" />
+                                    <span className="text-sm font-bold text-green-400 tracking-tight">Legal Notice Prepared</span>
                                 </div>
-                                <span className="text-xs font-mono text-gray-500">{generatedNotice.notice?.notice_id}</span>
+                                <span className="text-[10px] font-mono font-bold text-zinc-600 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
+                                    ID: {generatedNotice.notice?.notice_id}
+                                </span>
                             </div>
 
-                            <div className="bg-gray-800 p-4 rounded-xl max-h-[300px] overflow-auto">
-                                <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono">
+                            <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800/80 max-h-[300px] overflow-auto group/code relative">
+                                <div className="sticky top-0 float-right p-1 opacity-0 group-hover/code:opacity-100 transition-opacity">
+                                    <FileText className="h-4 w-4 text-zinc-700" />
+                                </div>
+                                <pre className="text-xs text-zinc-400 whitespace-pre-wrap font-mono leading-relaxed">
                                     {generatedNotice.notice?.body}
                                 </pre>
                             </div>
 
-                            <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-                                <p className="text-sm text-blue-200 font-medium mb-2">Submission Instructions:</p>
-                                <p className="text-xs text-blue-300/70">{generatedNotice.instructions?.notes}</p>
-                                {generatedNotice.instructions?.url && (
-                                    <a
-                                        href={generatedNotice.instructions.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 mt-2 text-blue-400 hover:text-blue-300 text-sm"
-                                    >
-                                        Open Submission Form <ExternalLink className="h-3 w-3" />
-                                    </a>
-                                )}
+                            <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-2xl">
+                                <div className="flex flex-col gap-3">
+                                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Next Steps:</p>
+                                    <p className="text-sm text-zinc-300 leading-relaxed font-medium">{generatedNotice.instructions?.notes}</p>
+                                    {generatedNotice.instructions?.url && (
+                                        <a
+                                            href={generatedNotice.instructions.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 mt-4 text-purple-400 hover:text-purple-300 font-bold text-sm transition-colors group/link"
+                                        >
+                                            Execute Submission Flow <ExternalLink className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                                        </a>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-gray-800 flex justify-between">
+                <div className="p-8 border-t border-zinc-800/50 bg-zinc-900/30 flex justify-between items-center">
                     <button
                         onClick={step === 1 ? onClose : () => setStep(step - 1)}
-                        className="px-6 py-3 text-gray-400 hover:text-white transition-colors"
+                        className="text-zinc-500 hover:text-white font-bold text-sm transition-colors tracking-tight"
                     >
-                        {step === 1 ? 'Cancel' : 'Back'}
+                        {step === 1 ? 'Discard Action' : 'Modify Selection'}
                     </button>
 
                     {step < 3 ? (
                         <button
                             onClick={step === 1 ? () => setStep(2) : handleGenerate}
                             disabled={(step === 1 && !platform) || (step === 2 && (!infringementUrl || !ownerName || !ownerEmail)) || isLoading}
-                            className="px-6 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            className="btn-primary group/next disabled:opacity-30 disabled:hover:scale-100"
                         >
                             {isLoading ? (
-                                <>Generating...</>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <span>Generating...</span>
+                                </div>
                             ) : step === 1 ? (
-                                <>Continue</>
+                                <>Initialize Process <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" /></>
                             ) : (
-                                <><FileText className="h-4 w-4" /> Generate Notice</>
+                                <><FileText className="h-4 w-4" /> Finalize Legal Notice</>
                             )}
                         </button>
                     ) : (
                         <button
                             onClick={copyToClipboard}
-                            className="px-6 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-all flex items-center gap-2"
+                            className={`px-8 py-3 rounded-xl font-bold transition-all duration-300 flex items-center gap-2 shadow-lg active:scale-95 ${copied ? 'bg-green-600 text-white shadow-green-500/20' : 'bg-purple-600 text-white shadow-purple-500/20 hover:bg-purple-500'}`}
                         >
-                            {copied ? <><Check className="h-4 w-4" /> Copied!</> : <><Copy className="h-4 w-4" /> Copy Notice</>}
+                            {copied ? <><Check className="h-4 w-4" /> Content Copied</> : <><Copy className="h-4 w-4" /> Copy Notice Payload</>}
                         </button>
                     )}
                 </div>
             </div>
+
         </div>
     );
 }
