@@ -34,7 +34,8 @@ export default function Navbar() {
     };
 
     const isAuthPage = pathname === "/login" || pathname === "/register";
-    if (isAuthPage) return null;
+    const isHomePage = pathname === "/";
+    if (isAuthPage || isHomePage) return null;
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0A0A0F]/80 backdrop-blur-md border-b border-zinc-800/50" aria-label="Main Navigation">

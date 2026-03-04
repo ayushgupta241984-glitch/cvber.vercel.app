@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Shield, Zap, Globe, Lock, Play } from "lucide-react";
+import { ArrowRight, Shield, Zap, Globe, Lock, Play, Search, BookOpen } from "lucide-react";
 import Logo from "@/components/common/Logo";
 import StructuredData from "@/components/seo/StructuredData";
 import { useState, useEffect } from "react";
@@ -75,9 +75,14 @@ export default function Home() {
                     </Link>
 
                     <div className="hidden md:flex items-center gap-10 text-[13px] font-bold uppercase tracking-widest text-zinc-500">
-                        {["Product", "Features", "Methodology", "Pricing"].map((item) => (
-                            <Link key={item} href={`#${item.toLowerCase()}`} className="hover:text-white transition-colors">
-                                {item}
+                        {[
+                            { name: "Features", href: "/features" },
+                            { name: "How It Works", href: "/how-it-works" },
+                            { name: "Art Hub", href: "/art-hub" },
+                            { name: "Verify", href: "/verify" }
+                        ].map((item) => (
+                            <Link key={item.name} href={item.href} className="hover:text-white transition-colors">
+                                {item.name}
                             </Link>
                         ))}
                     </div>
@@ -144,8 +149,8 @@ export default function Home() {
                             {isLoggedIn ? "Go to Dashboard" : "Secure Your Assets"}
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </Link>
-                        <button className="px-10 py-5 bg-zinc-900/40 hover:bg-zinc-900 border border-white/5 rounded-full font-bold text-sm uppercase tracking-widest transition-all flex items-center gap-3 backdrop-blur-xl">
-                            <Play className="w-4 h-4 fill-current" />
+                        <button className="px-10 py-5 bg-zinc-900/40 hover:bg-zinc-900 border border-white/5 rounded-full font-bold text-sm uppercase tracking-widest transition-all flex items-center gap-3 backdrop-blur-xl group">
+                            <Play className="w-4 h-4 fill-current group-hover:text-purple-400 transition-colors" />
                             Watch Demo
                         </button>
                     </motion.div>
@@ -156,21 +161,21 @@ export default function Home() {
             <section className="relative z-10 py-24 border-y border-white/5 bg-white/[0.01]">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-12 opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-1000 cursor-default">
-                        <div className="flex flex-col items-center md:items-start">
+                        <div className="flex flex-col items-center md:items-start text-center md:text-left">
                             <span className="text-4xl font-black tracking-tighter mb-1">10,000+</span>
-                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">Global Assets</span>
+                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest block">Global Assets</span>
                         </div>
-                        <div className="flex flex-col items-center md:items-start">
+                        <div className="flex flex-col items-center md:items-start text-center md:text-left">
                             <span className="text-4xl font-black tracking-tighter mb-1">24%</span>
-                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">Theft Reduction</span>
+                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest block">Theft Reduction</span>
                         </div>
-                        <div className="flex flex-col items-center md:items-start">
+                        <div className="flex flex-col items-center md:items-start text-center md:text-left">
                             <span className="text-4xl font-black tracking-tighter mb-1">99.9%</span>
-                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">Neural Accuracy</span>
+                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest block">Neural Accuracy</span>
                         </div>
-                        <div className="flex flex-col items-center md:items-start">
-                            <span className="text-4xl font-black tracking-tighter mb-1">INSTANT</span>
-                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">C2PA Response</span>
+                        <div className="flex flex-col items-center md:items-start text-center md:text-left">
+                            <span className="text-4xl font-black tracking-tighter mb-1">PROVEN</span>
+                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest block">C2PA Protocol</span>
                         </div>
                     </div>
                 </div>
@@ -180,65 +185,93 @@ export default function Home() {
             <section id="features" className="relative z-10 py-40 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="mb-24">
-                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase italic">Built for the<br />Modern Creator</h2>
-                        <p className="text-zinc-500 max-w-md font-medium">Enterprise-grade security simplified for the freelance era.</p>
+                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase italic">The Anatomy of<br />True Provenance</h2>
+                        <p className="text-zinc-500 max-w-md font-medium text-lg">Sophisticated art security, simplified for the next generation of creators.</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                        {/* 1. Neural Monitoring - Large Card */}
                         <motion.div
                             whileHover={{ y: -8 }}
-                            className="md:col-span-8 group relative bg-[#0D0D10] border border-white/5 rounded-[3rem] p-12 overflow-hidden flex flex-col justify-between h-[500px]"
+                            className="md:col-span-8 group relative bg-[#0D0D10] border border-white/5 rounded-[3rem] p-12 overflow-hidden flex flex-col justify-between min-h-[500px]"
                         >
+                            <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-30 transition-opacity">
+                                <img src="/assets/neural-defense.png" alt="Neural Defense Visualization" className="w-full h-full object-cover grayscale" />
+                            </div>
                             <div className="relative z-10">
                                 <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-10">
-                                    <Shield className="w-8 h-8 text-purple-500" />
+                                    <Zap className="w-8 h-8 text-purple-500" />
                                 </div>
                                 <h3 className="text-4xl font-black tracking-tight mb-6 uppercase">Neural-Net Monitoring</h3>
-                                <p className="text-lg text-zinc-500 max-w-sm font-medium">Continuous deep-web scanning detects unauthorized usage of your digital fingerprints across platforms.</p>
+                                <p className="text-xl text-zinc-400 max-w-sm font-medium leading-relaxed">Continuous deep-web scanning detects unauthorized usage of your digital fingerprints across social platforms and marketplaces.</p>
                             </div>
-                            <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_100%_0%,rgba(168,85,247,0.15),transparent_50%)] pointer-events-none" />
+                            <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_100%_0%,rgba(168,85,247,0.1),transparent_60%)] pointer-events-none" />
                         </motion.div>
 
+                        {/* 2. Verify Card */}
                         <motion.div
                             whileHover={{ y: -8 }}
-                            className="md:col-span-4 bg-[#0D0D10] border border-white/5 rounded-[3rem] p-12 flex flex-col justify-between"
+                            className="md:col-span-4 group relative bg-[#0D0D10] border border-white/5 rounded-[3rem] p-12 flex flex-col justify-between overflow-hidden min-h-[500px]"
                         >
-                            <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-10">
-                                <Lock className="w-6 h-6 text-zinc-400" />
+                            <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity">
+                                <img src="/assets/verify.png" alt="Verify Assets Visual" className="w-full h-full object-cover" />
                             </div>
-                            <div>
-                                <h3 className="text-2xl font-black tracking-tight mb-4 uppercase">Immutable Provenance</h3>
-                                <p className="text-zinc-500 font-medium">Native C2PA integration creates a permanent, verifiable chain of custody in every file.</p>
-                            </div>
-                        </motion.div>
-
-                        <motion.div
-                            whileHover={{ y: -8 }}
-                            className="md:col-span-4 bg-[#0D0D10] border border-white/5 rounded-[3rem] p-12"
-                        >
-                            <Globe className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-10">
-                                <Zap className="w-6 h-6 text-zinc-400" />
-                            </Globe>
-                            <h3 className="text-2xl font-black tracking-tight mb-4 uppercase">Automated DMCA</h3>
-                            <p className="text-zinc-500 font-medium">One-click legal filings across 12,000 domains the moment theft is detected.</p>
-                        </motion.div>
-
-                        <motion.div
-                            whileHover={{ y: -8 }}
-                            className="md:col-span-8 bg-[#0D0D10] border border-white/5 rounded-[3rem] p-12 flex items-center justify-between overflow-hidden relative"
-                        >
                             <div className="relative z-10">
-                                <h3 className="text-4xl font-black tracking-tight mb-4 uppercase">Universal SDK</h3>
-                                <p className="text-lg text-zinc-500 max-w-xs font-medium">Protect your workflow with two lines of code.</p>
+                                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-10">
+                                    <Search className="w-6 h-6 text-zinc-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black tracking-tight mb-4 uppercase">Asset Verification</h3>
+                                    <p className="text-zinc-500 font-medium leading-relaxed">Instantly verify the origin of any file using our decentralized C2PA validator. Proof in seconds.</p>
+                                </div>
                             </div>
-                            <div className="hidden sm:block p-8 rounded-3xl bg-black border border-white/5 font-mono text-xs text-purple-400/60 leading-relaxed">
-                                <pre>
-                                    {`const protect = await Cvber.init({
-  assets: ["./portfolio/*"],
-  autoReport: true
+                            <Link href="/verify" className="relative z-10 mt-8 text-xs font-bold uppercase tracking-widest text-purple-500 flex items-center gap-2 group/link">
+                                Launch Validator <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
+                            </Link>
+                        </motion.div>
+
+                        {/* 3. Art Hub Card */}
+                        <motion.div
+                            whileHover={{ y: -8 }}
+                            className="md:col-span-4 group relative bg-[#0D0D10] border border-white/5 rounded-[3rem] p-12 flex flex-col justify-between overflow-hidden min-h-[500px]"
+                        >
+                            <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity">
+                                <img src="/assets/art-hub.png" alt="Art Hub Visual" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="relative z-10">
+                                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-10">
+                                    <BookOpen className="w-6 h-6 text-zinc-400" />
+                                </div>
+                                <h3 className="text-2xl font-black tracking-tight mb-4 uppercase">The Art Hub</h3>
+                                <p className="text-zinc-500 font-medium leading-relaxed">Your mission control for art protection. Access DMCA templates, scraping defense guides, and legal toolkits.</p>
+                            </div>
+                            <Link href="/art-hub" className="relative z-10 mt-8 text-xs font-bold uppercase tracking-widest text-purple-500 flex items-center gap-2 group/link">
+                                Enter Hub <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
+                            </Link>
+                        </motion.div>
+
+                        {/* 4. Universal SDK - Large Card */}
+                        <motion.div
+                            whileHover={{ y: -8 }}
+                            className="md:col-span-8 group relative bg-[#0D0D10] border border-white/5 rounded-[3rem] p-12 flex flex-col md:flex-row items-start md:items-center justify-between overflow-hidden relative min-h-[500px]"
+                        >
+                            <div className="relative z-10 max-w-sm">
+                                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-10">
+                                    <Shield className="w-6 h-6 text-zinc-400" />
+                                </div>
+                                <h3 className="text-4xl font-black tracking-tight mb-6 uppercase">Universal Defense SDK</h3>
+                                <p className="text-lg text-zinc-500 font-medium leading-relaxed">Protect your entire portfolio workflow with two lines of code. Automated reporting and provenance injection built-in.</p>
+                            </div>
+                            <div className="mt-8 md:mt-0 relative z-10 p-8 rounded-3xl bg-black/80 border border-white/5 font-mono text-xs text-purple-400/60 leading-relaxed backdrop-blur-md">
+                                <pre className="whitespace-pre-wrap">
+                                    {`const defense = await Cvber.init({
+  vault: "./assets/*",
+  autoReport: true,
+  monitor: true
 });`}
                                 </pre>
                             </div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-purple-500/5 to-transparent pointer-events-none" />
                         </motion.div>
                     </div>
                 </div>
@@ -248,25 +281,25 @@ export default function Home() {
             <section className="relative z-10 py-40 px-6">
                 <div className="max-w-5xl mx-auto rounded-[4rem] bg-gradient-to-br from-purple-600 to-purple-800 p-16 md:p-24 text-center overflow-hidden relative shadow-[0_40px_100px_rgba(168,85,247,0.3)]">
                     <div className="relative z-10 flex flex-col items-center">
-                        <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-8 uppercase italic">Join the Resistance.</h2>
+                        <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-8 uppercase italic leading-none">Join the Resistance.</h2>
                         <p className="text-lg text-purple-100/70 max-w-xl mb-12 font-medium">The era of unchecked art theft is over. Reclaim your digital sovereignty today with CVBER.</p>
                         <Link
                             href={isLoggedIn ? "/dashboard" : "/register"}
-                            className="px-12 py-6 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all flex items-center gap-3 active:scale-95"
+                            className="px-12 py-6 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all flex items-center gap-3 active:scale-95 shadow-xl shadow-black/20"
                         >
-                            Get Protected Now
+                            {isLoggedIn ? "Access Dashboard" : "Secure Your Creative Soul"}
                             <ArrowRight className="w-5 h-5" />
                         </Link>
                     </div>
                     {/* Decorative background logo */}
                     <div className="absolute bottom-0 right-0 p-12 opacity-5 pointer-events-none">
-                        <Logo size="xl" className="w-[400px] h-[400px]" />
+                        <Logo size="xl" className="w-[400px] h-[400px] -mr-20 -mb-20" />
                     </div>
                 </div>
             </section>
 
             {/* Footer */}
-            <footer className="relative z-10 py-20 border-t border-white/5 px-6">
+            <footer className="relative z-10 py-24 border-t border-white/5 px-6">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12 text-zinc-600 font-bold text-[10px] uppercase tracking-[0.3em]">
                     <div className="flex items-center gap-3 opacity-30 grayscale brightness-200">
                         <Logo className="w-6 h-6" />
@@ -277,6 +310,7 @@ export default function Home() {
                         <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
                         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
                         <Link href="/contact" className="hover:text-white transition-colors">Support</Link>
+                        <Link href="/art-hub" className="hover:text-white transition-colors">Help</Link>
                     </div>
 
                     <div className="opacity-40">
