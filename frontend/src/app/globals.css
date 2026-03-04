@@ -2,63 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
-    --background: #0A0A0F;
+    --background: #050505;
     --foreground: #FFFFFF;
-    --card: #12121A;
+    --card: #09090b;
     --card-foreground: #FFFFFF;
     --primary: #A855F7;
     --primary-foreground: #FFFFFF;
-    --secondary: #1F2937;
-    --secondary-foreground: #F3F4F6;
-    --muted: #1F2937;
-    --muted-foreground: #9CA3AF;
+    --secondary: #18181B;
+    --secondary-foreground: #F4F4F5;
+    --muted: #18181B;
+    --muted-foreground: #A1A1AA;
     --accent: #A855F7;
     --accent-foreground: #FFFFFF;
     --border: #27272A;
     --input: #27272A;
     --ring: #A855F7;
+    --radius: 1rem;
 }
 
 @layer base {
     * {
-        @apply border-zinc-800;
+        @apply border-zinc-800/60;
     }
 
     body {
-        @apply bg-[#0A0A0F] text-white;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        @apply bg-[#050505] text-zinc-100;
+        font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
     }
 }
 
 @layer components {
     .btn-primary {
-        @apply bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] active:scale-95;
+        @apply relative bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2;
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+    }
+
+    .btn-primary:hover {
+        box-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
     }
 
     .btn-secondary {
-        @apply bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200;
+        @apply bg-zinc-900/50 border border-zinc-800/50 hover:bg-zinc-800/80 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 backdrop-blur-sm;
     }
 
-    .card {
-        @apply bg-[#12121A]/80 backdrop-blur-md border border-zinc-800/50 rounded-2xl shadow-xl hover:shadow-purple-500/10 transition-all duration-300;
+    .card-premium {
+        @apply bg-[#0D0D14]/80 backdrop-blur-xl border border-zinc-800/50 rounded-2xl shadow-2xl hover:border-purple-500/20 transition-all duration-500;
     }
 
-    .glass {
-        @apply bg-white/5 backdrop-blur-md border border-white/10;
+    .glass-header {
+        @apply sticky top-4 mx-4 z-50 px-6 py-4 rounded-3xl bg-black/60 backdrop-blur-2xl border border-white/5 shadow-2xl;
     }
 
-    .glow-purple {
-        box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+    .editorial-border {
+        @apply border border-zinc-900 hover:border-zinc-700 transition-colors duration-300;
+    }
+
+    .text-glow-purple {
+        text-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+    }
+
+    .glow-border {
+        @apply relative;
+    }
+
+    .glow-border::after {
+        content: '';
+        @apply absolute inset-0 rounded-[inherit] border border-purple-500/20 pointer-events-none;
+        box-shadow: inset 0 0 10px rgba(168, 85, 247, 0.1);
     }
 }
 
 @layer utilities {
-    .text-balance {
-        text-wrap: balance;
+    .text-gradient {
+        @apply bg-gradient-to-r from-white via-white to-zinc-500 bg-clip-text text-transparent;
     }
 
-    .text-glow {
-        text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+    .bg-grid-white {
+        background-size: 40px 40px;
+        background-image:
+            linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     }
 }

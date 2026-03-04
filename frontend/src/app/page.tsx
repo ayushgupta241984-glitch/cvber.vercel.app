@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, Check, ArrowRight, Upload, Stamp, Award } from 'lucide-react';
+import { Shield, Check, ArrowRight, Upload, Stamp, Award, Flame, Zap, MousePointer2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Logo from '@/components/common/Logo';
 import StructuredData from '@/components/seo/StructuredData';
@@ -31,61 +31,58 @@ export default function Home() {
     return (
         <div className="flex flex-col bg-[#0A0A0F]">
             <StructuredData />
-            {/* Hero Section */}
-            <section className="relative pt-20 pb-24 overflow-hidden">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid lg:grid-cols-2 gap-12 items-center">
-                        <div className="text-left relative z-10">
-                            <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-white mb-8 leading-tight">
-                                How to Protect Your <br />
-                                <span className="text-purple-500 text-glow">Art Online</span>
-                            </h1>
-                            <p className="text-xl text-zinc-400 mb-10 leading-relaxed max-w-xl">
-                                Professional AI-powered protection for digital artists, photographers, and creators.
-                                Generate certificates of origin, detect AI theft, and automate DMCA takedowns
-                                with blockchain-backed security.
+            {/* Immersive 3D Hero Section */}
+            <section className="relative min-h-[90vh] flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#9333EA] via-[#A855F7] to-[#7E22CE]">
+                {/* Background Giant Typography */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none">
+                    <h1 className="text-[38vw] md:text-[25vw] font-black text-white/20 mix-blend-overlay tracking-tighter leading-none whitespace-nowrap">
+                        PROTECT
+                    </h1>
+                </div>
+
+                {/* 3D Centerpiece Elements */}
+                <div className="relative z-10 flex flex-col items-center justify-center h-full mt-12 md:mt-0 w-full max-w-7xl mx-auto px-6">
+                    {/* The 3D Shield image */}
+                    <div className="relative w-full max-w-[280px] sm:max-w-[350px] md:max-w-[500px] flex items-center justify-center animate-float group cursor-pointer z-20">
+                        {/* Interactive Glow Behind Shield */}
+                        <div className="absolute inset-0 bg-white/20 blur-[60px] md:blur-[100px] rounded-full font-black scale-50 group-hover:scale-110 transition-all duration-700 pointer-events-none" />
+                        <img
+                            src="/hero-shield.png"
+                            alt="CVBER 3D Futuristic Shield"
+                            className="w-[120%] h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)] md:drop-shadow-[0_40px_80px_rgba(0,0,0,0.8)] group-hover:scale-105 transition-transform duration-700 relative z-10"
+                        />
+                        <div className="absolute bottom-4 md:bottom-10 px-4 py-2 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full text-white text-[10px] uppercase tracking-widest font-bold z-20 opacity-0 group-hover:opacity-100 group-hover:-translate-y-4 transition-all duration-300">
+                            Quantum Encrypted
+                        </div>
+                    </div>
+
+                    {/* Editorial Foreground UI - Bottom Left & Right */}
+                    <div className="absolute inset-x-0 bottom-8 md:bottom-12 flex flex-col-reverse md:flex-row justify-between items-center md:items-end px-6 md:px-12 z-30 gap-8 md:gap-0">
+
+                        <div className="max-w-sm text-center md:text-left">
+                            <h2 className="text-white font-bold tracking-widest uppercase text-xs md:text-sm mb-2 md:mb-3 opacity-90 mix-blend-overlay mix-blend-screen hidden md:block">
+                                Enterprise Protection
+                            </h2>
+                            <p className="text-white/80 text-xs leading-relaxed font-medium hidden md:block">
+                                Professional AI-powered defense for digital creators. The quality is absolute, backed natively, and the code is a dream. The utility scope is excellent. Thank you! We strive to earn and keep your trust.
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <HeroButton />
-                                <Link href="/how-it-works" className="btn-secondary text-center">
-                                    See How It Works
-                                </Link>
+                            <div className="flex gap-3 mt-0 md:mt-6 justify-center md:justify-start">
+                                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.1)] text-white hover:bg-white hover:text-purple-600 transition-colors cursor-pointer animate-float">
+                                    <ArrowRight className="w-4 h-4 rotate-180" />
+                                </div>
+                                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.1)] text-white hover:bg-white hover:text-purple-600 transition-colors cursor-pointer animate-float-delayed">
+                                    <ArrowRight className="w-4 h-4" />
+                                </div>
                             </div>
                         </div>
 
-                        {/* Certificate Card Preview */}
-                        <div className="relative lg:ml-10">
-                            <div className="card p-8 bg-[#12121A]/80 backdrop-blur-xl relative z-10 border-purple-500/20">
-                                <div className="flex items-center gap-4 mb-8">
-                                    <Logo size="md" alt="CVBER platform logo - Digital Art Protection" />
-                                    <div>
-                                        <h3 className="font-bold text-white">Certificate of Origin</h3>
-                                        <p className="text-sm text-zinc-500 font-mono">CVB-2024-001234</p>
-                                    </div>
-                                </div>
-                                <div className="space-y-4 mb-8">
-                                    <div className="flex justify-between text-sm py-2 border-b border-zinc-800">
-                                        <span className="text-zinc-500">File:</span>
-                                        <span className="font-medium text-white">digital-art-protection.jpg</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm py-2 border-b border-zinc-800">
-                                        <span className="text-zinc-500">Protected:</span>
-                                        <span className="font-medium text-white">Feb 18, 2026</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm py-2 border-b border-zinc-800">
-                                        <span className="text-zinc-500">Status:</span>
-                                        <span className="font-semibold text-purple-400 flex items-center gap-1">
-                                            Verified <Check className="w-4 h-4" />
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="aspect-square w-24 mx-auto bg-zinc-900/50 border border-zinc-800 rounded-lg flex items-center justify-center text-[10px] text-zinc-600 font-mono text-center">
-                                    QR Code for Authentication
-                                </div>
-                            </div>
-                            {/* Decorative background circle */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-purple-600/10 rounded-full -z-10 blur-3xl opacity-50 animate-pulse-slow" />
+                        <div className="text-center md:text-right flex flex-col items-center md:items-end p-4 md:p-0 bg-black/40 md:bg-transparent rounded-2xl md:rounded-none backdrop-blur-md md:backdrop-blur-none border border-white/10 md:border-transparent mt-4 md:mt-0">
+                            <HeroButton />
+                            <Link href="/how-it-works" className="mt-4 md:mt-6 text-white uppercase tracking-widest text-[10px] md:text-[11px] font-black flex items-center gap-2 hover:text-white/70 transition-colors group">
+                                EXPLORE ALL <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </Link>
                         </div>
+
                     </div>
                 </div>
             </section>

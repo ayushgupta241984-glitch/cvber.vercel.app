@@ -27,6 +27,8 @@ const config: Config = {
                 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                 'gradient': 'gradient 8s linear infinite',
                 'scan': 'scan 2s ease-in-out infinite',
+                'float': 'float 8s ease-in-out infinite',
+                'float-delayed': 'float 8s ease-in-out 4s infinite',
             },
             keyframes: {
                 gradient: {
@@ -42,6 +44,11 @@ const config: Config = {
                 scan: {
                     '0%, 100%': { transform: 'translateY(-100%)' },
                     '50%': { transform: 'translateY(100%)' },
+                },
+                float: {
+                    '0%': { transform: 'translateY(0px)' },
+                    '50%': { transform: 'translateY(-25px)' },
+                    '100%': { transform: 'translateY(0px)' },
                 },
             },
             backgroundImage: {
