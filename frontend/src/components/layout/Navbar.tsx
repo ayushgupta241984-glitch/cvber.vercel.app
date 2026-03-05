@@ -13,10 +13,19 @@ export default function Navbar() {
     useEffect(() => {
         const checkAuth = async () => {
             const token = localStorage.getItem('access_token');
+            const cachedName = localStorage.getItem('user_full_name');
+
+            if (cachedName) {
+                setUser({ full_name: cachedName });
+            }
+
             if (token) {
                 try {
                     const profile = await apiClient.getUserProfile();
                     setUser(profile);
+                    if (profile.full_name) {
+                        localStorage.setItem('user_full_name', profile.full_name);
+                    }
                 } catch (err) {
                     console.error("Failed to load user", err);
                 }
@@ -58,14 +67,14 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {user ? (
+                        {(user || localStorage.getItem('access_token')) ? (
                             <div className="flex items-center gap-3 pl-4 border-l border-zinc-800">
                                 <div className="flex flex-col items-end hidden sm:flex">
                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500/80 leading-none mb-1">Authenticated</span>
-                                    <span className="text-sm font-bold text-white tracking-tight">{user.full_name}</span>
+                                    <span className="text-sm font-bold text-white tracking-tight">{user?.full_name || "Logged In"}</span>
                                 </div>
                                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-purple-500/20 border border-white/10 group-hover:scale-105 transition-transform">
-                                    {user.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                    {(user?.full_name || "U").split(' ').map(n => n[0]).join('').toUpperCase()}
                                 </div>
                             </div>
                         ) : (

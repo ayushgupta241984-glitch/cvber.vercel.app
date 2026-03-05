@@ -27,6 +27,7 @@ export default function RegisterPage() {
             // Store token (auto-login)
             if (result.access_token) {
                 localStorage.setItem('access_token', result.access_token);
+                localStorage.setItem('user_full_name', fullName);
                 // Redirect to dashboard
                 router.push('/dashboard');
             } else {

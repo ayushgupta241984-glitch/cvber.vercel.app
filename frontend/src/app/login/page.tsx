@@ -23,8 +23,11 @@ export default function LoginPage() {
         try {
             const result = await apiClient.login(email, password);
 
-            // Store token
+            // Store token and name
             localStorage.setItem('access_token', result.access_token);
+            if (result.user?.full_name) {
+                localStorage.setItem('user_full_name', result.user.full_name);
+            }
 
             // Redirect to dashboard
             router.push('/dashboard');
