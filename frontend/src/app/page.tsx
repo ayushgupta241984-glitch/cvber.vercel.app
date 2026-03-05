@@ -95,7 +95,7 @@ export default function Home() {
                             Log in
                         </Link>
                         <Link
-                            href={isLoggedIn ? "/dashboard" : "/register"}
+                            href="/register"
                             className="px-8 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition-all active:scale-95 shadow-[0_4px_20px_rgba(255,255,255,0.2)]"
                         >
                             Get Started
@@ -144,7 +144,7 @@ export default function Home() {
                             href="/register"
                             className="group px-10 py-5 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all flex items-center gap-3 active:scale-95 shadow-[0_20px_40px_rgba(255,255,255,0.1)]"
                         >
-                            {isLoggedIn ? "Go to Dashboard" : "Protect My Assets"}
+                            Protect My Assets
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </motion.div>
@@ -278,10 +278,10 @@ export default function Home() {
                         <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-8 uppercase italic leading-none">Join the Resistance.</h2>
                         <p className="text-lg text-purple-100/70 max-w-xl mb-12 font-medium">The era of unchecked art theft is over. Reclaim your digital sovereignty today with CVBER.</p>
                         <Link
-                            href={isLoggedIn ? "/dashboard" : "/register"}
+                            href="/register"
                             className="px-12 py-6 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all flex items-center gap-3 active:scale-95 shadow-xl shadow-black/20"
                         >
-                            {isLoggedIn ? "Access Dashboard" : "Secure Your Creative Soul"}
+                            Secure Your Creative Soul
                             <ArrowRight className="w-5 h-5" />
                         </Link>
                     </div>
