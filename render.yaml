@@ -19,3 +19,23 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         value: "*"
+      - key: C2PA_SERVICE_URL
+        fromService:
+            name: cvber-c2pa
+            type: web
+            property: host
+
+  - type: web
+    name: cvber-c2pa
+    env: docker
+    dockerContext: c2pa-service
+    dockerfilePath: Dockerfile
+    plan: free
+    region: ohio
+    numInstances: 1
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
