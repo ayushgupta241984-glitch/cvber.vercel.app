@@ -8,7 +8,7 @@ import { ScreenshotGuard } from '@/components/security/ScreenshotGuard';
 import { FileViewer } from '@/components/dashboard/FileViewer';
 import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
 import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
-import { LayoutGrid, Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, MessageSquare, Settings, LogOut, ChevronRight, ArrowUpRight } from 'lucide-react';
+import { LayoutGrid, Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, Settings, LogOut, ChevronRight, ArrowUpRight } from 'lucide-react';
 
 export default function DashboardPage() {
     const [activeTab, setActiveTab] = useState<'ai' | 'blockchain'>('ai');
@@ -115,9 +115,6 @@ export default function DashboardPage() {
 
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: Layout },
-        { id: 'enforcement', label: 'Enforcement', icon: Shield },
-        { id: 'analytics', label: 'Analytics', icon: Activity },
-        { id: 'support', label: 'Support', icon: MessageSquare },
         { id: 'settings', label: 'Settings', icon: Settings },
     ];
 
