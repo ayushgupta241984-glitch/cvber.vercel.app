@@ -58,12 +58,26 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <Link href="/login" className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors">
-                            Log In
-                        </Link>
-                        <Link href="/register" className="btn-primary py-2 px-4 text-sm">
-                            Get Started
-                        </Link>
+                        {user ? (
+                            <div className="flex items-center gap-3 pl-4 border-l border-zinc-800">
+                                <div className="flex flex-col items-end hidden sm:flex">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500/80 leading-none mb-1">Authenticated</span>
+                                    <span className="text-sm font-bold text-white tracking-tight">{user.full_name}</span>
+                                </div>
+                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-purple-500/20 border border-white/10 group-hover:scale-105 transition-transform">
+                                    {user.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <Link href="/login" className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors">
+                                    Log In
+                                </Link>
+                                <Link href="/register" className="btn-primary py-2 px-4 text-sm">
+                                    Get Started
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

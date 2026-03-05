@@ -5,14 +5,24 @@ import { ArrowRight, Shield, Zap, Globe, Lock, Play, Search, BookOpen } from "lu
 import Logo from "@/components/common/Logo";
 import StructuredData from "@/components/seo/StructuredData";
 import { useState, useEffect } from "react";
+import { apiClient } from "@/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [user, setUser] = useState<{ full_name: string } | null>(null);
 
     useEffect(() => {
-        setIsLoggedIn(!!localStorage.getItem("access_token"));
+        const token = localStorage.getItem("access_token");
+        setIsLoggedIn(!!token);
+
+        if (token) {
+            apiClient.getUserProfile()
+                .then(profile => setUser(profile))
+                .catch(err => console.error("Failed to load user profile", err));
+        }
+
         const handleScroll = () => setIsScrolled(window.scrollY > 50);
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
@@ -88,18 +98,32 @@ export default function Home() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <Link
-                            href="/login"
-                            className="hidden sm:block px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors"
-                        >
-                            Log in
-                        </Link>
-                        <Link
-                            href="/register"
-                            className="px-8 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition-all active:scale-95 shadow-[0_4px_20px_rgba(255,255,255,0.2)]"
-                        >
-                            Get Started
-                        </Link>
+                        {user ? (
+                            <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+                                <div className="flex flex-col items-end hidden sm:flex">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500/80 leading-none mb-1">Active Session</span>
+                                    <span className="text-sm font-bold text-white tracking-tight">{user.full_name}</span>
+                                </div>
+                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-purple-500/20 border border-white/10 hover:scale-105 transition-transform cursor-pointer">
+                                    {user.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <Link
+                                    href="/login"
+                                    className="hidden sm:block px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors"
+                                >
+                                    Log in
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    className="px-8 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition-all active:scale-95 shadow-[0_4px_20px_rgba(255,255,255,0.2)]"
+                                >
+                                    Get Started
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </nav>
