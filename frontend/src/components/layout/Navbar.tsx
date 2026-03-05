@@ -58,31 +58,12 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {user ? (
-                            <>
-                                <span className="text-sm font-medium text-white capitalize">
-                                    Hi, {user.full_name || 'User'}
-                                </span>
-                                <button
-                                    onClick={handleLogout}
-                                    className="text-sm font-medium text-zinc-400 hover:text-red-400 transition-colors"
-                                >
-                                    Sign Out
-                                </button>
-                                <Link href="/dashboard" className="btn-primary py-2 px-4 text-sm">
-                                    Dashboard
-                                </Link>
-                            </>
-                        ) : (
-                            <>
-                                <Link href="/login" className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors">
-                                    Log In
-                                </Link>
-                                <Link href="/register" className="btn-primary py-2 px-4 text-sm">
-                                    Get Started
-                                </Link>
-                            </>
-                        )}
+                        <Link href="/login" className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors">
+                            Log In
+                        </Link>
+                        <Link href={user ? "/dashboard" : "/register"} className="btn-primary py-2 px-4 text-sm">
+                            Get Started
+                        </Link>
                     </div>
                 </div>
             </div>

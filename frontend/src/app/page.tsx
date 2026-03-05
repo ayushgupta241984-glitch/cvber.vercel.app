@@ -88,19 +88,17 @@ export default function Home() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {!isLoggedIn && (
-                            <Link
-                                href="/login"
-                                className="hidden sm:block px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors"
-                            >
-                                Log in
-                            </Link>
-                        )}
+                        <Link
+                            href="/login"
+                            className="hidden sm:block px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors"
+                        >
+                            Log in
+                        </Link>
                         <Link
                             href={isLoggedIn ? "/dashboard" : "/register"}
                             className="px-8 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition-all active:scale-95 shadow-[0_4px_20px_rgba(255,255,255,0.2)]"
                         >
-                            {isLoggedIn ? "Dashboard" : "Get Started"}
+                            Get Started
                         </Link>
                     </div>
                 </div>
