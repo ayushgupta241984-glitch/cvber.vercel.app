@@ -9,11 +9,13 @@ import Logo from "../common/Logo";
 export default function Navbar() {
     const pathname = usePathname();
     const [user, setUser] = useState<{ full_name: string } | null>(null);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         const checkAuth = async () => {
-            const token = localStorage.getItem('access_token');
-            const cachedName = localStorage.getItem('user_full_name');
+            const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+            const cachedName = typeof window !== 'undefined' ? localStorage.getItem('user_full_name') : null;
 
             if (cachedName) {
                 setUser({ full_name: cachedName });
@@ -67,7 +69,7 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {(user || localStorage.getItem('access_token')) ? (
+                        {(mounted && (user || localStorage.getItem('access_token'))) ? (
                             <div className="flex items-center gap-3 pl-4 border-l border-zinc-800">
                                 <div className="flex flex-col items-end hidden sm:flex">
                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500/80 leading-none mb-1">Authenticated</span>

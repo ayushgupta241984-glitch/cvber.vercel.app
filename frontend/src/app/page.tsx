@@ -12,8 +12,10 @@ export default function Home() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [user, setUser] = useState<{ full_name: string } | null>(null);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         const token = localStorage.getItem("access_token");
         const cachedName = localStorage.getItem("user_full_name");
 
