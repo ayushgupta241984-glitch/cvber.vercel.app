@@ -98,12 +98,14 @@ class VertexAIService:
     def _rule_based_analysis(self, file_name: str) -> Dict[str, Any]:
         """Apply hard-coded forensic rules before AI runs."""
         is_screenshot_hint = "screenshot" in file_name.lower() or "screen shot" in file_name.lower()
+        # Common mobile screenshot patterns
+        is_mobile_pattern = any(x in file_name.lower() for x in ["img_", "screenshot_", "captured_"])
         
         if is_screenshot_hint:
             return {
                 "is_screenshot": True,
-                "originality_score": 15.0,
-                "forensic_details": "RULE-BASED: File name contains 'screenshot' patterns. Automatic flag for non-original content."
+                "originality_score": 5.0,
+                "forensic_details": "RULE-BASED: File name contains definitive 'screenshot' patterns. Content flagged as non-original capture."
             }
         return {
             "is_screenshot": False,
@@ -111,42 +113,41 @@ class VertexAIService:
             "forensic_details": "No obvious screenshot indicators in filename."
         }
 
-    async def analyze_file_threat(self, file_buffer: bytes, file_name: str, file_type: str) -> RiskReport:
+    async def analyze_file_threat(self, file_buffer: bytes, file_name: str, file_type: str, has_c2pa: bool = False) -> RiskReport:
         """Analyze a file for security threats and originality."""
         self.ensure_initialized()
         
         # Apply pre-scan rules (Hard fallback for screenshots)
         rules = self._rule_based_analysis(file_name)
         
-        prompt = f"""You are a senior digital forensics inspector for CVBER Free. 
+        c2pa_status = "VERIFIED CRYPTOGRAPHIC PROVENANCE DETECTED" if has_c2pa else "NO CRYPTOGRAPHIC PROVENANCE (UNSIGNATURED)"
+
+        prompt = f"""You are a top-tier digital forensics inspector for CVBER Free. 
 Analyze this file: {file_name} ({file_type}).
+CRYPTO STATUS: {c2pa_status}
 
-### STEP 1: VISUAL INSPECTION (INTERNAL REASONING)
-Before providing the JSON, look at the FOUR CORNERS and EDGES of the image very carefully.
-Check for:
-- **Top Corners**: Time (e.g., 10:45), Battery percentage, WiFi bars, Cellular signal.
-- **Top Edge**: Browser tabs, Address bars (http://...), or "Window" controls (minimize/close).
-- **Bottom Edge**: Mobile navigation bar (Home/Back/Recent), Browser footer, or Taskbar.
-- **Watermarks**: Look for TikTok, Instagram, or Getty Images logos.
+### STEP 1: PIXEL-LEVEL FORENSICS
+Look at the edges, corners, and color gradients.
+Identify subtle signs of a "Capture" instead of an "Original Source":
+- **UI Artifacts**: Any status bar icons, home bars, time, battery, or scroll bars?
+- **Compression Gaps**: Screenshots often have different noise patterns than original sensor data.
+- **Edge Oscillations**: Look for the slight blur characteristic of OS-level screen capture overlays.
 
-### STEP 2: WEB VERIFICATION (GROUNDING)
-- Use Google Search to check if this image (or a very similar one) exists on the public web.
-- If you find matches on stock sites, social media, or other public sources, flag it as a REPOST.
-
-### STEP 3: SCORING RULES
-- **IS_SCREENSHOT**: Set to `true` if ANY of the above UI elements are present. 
+### STEP 2: SCORING RULES (STRICT)
+- **IS_SCREENSHOT**: Set to `true` if ANY capture artifacts exist. 
 - **ORIGINALITY_SCORE**: 
-  - 0-20: Obvious screenshot or DIRECT web match found (repost).
-  - 21-50: Clear repost (platform logos, heavy compression, low res).
-  - 51-89: Possibly original but looks like common stock or social media content.
-  - 90-100: High-fidelity original creation/photo with no UI artifacts.
+  - 0-15: Confirmed screenshot or direct duplicate found online.
+  - 16-50: Likely screenshot or repost from social media (TikTok/Insta artifacts).
+  - 51-84: Possibly original, but lacks cryptographic proof.
+  - 85-100: ONLY allow if the file shows genuine sensor/creative depth AND has NO capture artifacts. 
+  - **CAP**: If CRYPTO STATUS is 'NO CRYPTOGRAPHIC PROVENANCE', do NOT exceed 85% even if it looks perfect.
 
 ### OUTPUT FORMAT (Valid JSON only):
 {{
     "overall_risk_score": 0-100,
     "originality_score": 0-100,
     "is_screenshot": true/false,
-    "forensic_details": "A brief explanation of why you gave this score. e.g. Visible battery icon at top right.",
+    "forensic_details": "Detailed technical explanation. Mention specific artifacts found (e.g. 'Compression gap in top-right corner characteristic of iOS capture').",
     "threat_categories": [{{"name": string, "severity": "low|medium|high|critical", "confidence": 0-1, "description": string}}],
     "detailed_findings": [{{"category": string, "description": string, "evidence": string}}],
     "recommendations": [{{"priority": "low|medium|high", "action": string, "rationale": string}}],

@@ -65,11 +65,23 @@ async def scan_file(
         # Get file type
         file_type = file.content_type or "application/octet-stream"
         
-        # Perform AI threat analysis
+        # [NEW] Check for C2PA manifest BEFORE AI analysis
+        has_c2pa = False
+        try:
+            # Only attempt verify if it's a known image/video type
+            if "image" in file_type or "video" in file_type:
+                v_res = await c2pa_service.verify_signature(file_buffer)
+                # If there are active manifests, it's a verified file
+                has_c2pa = v_res.get("active_manifest") is not None or len(v_res.get("manifests", {})) > 0
+        except Exception as v_err:
+            print(f"C2PA auto-verify failed: {v_err}")
+
+        # Perform AI threat analysis (Now C2PA-aware)
         risk_report = await vertex_ai_service.analyze_file_threat(
             file_buffer=file_buffer,
             file_name=file.filename,
-            file_type=file_type
+            file_type=file_type,
+            has_c2pa=has_c2pa
         )
         
         # Store in audit logs (OPTIONAL - Don't crash if table doesn't exist)
