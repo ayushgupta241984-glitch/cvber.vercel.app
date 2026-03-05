@@ -214,12 +214,24 @@ Identify subtle signs of a "Capture" instead of an "Original Source":
             
             # Merge AI results with pre-scan rules (Rules win if AI is too generous)
             is_screenshot = data.get("is_screenshot", False) or rules["is_screenshot"]
-            originality_score = data.get("originality_score", 100)
+            ai_originality_score = float(data.get("originality_score", 100))
+            
+            # --- STRICT ENFORCEMENT LAYER ---
+            # 1. If it's a screenshot, it CANNOT be original. Max 15%.
+            if is_screenshot:
+                originality_score = min(ai_originality_score, 15.0)
+            # 2. If it lacks C2PA, it CANNOT be 100% verified original. Max 85%.
+            elif not has_c2pa:
+                originality_score = min(ai_originality_score, 85.0)
+            else:
+                originality_score = ai_originality_score
+
+            # Explicit rule-based override (highest priority)
             if rules["is_screenshot"]:
                 originality_score = min(originality_score, rules["originality_score"])
             
             description = data.get("forensic_details", rules["forensic_details"])
-            if is_screenshot and "Screenshot Detected" not in description:
+            if is_screenshot and "Screenshot" not in description:
                 description = f"Screenshot Detected: {description}"
 
             # Post-processing: Add specific threat
@@ -229,7 +241,7 @@ Identify subtle signs of a "Capture" instead of an "Original Source":
                     name="Ownership Alert",
                     severity="high",
                     confidence=1.0,
-                    description="The file has been definitively flagged as a screenshot. Original intellectual property cannot be verified."
+                    description="The file has been definitively flagged as a screenshot. Original intellectual property cannot be verified at the source level."
                 ))
 
             # Final Risk Report
@@ -249,7 +261,8 @@ Identify subtle signs of a "Capture" instead of an "Original Source":
                     "ai_provider": self.provider,
                     "ai_model": active_model,
                     "forensic_summary": description,
-                    "web_detection": "active" if self.provider == "google" else "inactive"
+                    "web_detection": "active" if self.provider == "google" else "inactive",
+                    "c2pa_verified": has_c2pa
                 }
             )
         except Exception as e:
