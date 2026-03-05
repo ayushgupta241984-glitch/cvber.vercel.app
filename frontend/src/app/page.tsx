@@ -95,7 +95,7 @@ export default function Home() {
                             Log in
                         </Link>
                         <Link
-                            href={isLoggedIn ? "/dashboard" : "/register"}
+                            href="/register"
                             className="px-8 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition-all active:scale-95 shadow-[0_4px_20px_rgba(255,255,255,0.2)]"
                         >
                             Get Started
@@ -141,7 +141,7 @@ export default function Home() {
                         className="flex flex-col sm:flex-row items-center gap-6"
                     >
                         <Link
-                            href={isLoggedIn ? "/dashboard" : "/register"}
+                            href="/register"
                             className="group px-10 py-5 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all flex items-center gap-3 active:scale-95 shadow-[0_20px_40px_rgba(255,255,255,0.1)]"
                         >
                             Protect My Assets
@@ -278,7 +278,7 @@ export default function Home() {
                         <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-8 uppercase italic leading-none">Join the Resistance.</h2>
                         <p className="text-lg text-purple-100/70 max-w-xl mb-12 font-medium">The era of unchecked art theft is over. Reclaim your digital sovereignty today with CVBER.</p>
                         <Link
-                            href={isLoggedIn ? "/dashboard" : "/register"}
+                            href="/register"
                             className="px-12 py-6 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all flex items-center gap-3 active:scale-95 shadow-xl shadow-black/20"
                         >
                             Secure Your Creative Soul

@@ -61,7 +61,7 @@ export default function Navbar() {
                         <Link href="/login" className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors">
                             Log In
                         </Link>
-                        <Link href={user ? "/dashboard" : "/register"} className="btn-primary py-2 px-4 text-sm">
+                        <Link href="/register" className="btn-primary py-2 px-4 text-sm">
                             Get Started
                         </Link>
                     </div>
