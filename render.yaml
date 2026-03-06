@@ -18,7 +18,7 @@ services:
       - key: JWT_SECRET
         sync: false
       - key: GROQ_API_KEY
-        value: "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"
+        sync: false
       - key: ALLOWED_ORIGINS
         value: "*"
       - key: C2PA_SERVICE_URL
