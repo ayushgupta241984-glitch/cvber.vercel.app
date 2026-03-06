@@ -13,22 +13,28 @@ logger = logging.getLogger(__name__)
 try:
     import google.generativeai as genai
     GENAI_AVAILABLE = True
-except ImportError:
+    logger.info("✅ google.generativeai imported successfully")
+except ImportError as e:
     GENAI_AVAILABLE = False
+    logger.warning(f"⚠️ google.generativeai not available: {e}")
 
 try:
     from groq import AsyncGroq
     GROQ_AVAILABLE = True
-except ImportError:
+    logger.info("✅ groq.AsyncGroq imported successfully")
+except ImportError as e:
     GROQ_AVAILABLE = False
+    logger.warning(f"⚠️ groq.AsyncGroq not available: {e}")
 
 try:
     from google.cloud import aiplatform
     from vertexai.generative_models import GenerativeModel, Part
     VERTEX_AI_AVAILABLE = True
-except ImportError:
+    logger.info("✅ Vertex AI SDK imported successfully")
+except ImportError as e:
     # Vertex AI SDK isn't installed or cannot be imported.
     VERTEX_AI_AVAILABLE = False
+    logger.warning(f"⚠️ Vertex AI SDK not available: {e}")
 
 from app.config import settings
 from app.models.schemas import RiskReport, ThreatCategory, DetailedFinding, Recommendation
@@ -57,32 +63,39 @@ class VertexAIService:
         if self.initialized:
             return True
         
+        # Log available keys for debugging
+        groq_key_status = "present" if settings.groq_api_key else "missing"
+        google_key_status = "present" if settings.google_api_key else "missing"
+        logger.info(f"AI Service init check: groq_key={groq_key_status}, google_key={google_key_status}, GROQ_AVAILABLE={GROQ_AVAILABLE}, GENAI_AVAILABLE={GENAI_AVAILABLE}")
+        
         # Always attempt initialization if not yet successful, in case new keys appeared
         # 1. Try Groq (Free & Fast) - PRIMARY
         if GROQ_AVAILABLE and self.is_valid_key(settings.groq_api_key):
             if not self.provider == "groq":  # Only reinit if not already attempted
+                logger.info(f"Attempting Groq init with key prefix: {settings.groq_api_key[:20]}...")
                 try:
                     self.groq_client = AsyncGroq(api_key=settings.groq_api_key)
                     self.initialized = True
                     self.provider = "groq"
-                    logger.info("Groq initialized successfully")
+                    logger.info("✅ Groq initialized successfully")
                     return True
                 except Exception as e:
-                    logger.error(f"Groq init failed: {e}")
+                    logger.error(f"❌ Groq init failed: {type(e).__name__}: {e}")
                     self.provider = None  # clear so we can retry later
 
         # 2. Try Google AI Studio (Free & Reliable) - FALLBACK
         if GENAI_AVAILABLE and self.is_valid_key(settings.google_api_key):
             if not self.provider == "google":  # Only reinit if not already attempted
+                logger.info(f"Attempting Google init with key prefix: {settings.google_api_key[:20]}...")
                 try:
                     genai.configure(api_key=settings.google_api_key)
                     self.model = genai.GenerativeModel('gemini-1.5-flash', tools='google_search_retrieval')
                     self.initialized = True
                     self.provider = "google"
-                    logger.info("Google AI Studio (Gemini) initialized successfully")
+                    logger.info("✅ Google AI Studio (Gemini) initialized successfully")
                     return True
                 except Exception as e:
-                    logger.error(f"Google AI Studio init failed: {e}")
+                    logger.error(f"❌ Google AI Studio init failed: {type(e).__name__}: {e}")
                     self.provider = None  # clear so we can retry later
 
         # 3. Fallback to Vertex AI (Enterprise)

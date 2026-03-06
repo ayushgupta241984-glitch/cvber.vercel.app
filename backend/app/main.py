@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import scan, auth, mentor, enforcement, diagnostics
+from app.services.vertex_ai import vertex_ai_service
 
 import os
 import json
@@ -77,6 +78,24 @@ async def health_check():
             "database": "operational",
             "vertex_ai": "operational",
             "c2pa": "operational"
+        }
+    }
+
+
+@app.get("/api/ai-status")
+async def ai_status():
+    """Diagnostic endpoint to check AI service status."""
+    vertex_ai_service.ensure_initialized()
+    return {
+        "ai_service": {
+            "initialized": vertex_ai_service.initialized,
+            "provider": vertex_ai_service.provider,
+            "groq_available": vertex_ai_service.groq_client is not None,
+            "google_available": vertex_ai_service.model is not None,
+        },
+        "environment": {
+            "groq_key_present": bool(settings.groq_api_key),
+            "google_key_present": bool(settings.google_api_key),
         }
     }
 
