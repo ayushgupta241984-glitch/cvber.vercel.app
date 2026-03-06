@@ -2,6 +2,14 @@ from pydantic_settings import BaseSettings
 from typing import List, Optional, Union
 from pydantic import field_validator
 import os
+from dotenv import load_dotenv
+
+# Try loading .env from a couple of likely locations (project root and current dir)
+root_env = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", ".env"))
+if os.path.exists(root_env):
+    load_dotenv(root_env)
+else:
+    load_dotenv()  # fallback to default behavior
 
 
 class Settings(BaseSettings):
@@ -48,6 +56,9 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.allowed_origins.split(',') if origin.strip()]
     
     model_config = {
+        # pydantic-settings will still attempt to read .env, but we've pre-loaded it
+        # above using python-dotenv from the repository root, so the working
+        # directory no longer matters.
         "env_file": ".env",
         "case_sensitive": False,
         "env_file_encoding": "utf-8",
