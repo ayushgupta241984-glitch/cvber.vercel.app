@@ -69,7 +69,7 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {(mounted && (user || localStorage.getItem('access_token'))) ? (
+                        {(mounted && (user || localStorage.getItem('access_token')) && pathname === "/dashboard") ? (
                             <div className="flex items-center gap-3 pl-4 border-l border-zinc-800">
                                 <div className="flex flex-col items-end hidden sm:flex">
                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500/80 leading-none mb-1">Authenticated</span>
@@ -81,10 +81,15 @@ export default function Navbar() {
                             </div>
                         ) : (
                             <>
-                                <Link href="/login" className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors">
-                                    Log In
-                                </Link>
-                                <Link href="/register" className="btn-primary py-2 px-4 text-sm">
+                                {!(mounted && (user || localStorage.getItem('access_token'))) && (
+                                    <Link href="/login" className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors">
+                                        Log In
+                                    </Link>
+                                )}
+                                <Link
+                                    href={(mounted && (user || localStorage.getItem('access_token'))) ? "/dashboard" : "/register"}
+                                    className="btn-primary py-2 px-6 text-sm font-bold"
+                                >
                                     Get Started
                                 </Link>
                             </>

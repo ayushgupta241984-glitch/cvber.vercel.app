@@ -97,9 +97,19 @@ export default function LoginPage() {
 
                         {/* Error Message */}
                         {error && (
-                            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 animate-shake">
-                                <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
-                                <p className="text-red-400 text-sm font-medium">{error}</p>
+                            <div className="space-y-3">
+                                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 animate-shake">
+                                    <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
+                                    <p className="text-red-400 text-sm font-medium">{error}</p>
+                                </div>
+                                {error.toLowerCase().includes('invalid') && (
+                                    <div className="p-4 bg-purple-500/5 border border-purple-500/10 rounded-xl">
+                                        <p className="text-xs text-zinc-400 leading-relaxed font-medium">
+                                            <span className="text-purple-400 font-bold uppercase tracking-wider block mb-1">Tip</span>
+                                            If you're sure of your password, double-check for leading/trailing spaces in your email and password.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Shield, Download, X, Copy, Check, ExternalLink, Settings, Type, Grid, Layout, Square, Palette } from 'lucide-react';
+import { Shield, Download, X, Copy, Check, ExternalLink, Settings, Type, Grid, Layout, Square, Palette, Sparkles } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 
 interface WatermarkEngineProps {
@@ -78,7 +78,7 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
                 ctx.restore();
             } else if (style === 'center') {
                 const centerSize = Math.max(40, Math.floor(canvas.width * 0.15));
-                ctx.font = `black ${centerSize}px Inter, sans-serif`;
+                ctx.font = `900 ${centerSize}px Inter, sans-serif`;
 
                 ctx.save();
                 ctx.translate(canvas.width / 2, canvas.height / 2);
@@ -104,7 +104,7 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
                 const r = 10;
 
                 // Background
-                ctx.fillStyle = color === 'white' ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.9)';
+                ctx.fillStyle = color === 'white' ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.95)';
                 ctx.beginPath();
                 ctx.moveTo(x + r, y);
                 ctx.lineTo(x + badgeW - r, y);
@@ -120,13 +120,13 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
 
                 // Text
                 ctx.fillStyle = color === 'white' ? 'white' : 'black';
-                ctx.font = `bold ${badgeH * 0.4}px Inter, sans-serif`;
+                ctx.font = `bold ${badgeH * 0.35}px Inter, sans-serif`;
                 ctx.fillText(text, x + badgeW / 2, y + badgeH / 2);
 
                 // Small subtext
-                ctx.font = `normal ${badgeH * 0.2}px Inter, sans-serif`;
-                ctx.globalAlpha = 0.7;
-                ctx.fillText("VERIFIED AUTHENTIC", x + badgeW / 2, y + badgeH * 0.8);
+                ctx.font = `black ${badgeH * 0.18}px Inter, sans-serif`;
+                ctx.globalAlpha = 0.6;
+                ctx.fillText("CVBER VERIFIED AUTHENTIC", x + badgeW / 2, y + badgeH * 0.78);
                 ctx.globalAlpha = 1.0;
             }
 
@@ -135,96 +135,85 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
         };
     };
 
-    const handleCopy = () => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
     if (!isOpen || !file) return null;
 
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-white/90 backdrop-blur-xl animate-in fade-in duration-300" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-500" onClick={onClose} />
 
-            <div className="relative w-full max-w-6xl h-[85vh] bg-white rounded-[32px] shadow-2xl overflow-hidden flex border border-gray-100 animate-in slide-in-from-bottom-8 duration-500">
+            <div className="relative w-full max-w-6xl h-[85vh] bg-[#050505] rounded-[40px] shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden flex border border-zinc-900 animate-in slide-in-from-bottom-12 duration-700">
 
                 {/* Left: Configuration Panel */}
-                <div className="w-80 bg-gray-50 border-r border-gray-100 p-6 flex flex-col gap-8 shrink-0 overflow-y-auto">
+                <div className="w-80 bg-[#070707] border-r border-zinc-900 p-8 flex flex-col gap-10 shrink-0 overflow-y-auto">
                     <div>
-                        <h2 className="text-xl font-black text-gray-900 tracking-tight mb-1">Watermark Editor</h2>
-                        <p className="text-xs text-gray-500 font-medium">Customize your protection</p>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Sparkles className="h-4 w-4 text-purple-500" />
+                            <h2 className="text-xl font-black text-white tracking-tighter uppercase">Watermark</h2>
+                        </div>
+                        <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em]">Protection Suite v2.0</p>
                     </div>
 
                     {/* Text Input */}
-                    <div className="space-y-3">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                            <Type className="h-3 w-3" /> Text Content
+                    <div className="space-y-4">
+                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.15em] flex items-center gap-2">
+                            <Type className="h-3 w-3" /> Content String
                         </label>
                         <input
                             type="text"
                             value={text}
                             onChange={(e) => setText(e.target.value)}
-                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                            className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all placeholder:text-zinc-700"
                             maxLength={30}
                         />
                     </div>
 
                     {/* Style Selector */}
-                    <div className="space-y-3">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                            <Layout className="h-3 w-3" /> Layout Style
+                    <div className="space-y-4">
+                        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.15em] flex items-center gap-2">
+                            <Layout className="h-3 w-3" /> Spatial Layout
                         </label>
                         <div className="grid grid-cols-3 gap-2">
-                            <button
-                                onClick={() => setStyle('grid')}
-                                className={`p-2 rounded-lg border flex flex-col items-center gap-1 transition-all ${style === 'grid' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`}
-                            >
-                                <Grid className="h-4 w-4" />
-                                <span className="text-[10px] font-bold">Grid</span>
-                            </button>
-                            <button
-                                onClick={() => setStyle('center')}
-                                className={`p-2 rounded-lg border flex flex-col items-center gap-1 transition-all ${style === 'center' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`}
-                            >
-                                <Square className="h-4 w-4" />
-                                <span className="text-[10px] font-bold">Center</span>
-                            </button>
-                            <button
-                                onClick={() => setStyle('badge')}
-                                className={`p-2 rounded-lg border flex flex-col items-center gap-1 transition-all ${style === 'badge' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`}
-                            >
-                                <Shield className="h-4 w-4" />
-                                <span className="text-[10px] font-bold">Badge</span>
-                            </button>
+                            {(['grid', 'center', 'badge'] as WatermarkStyle[]).map((s) => (
+                                <button
+                                    key={s}
+                                    onClick={() => setStyle(s)}
+                                    className={`p-3 rounded-2xl border flex flex-col items-center gap-2 transition-all duration-300 ${style === s ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-600/20' : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300'}`}
+                                >
+                                    {s === 'grid' && <Grid className="h-4 w-4" />}
+                                    {s === 'center' && <Square className="h-4 w-4" />}
+                                    {s === 'badge' && <Shield className="h-4 w-4" />}
+                                    <span className="text-[9px] font-black uppercase tracking-widest">{s}</span>
+                                </button>
+                            ))}
                         </div>
                     </div>
 
                     {/* Appearance */}
-                    <div className="space-y-6">
-                        <div className="space-y-3">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                                <Palette className="h-3 w-3" /> Color Theme
+                    <div className="space-y-8">
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.15em] flex items-center gap-2">
+                                <Palette className="h-3 w-3" /> Ink Profile
                             </label>
-                            <div className="flex gap-2 p-1 bg-gray-200 rounded-lg">
+                            <div className="flex gap-2 p-1 bg-zinc-900 rounded-2xl border border-zinc-800">
                                 <button
                                     onClick={() => setColor('white')}
-                                    className={`flex-1 py-1.5 rounded-md text-xs font-bold transition-all ${color === 'white' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                    className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${color === 'white' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
                                 >
                                     Light
                                 </button>
                                 <button
                                     onClick={() => setColor('black')}
-                                    className={`flex-1 py-1.5 rounded-md text-xs font-bold transition-all ${color === 'black' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                    className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${color === 'black' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
                                 >
                                     Dark
                                 </button>
                             </div>
                         </div>
 
-                        <div className="space-y-3">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
-                                <span>Opacity</span>
-                                <span className="text-gray-900">{opacity}%</span>
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.15em] flex items-center justify-between">
+                                <span>Density / Opacity</span>
+                                <span className="text-purple-500">{opacity}%</span>
                             </label>
                             <input
                                 type="range"
@@ -232,46 +221,54 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
                                 max="100"
                                 value={opacity}
                                 onChange={(e) => setOpacity(parseInt(e.target.value))}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                className="w-full h-1.5 bg-zinc-900 rounded-lg appearance-none cursor-pointer accent-purple-500 border border-zinc-800/50"
                             />
                         </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="mt-auto space-y-3 pt-6 border-t border-gray-100">
+                    <div className="mt-auto space-y-3 pt-8 border-t border-zinc-900">
                         <a
                             href={downloadUrl!}
                             download={`cvber_protected_${file.name}`}
-                            className="flex items-center justify-center gap-2 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200 w-full"
+                            className="flex items-center justify-center gap-3 py-4 bg-white text-black font-black uppercase tracking-[0.15em] text-[10px] rounded-[20px] hover:bg-zinc-200 transition-all active:scale-95 shadow-xl shadow-white/5 w-full"
                         >
                             <Download className="h-4 w-4" />
-                            Download
+                            Secure Export
                         </a>
-                        <button onClick={onClose} className="w-full py-3 text-gray-500 font-bold text-sm hover:text-gray-700">
-                            Cancel
+                        <button onClick={onClose} className="w-full py-4 text-zinc-600 font-black text-[10px] uppercase tracking-[0.2em] hover:text-zinc-400 transition-colors">
+                            Dismiss
                         </button>
                     </div>
                 </div>
 
                 {/* Right: Preview Area */}
-                <div className="flex-1 bg-[url('https://repo.sourcelib.org/patterns/subtle-dots.png')] bg-gray-100 relative overflow-hidden flex items-center justify-center p-8">
+                <div className="flex-1 bg-[#09090b] relative overflow-hidden flex items-center justify-center p-12 bg-grid-white animate-scan">
                     <canvas ref={canvasRef} className="hidden" />
                     {isProcessing ? (
-                        <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
-                            <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                            <p className="text-sm font-bold text-blue-600 uppercase tracking-widest">Rendering...</p>
+                        <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-500">
+                            <div className="h-16 w-16 border-[6px] border-purple-500 border-t-transparent rounded-full animate-spin shadow-[0_0_30px_rgba(168,85,247,0.3)]" />
+                            <p className="text-[10px] font-black text-purple-500 uppercase tracking-[0.3em] animate-pulse">Processing Vector Data</p>
                         </div>
                     ) : (
-                        <div className="relative shadow-2xl rounded-lg overflow-hidden max-h-full transition-all duration-300">
-                            <img src={downloadUrl!} alt="Preview" className="max-h-[70vh] object-contain" />
+                        <div className="relative group max-h-full">
+                            <div className="absolute -inset-4 bg-purple-500/10 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                            <div className="relative shadow-[0_0_80px_rgba(0,0,0,0.5)] rounded-2xl overflow-hidden border border-white/5 transition-all duration-500 group-hover:scale-[1.02]">
+                                <img src={downloadUrl!} alt="Preview" className="max-h-[65vh] object-contain" />
+                            </div>
                         </div>
                     )}
 
                     {/* Floating Info */}
-                    <div className="absolute top-6 right-6">
-                        <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-white/50 text-xs font-bold text-gray-600 flex items-center gap-2">
-                            <Check className="h-3 w-3 text-green-500" /> Live Preview
+                    <div className="absolute top-8 right-8">
+                        <div className="bg-zinc-900/80 backdrop-blur-xl px-4 py-2 rounded-full shadow-2xl border border-white/5 text-[9px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)] animate-pulse" />
+                            Protected Sandbox
                         </div>
+                    </div>
+
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+                        <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-[0.4em] text-center">Reference Alpha v1.0 • Internal Security Only</p>
                     </div>
                 </div>
             </div>
