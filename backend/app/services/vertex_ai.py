@@ -27,6 +27,7 @@ try:
     from vertexai.generative_models import GenerativeModel, Part
     VERTEX_AI_AVAILABLE = True
 except ImportError:
+    # Vertex AI SDK isn't installed or cannot be imported.
     VERTEX_AI_AVAILABLE = False
 
 from app.config import settings
@@ -56,7 +57,18 @@ class VertexAIService:
         if self.initialized:
             return True
             
-        # 1. Try Google AI Studio (Free & Reliable)
+        # 1. Try Groq (Free & Fast) - PRIMARY
+        if GROQ_AVAILABLE and self.is_valid_key(settings.groq_api_key):
+            try:
+                self.groq_client = AsyncGroq(api_key=settings.groq_api_key)
+                self.initialized = True
+                self.provider = "groq"
+                logger.info("Groq (Vision) initialized")
+                return True
+            except Exception as e:
+                logger.error(f"Groq init failed: {e}")
+
+        # 2. Try Google AI Studio (Free & Reliable) - FALLBACK
         if GENAI_AVAILABLE and self.is_valid_key(settings.google_api_key):
             try:
                 genai.configure(api_key=settings.google_api_key)
@@ -68,17 +80,6 @@ class VertexAIService:
                 return True
             except Exception as e:
                 logger.error(f"Google AI Studio init failed: {e}")
-
-        # 2. Try Groq (Free & Fast)
-        if GROQ_AVAILABLE and self.is_valid_key(settings.groq_api_key):
-            try:
-                self.groq_client = AsyncGroq(api_key=settings.groq_api_key)
-                self.initialized = True
-                self.provider = "groq"
-                logger.info("Groq (Vision) initialized")
-                return True
-            except Exception as e:
-                logger.error(f"Groq init failed: {e}")
 
         # 3. Fallback to Vertex AI (Enterprise)
         if VERTEX_AI_AVAILABLE and os.path.exists(settings.google_application_credentials):

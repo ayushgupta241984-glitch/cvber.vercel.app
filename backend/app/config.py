@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     gcp_project_id: str = "placeholder-project-id"
     google_application_credentials: str = "./service-account.json"
     google_api_key: Optional[str] = None
+    # NOTE: Do NOT commit real API keys. Provide your Groq API key via environment or .env.
     groq_api_key: Optional[str] = None
     
     # Vertex AI
