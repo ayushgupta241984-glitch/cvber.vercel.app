@@ -311,8 +311,9 @@ KNOWLEDGE CAPABILITIES:
                 return completion.choices[0].message.content
                 
         except Exception as e:
-            logger.error(f"Mentor AI Error: {e}")
-            return f"Digital Glitch: {str(e)[:100]}... Please check your API keys."
+            logger.error(f"Mentor AI Error (provider={self.provider}): {e}")
+            # include provider in the response so frontend can know which service failed
+            return f"Digital Glitch ({self.provider}): {str(e)[:100]}... Please check your API keys."
 
     def _clean_json_response(self, text: str) -> str:
         text = text.strip()
