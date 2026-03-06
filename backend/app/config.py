@@ -2,13 +2,18 @@ from pydantic_settings import BaseSettings
 from typing import List, Optional, Union
 from pydantic import field_validator
 import os
+import logging
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 # Try loading .env from a couple of likely locations (project root and current dir)
 root_env = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", ".env"))
 if os.path.exists(root_env):
+    logger.info(f"Loading .env from {root_env}")
     load_dotenv(root_env)
 else:
+    logger.info("No .env file found at project root, using environment variables")
     load_dotenv()  # fallback to default behavior
 
 
@@ -68,3 +73,12 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Log configuration on startup
+logger.info("=" * 60)
+logger.info("CONFIG LOADED:")
+logger.info(f"  GROQ_API_KEY: {'PRESENT' if settings.groq_api_key else 'MISSING'}")
+logger.info(f"  GOOGLE_API_KEY: {'PRESENT' if settings.google_api_key else 'MISSING'}")
+logger.info(f"  GCP_PROJECT_ID: {settings.gcp_project_id}")
+logger.info(f"  ALLOWED_ORIGINS: {settings.parsed_allowed_origins}")
+logger.info("=" * 60)
