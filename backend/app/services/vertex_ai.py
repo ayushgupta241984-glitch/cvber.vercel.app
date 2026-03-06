@@ -309,30 +309,30 @@ KNOWLEDGE CAPABILITIES:
                     model="llama-3.3-70b-versatile",
                 )
                 return completion.choices[0].message.content
-                
         except Exception as e:
-            logger.error(f"Mentor AI Error (provider={self.provider}): {e}")
+            # If we hit an authentication error, try to fall back automatically.
+            err_str = str(e)
+            logger.error(f"Mentor AI Error (provider={self.provider}): {err_str}")
+            if "401" in err_str or "Invalid API Key" in err_str:
+                old_provider = self.provider
+                logger.warning(f"{old_provider} returned 401; clearing key and reinitializing.")
+                # clear the offending key so ensure_initialized won't pick it again
+                if old_provider == "groq":
+                    settings.groq_api_key = None
+                elif old_provider == "google":
+                    settings.google_api_key = None
+                # mark as not initialized so we can retry
+                self.initialized = False
+                self.provider = None
+                # attempt to reinitialize and retry once
+                if self.ensure_initialized() and self.provider != old_provider:
+                    try:
+                        return await self.get_mentor_response(message, history)
+                    except Exception as e2:
+                        # if retry fails, fall through to return original error
+                        logger.error(f"Retry after fallback also failed: {e2}")
             # include provider in the response so frontend can know which service failed
-            return f"Digital Glitch ({self.provider}): {str(e)[:100]}... Please check your API keys."
-
-    def _clean_json_response(self, text: str) -> str:
-        text = text.strip()
-        if text.startswith("```json"): text = text[7:]
-        if text.startswith("```"): text = text[3:]
-        if text.endswith("```"): text = text[:-3]
-        return text.strip()
-
-    def _generate_mock_report(self, file_name: str, file_type: str, file_size: int, error: str = None, rules: Dict = None) -> RiskReport:
-        desc = "AI OFFLINE" if not error else f"ANALYSIS ERROR: {error[:30]}"
-        
-        # Merge with rules
-        is_screenshot = rules["is_screenshot"] if rules else "screenshot" in file_name.lower()
-        originality = rules["originality_score"] if rules else (15.0 if is_screenshot else 100.0)
-        forensic_summary = rules["forensic_details"] if rules else (f"{desc} | Screenshot flag" if is_screenshot else f"{desc} | Unknown")
-
-        return RiskReport(
-            overall_risk_score=0.0,
-            originality_score=originality,
+            return f"Digital Glitch ({self.provider}): {err_str[:100]}... Please check your API keys."
             is_screenshot=is_screenshot,
             threat_categories=[ThreatCategory(name="AI Offline", severity="medium", confidence=1.0, description="The AI scanning engine is currently unreachable. Results are based on local pre-scan rules.")],
             detailed_findings=[DetailedFinding(category="System", description=desc, evidence=file_name)],
