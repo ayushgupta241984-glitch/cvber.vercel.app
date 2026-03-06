@@ -6,6 +6,12 @@ from app.services.vertex_ai import vertex_ai_service
 
 import os
 import json
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Log environment on startup for debugging
+logger.info(f"GROQ_API_KEY env var present: {os.getenv('GROQ_API_KEY', 'NOT SET')[:30]}...")
 
 # Create FastAPI app
 app = FastAPI(
