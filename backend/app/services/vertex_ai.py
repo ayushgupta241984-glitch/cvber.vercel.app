@@ -339,6 +339,25 @@ KNOWLEDGE CAPABILITIES:
                         logger.error(f"Retry after fallback also failed: {e2}")
             # include provider in the response so frontend can know which service failed
             return f"Digital Glitch ({self.provider}): {err_str[:100]}... Please check your API keys."
+
+    def _clean_json_response(self, text: str) -> str:
+        text = text.strip()
+        if text.startswith("```json"): text = text[7:]
+        if text.startswith("```"): text = text[3:]
+        if text.endswith("```"): text = text[:-3]
+        return text.strip()
+
+    def _generate_mock_report(self, file_name: str, file_type: str, file_size: int, error: str = None, rules: Dict = None) -> RiskReport:
+        desc = "AI OFFLINE" if not error else f"ANALYSIS ERROR: {error[:30]}"
+        
+        # Merge with rules
+        is_screenshot = rules["is_screenshot"] if rules else "screenshot" in file_name.lower()
+        originality = rules["originality_score"] if rules else (15.0 if is_screenshot else 100.0)
+        forensic_summary = rules["forensic_details"] if rules else (f"{desc} | Screenshot flag" if is_screenshot else f"{desc} | Unknown")
+
+        return RiskReport(
+            overall_risk_score=0.0,
+            originality_score=originality,
             is_screenshot=is_screenshot,
             threat_categories=[ThreatCategory(name="AI Offline", severity="medium", confidence=1.0, description="The AI scanning engine is currently unreachable. Results are based on local pre-scan rules.")],
             detailed_findings=[DetailedFinding(category="System", description=desc, evidence=file_name)],
