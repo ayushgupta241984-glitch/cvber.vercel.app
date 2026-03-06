@@ -53,46 +53,52 @@ class VertexAIService:
         return not any(p in key.lower() for p in placeholders)
 
     def ensure_initialized(self):
-        """Ensure an AI service is initialized."""
+        """Ensure an AI service is initialized. Always retries if not yet successful."""
         if self.initialized:
             return True
-            
+        
+        # Always attempt initialization if not yet successful, in case new keys appeared
         # 1. Try Groq (Free & Fast) - PRIMARY
         if GROQ_AVAILABLE and self.is_valid_key(settings.groq_api_key):
-            try:
-                self.groq_client = AsyncGroq(api_key=settings.groq_api_key)
-                self.initialized = True
-                self.provider = "groq"
-                logger.info("Groq (Vision) initialized")
-                return True
-            except Exception as e:
-                logger.error(f"Groq init failed: {e}")
+            if not self.provider == "groq":  # Only reinit if not already attempted
+                try:
+                    self.groq_client = AsyncGroq(api_key=settings.groq_api_key)
+                    self.initialized = True
+                    self.provider = "groq"
+                    logger.info("Groq initialized successfully")
+                    return True
+                except Exception as e:
+                    logger.error(f"Groq init failed: {e}")
+                    self.provider = None  # clear so we can retry later
 
         # 2. Try Google AI Studio (Free & Reliable) - FALLBACK
         if GENAI_AVAILABLE and self.is_valid_key(settings.google_api_key):
-            try:
-                genai.configure(api_key=settings.google_api_key)
-                genai.configure(api_key=settings.google_api_key)
-                self.model = genai.GenerativeModel('gemini-1.5-flash', tools='google_search_retrieval')
-                self.initialized = True
-                self.provider = "google"
-                logger.info("Google AI Studio (Gemini) initialized")
-                return True
-            except Exception as e:
-                logger.error(f"Google AI Studio init failed: {e}")
+            if not self.provider == "google":  # Only reinit if not already attempted
+                try:
+                    genai.configure(api_key=settings.google_api_key)
+                    self.model = genai.GenerativeModel('gemini-1.5-flash', tools='google_search_retrieval')
+                    self.initialized = True
+                    self.provider = "google"
+                    logger.info("Google AI Studio (Gemini) initialized successfully")
+                    return True
+                except Exception as e:
+                    logger.error(f"Google AI Studio init failed: {e}")
+                    self.provider = None  # clear so we can retry later
 
         # 3. Fallback to Vertex AI (Enterprise)
         if VERTEX_AI_AVAILABLE and os.path.exists(settings.google_application_credentials):
-            try:
-                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.google_application_credentials
-                aiplatform.init(project=settings.gcp_project_id, location=settings.vertex_ai_location)
-                self.model = GenerativeModel(settings.vertex_ai_model)
-                self.initialized = True
-                self.provider = "vertex"
-                logger.info("Vertex AI initialized")
-                return True
-            except Exception as e:
-                logger.warning(f"Vertex AI init failed: {e}")
+            if not self.provider == "vertex":  # Only reinit if not already attempted
+                try:
+                    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.google_application_credentials
+                    aiplatform.init(project=settings.gcp_project_id, location=settings.vertex_ai_location)
+                    self.model = GenerativeModel(settings.vertex_ai_model)
+                    self.initialized = True
+                    self.provider = "vertex"
+                    logger.info("Vertex AI initialized successfully")
+                    return True
+                except Exception as e:
+                    logger.warning(f"Vertex AI init failed: {e}")
+                    self.provider = None  # clear so we can retry later
         
         return False
     
