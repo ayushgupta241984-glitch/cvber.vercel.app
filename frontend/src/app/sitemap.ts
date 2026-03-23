@@ -39,5 +39,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
             changeFrequency: 'daily',
             priority: 0.7,
         },
+        // Features - Weekly
+        {
+            url: `${baseUrl}/features`,
+            lastModified: currentDate,
+            changeFrequency: 'weekly',
+            priority: 0.9,
+        },
+        // How It Works - Monthly
+        {
+            url: `${baseUrl}/how-it-works`,
+            lastModified: currentDate,
+            changeFrequency: 'monthly',
+            priority: 0.85,
+        },
+        // Art Hub - Weekly
+        {
+            url: `${baseUrl}/art-hub`,
+            lastModified: currentDate,
+            changeFrequency: 'weekly',
+            priority: 0.85,
+        },
     ]
 }

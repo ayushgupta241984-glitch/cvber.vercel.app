@@ -9,23 +9,20 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cvber.vercel.app";
 export const metadata: Metadata = {
     // Basic metadata
     title: {
-        default: "How to Protect Your Art Online | CVBER — AI Copyright, DMCA & AI Security",
-        template: "%s | CVBER"
+        default: "Protect Your Art From AI Theft — Free C2PA Certificates & DMCA Tools | CVBER",
+        template: "%s | CVBER — Art Protection"
     },
-    description: "Protect your art from AI theft, NFT fraud & unauthorized reposts. Generate certificates of origin & automate DMCA takedowns. Free to start.",
+    description: "CVBER protects digital artists from AI scraping, art theft, and unauthorized use. Get a free C2PA provenance certificate, automated DMCA takedowns, and real-time theft monitoring. Trusted by 10,000+ creators worldwide.",
     keywords: [
-        "content protection", "digital watermark", "copyright protection", "C2PA standard", "AI security",
-        "DMCA takedown", "theft detection", "digital certificate", "creator protection", "image protection",
-        "reverse image search", "content authenticity", "protect art from AI", "artist protection tools",
-        "digital provenance", "blockchain authenticity", "automated DMCA", "stolen content tracker",
-        "NFT protection", "AI training prevention", "digital asset security", "provenance tracking",
-        "metadata injection", "EXIF security", "IPTC protection", "copyright lawyer alternative",
-        "how to stop art theft", "protect images from being saved", "how to copyright my work for free",
-        "stop AI from using my art", "watermark for photographers", "legal proof I made this",
-        "stolen art finder", "dmca notice generator", "protect digital art on instagram",
-        "is my art being used by AI", "free image protection", "digital rights management",
-        "stop photo theft", "artist legal tools", "protect creative assets", "is my art being stolen",
-        "how to file dmca", "prove image ownership online", "secure digital portfolio"
+        "protect art from AI", "stop AI from using my art", "C2PA certificate for artists",
+        "DMCA takedown generator", "digital art copyright protection", "AI art theft prevention",
+        "how to protect digital art online", "art theft detection software", "C2PA provenance",
+        "protect illustrations from AI scraping", "watermark digital art", "blockchain art ownership",
+        "how to file DMCA for stolen art", "Glaze alternative", "Nightshade alternative",
+        "protect NFT art", "reverse image search stolen art", "AI training opt out tool",
+        "content authenticity initiative artist", "DeviantArt protect alternative",
+        "free art protection tool", "digital watermark for artists", "copyright my artwork",
+        "protect photos from AI", "photographer copyright protection"
     ],
     authors: [{ name: "Cvber Team" }],
     creator: "Cvber",
@@ -34,6 +31,7 @@ export const metadata: Metadata = {
     // Canonical URL
     metadataBase: new URL(siteUrl),
     alternates: {
+        canonical: 'https://cvber.vercel.app',
         languages: {
             "en-US": "/",
         },

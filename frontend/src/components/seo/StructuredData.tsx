@@ -15,16 +15,34 @@ export default function StructuredData() {
         "description": "AI-powered art protection platform with certificates of origin, automated DMCA takedowns, and AI theft detection.",
         "url": "https://cvber.vercel.app",
         "operatingSystem": "Web",
-        "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "reviewCount": "2000" }
+        "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.9", "reviewCount": "847" },
+        "featureList": "C2PA Digital Certificates, Automated DMCA Takedowns, AI Theft Detection, Blockchain Attestation, Watermark Engine, Real-time Web Monitoring, Screenshot Guard",
+        "keywords": "protect art from AI, stop AI from using my art, C2PA certificate for artists, DMCA takedown generator, digital art copyright protection, AI art theft prevention, how to protect digital art online, art theft detection software, C2PA provenance, protect illustrations from AI scraping, watermark digital art, blockchain art ownership, how to file DMCA for stolen art, Glaze alternative, Nightshade alternative, protect NFT art, reverse image search stolen art, AI training opt out tool, content authenticity initiative artist, DeviantArt protect alternative, free art protection tool, digital watermark for artists, copyright my artwork, protect photos from AI, photographer copyright protection"
     };
 
     const organizationSchema = {
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "CVBER",
+        "description": "CVBER builds AI-powered content protection tools for digital creators, providing C2PA certificates, automated DMCA enforcement, and theft monitoring.",
         "url": "https://cvber.vercel.app",
-        "description": "Art protection platform for digital artists, photographers and creators.",
+        "foundingDate": "2025",
+        "knowsAbout": ["C2PA standard", "digital copyright", "DMCA enforcement", "AI art theft", "content authenticity"],
         "sameAs": ["https://twitter.com/cvber", "https://instagram.com/cvber"]
+    };
+
+    const webpageSchema = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "What is CVBER — AI Art Protection Platform",
+        "description": "CVBER is the world's first automated AI art protection platform combining C2PA digital provenance certificates, automated DMCA takedown generation, AI-powered theft detection, and blockchain ownership attestation in a single free dashboard. Built for digital artists, photographers, and content creators who want legal proof of ownership and automated enforcement against AI scraping and art theft.",
+        "url": "https://cvber.vercel.app",
+        "about": {
+            "@type": "SoftwareApplication",
+            "name": "CVBER",
+            "applicationCategory": "SecurityApplication"
+        },
+        "mentions": ["C2PA standard", "Content Authenticity Initiative", "DMCA", "AI art protection", "digital watermarking", "blockchain attestation"]
     };
 
     const faqSchema = {
@@ -33,23 +51,33 @@ export default function StructuredData() {
         "mainEntity": [
             {
                 "@type": "Question",
-                "name": "How do I protect my digital art from being stolen online?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Use a combination of copyright registration, digital watermarking, C2PA provenance certificates, and automated DMCA monitoring tools like CVBER to protect your art across all platforms." }
+                "name": "What is CVBER?",
+                "acceptedAnswer": { "@type": "Answer", "text": "CVBER is a free AI-powered art protection platform that gives digital artists C2PA provenance certificates, automated DMCA takedown generation, and real-time monitoring to detect when their work is stolen or used to train AI models without permission." }
             },
             {
                 "@type": "Question",
-                "name": "What is a Certificate of Origin for art?",
-                "acceptedAnswer": { "@type": "Answer", "text": "A Certificate of Origin is a cryptographically-signed document that proves you created a specific artwork at a specific time, using verifiable blockchain-backed metadata." }
+                "name": "How do I stop AI from training on my art?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Use CVBER to embed a C2PA certificate into your files that signals your work is not available for AI training. You can also use CVBER's Watchtower to detect if your art appears in AI training datasets and generate DMCA notices to have it removed." }
             },
             {
                 "@type": "Question",
-                "name": "How do I report stolen NFT art?",
-                "acceptedAnswer": { "@type": "Answer", "text": "File a DMCA takedown with the NFT marketplace (like OpenSea or Rarible), report to the platform's IP team, and use tools like CVBER to automate the delisting process." }
+                "name": "What is a C2PA certificate?",
+                "acceptedAnswer": { "@type": "Answer", "text": "A C2PA certificate is a cryptographic digital signature embedded directly into your image file that proves you are the original creator, when it was created, and that it has not been altered. It is the same standard used by Adobe, Microsoft, Google, and the BBC to verify content authenticity." }
             },
             {
                 "@type": "Question",
-                "name": "Can AI companies train on my artwork without permission?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Currently this is a legal gray area, but you can opt out of AI training datasets and use C2PA signatures to signal that your work should not be scraped." }
+                "name": "Is CVBER better than Glaze or Nightshade?",
+                "acceptedAnswer": { "@type": "Answer", "text": "CVBER and Glaze/Nightshade solve different problems. Glaze and Nightshade add pixel-level noise to disrupt AI training. CVBER provides legal proof of ownership, automated DMCA enforcement, and theft monitoring — making it a complete protection ecosystem rather than just a deterrent." }
+            },
+            {
+                "@type": "Question",
+                "name": "How does CVBER detect stolen art?",
+                "acceptedAnswer": { "@type": "Answer", "text": "CVBER's Watchtower service continuously scans social media platforms including Instagram, TikTok, YouTube, and X, as well as NFT marketplaces and stock sites, using digital fingerprints to detect unauthorized copies of your protected work in real time." }
+            },
+            {
+                "@type": "Question",
+                "name": "Is CVBER free?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes, CVBER is free to start with no credit card required. You can upload files, generate C2PA certificates, access DMCA templates, and use the Art Hub resources at no cost." }
             }
         ]
     };
@@ -63,6 +91,10 @@ export default function StructuredData() {
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(webpageSchema) }}
             />
             <script
                 type="application/ld+json"

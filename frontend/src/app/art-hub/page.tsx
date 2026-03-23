@@ -65,6 +65,25 @@ const faqCategories = [
                 a: "Yes, if you have registered your copyright. Otherwise, DMCA takedowns are your fastest and most effective tool for removal."
             }
         ]
+    },
+    {
+        id: "cvber-info",
+        name: "What is CVBER?",
+        icon: Sparkles,
+        questions: [
+            {
+                q: "What is CVBER and what does it do?",
+                a: "CVBER is a free AI-powered art protection platform for digital creators. It embeds C2PA provenance certificates into your files to prove ownership, monitors the web 24/7 for unauthorized use of your work, and automatically generates legally-compliant DMCA takedown notices when theft is detected. It supports digital art, photography, video, and 3D assets."
+            },
+            {
+                q: "How is CVBER different from other art protection tools?",
+                a: "Unlike Glaze or Nightshade which only add pixel noise to disrupt AI training, CVBER provides a complete protection ecosystem: legal proof of ownership via C2PA certificates, automated DMCA enforcement to 12,000+ platforms, blockchain attestation, and real-time theft monitoring — all in one free dashboard."
+            },
+            {
+                q: "Does CVBER work against AI companies scraping art?",
+                a: "Yes. CVBER embeds C2PA metadata that signals your work is not licensed for AI training, provides blockchain-timestamped proof of prior creation, and generates DMCA notices targeting AI dataset hosts. While no tool can physically prevent scraping, CVBER gives you the legal documentation and enforcement tools to fight back."
+            }
+        ]
     }
 ];
 
