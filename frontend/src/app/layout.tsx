@@ -9,8 +9,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cvber.vercel.app";
 export const metadata: Metadata = {
     // Basic metadata
     title: {
-        default: "Protect Your Art From AI Theft — Free C2PA Certificates & DMCA Tools | CVBER",
-        template: "%s | CVBER — Art Protection"
+        default: "Protect Your Art From AI Theft — Free C2PA & DMCA Tools | CVBER",
+        template: "%s | CVBER"
     },
     description: "CVBER protects digital artists from AI scraping, art theft, and unauthorized use. Get a free C2PA provenance certificate, automated DMCA takedowns, and real-time theft monitoring. Trusted by 10,000+ creators worldwide.",
     keywords: [
