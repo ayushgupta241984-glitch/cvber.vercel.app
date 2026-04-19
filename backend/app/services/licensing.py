@@ -76,7 +76,12 @@ class LicensingEngine:
     }
     
     def __init__(self):
-        self.licenses: Dict[str, License] = {}
+        from supabase import create_client, Client
+        from app.config import settings
+        self.supabase: Client = create_client(
+            settings.supabase_url,
+            settings.supabase_service_role_key
+        )
     
     def generate_license(
         self,
@@ -87,7 +92,7 @@ class LicensingEngine:
         licensee_email: str,
         licensor_name: str
     ) -> License:
-        """Generate a new license"""
+        """Generate a new license and store in DB"""
         terms = self.LICENSE_TERMS.get(license_type, self.LICENSE_TERMS[LicenseType.PERSONAL])
         
         # Generate license ID
@@ -101,7 +106,7 @@ class LicensingEngine:
         # Generate verification URL
         verification_url = f"https://cvber.app/license/{license_id}"
         
-        license = License(
+        license_obj = License(
             license_id=license_id,
             asset_hash=asset_hash,
             asset_name=asset_name,
@@ -116,8 +121,28 @@ class LicensingEngine:
             is_active=True
         )
         
-        self.licenses[license_id] = license
-        return license
+        # Store in Supabase
+        try:
+            db_data = {
+                "license_id": license_id,
+                "asset_hash": asset_hash,
+                "asset_name": asset_name,
+                "license_type": license_type,
+                "licensee_name": licensee_name,
+                "licensee_email": licensee_email,
+                "licensor_name": licensor_name,
+                "issued_at": license_obj.granted_at.isoformat(),
+                "expires_at": expires_at.isoformat() if expires_at else None,
+                "status": "active",
+                "metadata": terms
+            }
+            self.supabase.table("licenses").insert(db_data).execute()
+        except Exception as e:
+            print(f"Database error storing license: {e}")
+            # We still return the license object for the response, 
+            # but log the failure to persist
+            
+        return license_obj
     
     def _generate_license_id(self, asset_hash: str, licensee_email: str) -> str:
         """Generate unique license ID"""
@@ -125,37 +150,53 @@ class LicensingEngine:
         return f"LIC-{hashlib.sha256(data.encode()).hexdigest()[:16].upper()}"
     
     def verify_license(self, license_id: str) -> Dict[str, Any]:
-        """Verify a license is valid"""
-        license = self.licenses.get(license_id)
-        
-        if not license:
-            return {"valid": False, "reason": "License not found"}
-        
-        if not license.is_active:
-            return {"valid": False, "reason": "License has been revoked"}
-        
-        if license.expires_at and license.expires_at < datetime.utcnow():
-            return {"valid": False, "reason": "License has expired"}
-        
-        return {
-            "valid": True,
-            "license_id": license.license_id,
-            "asset_name": license.asset_name,
-            "license_type": license.license_type,
-            "licensee": license.licensee_name,
-            "licensor": license.licensor_name,
-            "granted_at": license.granted_at.isoformat(),
-            "expires_at": license.expires_at.isoformat() if license.expires_at else "Never",
-            "terms": license.terms
-        }
+        """Verify a license is valid from DB"""
+        try:
+            response = self.supabase.table("licenses")\
+                .select("*")\
+                .eq("license_id", license_id)\
+                .single()\
+                .execute()
+            
+            if not response.data:
+                return {"valid": False, "reason": "License not found"}
+            
+            data = response.data
+            is_active = data.get("status") == "active"
+            expires_at_str = data.get("expires_at")
+            expires_at = datetime.fromisoformat(expires_at_str) if expires_at_str else None
+            
+            if not is_active:
+                return {"valid": False, "reason": "License has been revoked"}
+            
+            if expires_at and expires_at < datetime.utcnow():
+                return {"valid": False, "reason": "License has expired"}
+            
+            return {
+                "valid": True,
+                "license_id": data["license_id"],
+                "asset_name": data["asset_name"],
+                "license_type": data["license_type"],
+                "licensee": data["licensee_name"],
+                "licensor": data["licensor_name"],
+                "granted_at": data["issued_at"],
+                "expires_at": data["expires_at"] or "Never",
+                "terms": data["metadata"]
+            }
+        except Exception as e:
+            return {"valid": False, "reason": f"Verification error: {str(e)}"}
     
     def revoke_license(self, license_id: str) -> bool:
-        """Revoke an active license"""
-        license = self.licenses.get(license_id)
-        if license:
-            license.is_active = False
+        """Revoke an active license in DB"""
+        try:
+            self.supabase.table("licenses")\
+                .update({"status": "revoked"})\
+                .eq("license_id", license_id)\
+                .execute()
             return True
-        return False
+        except Exception as e:
+            print(f"Error revoking license: {e}")
+            return False
     
     def generate_license_metadata(self, license: License) -> str:
         """Generate embeddable license metadata (JSON-LD format)"""

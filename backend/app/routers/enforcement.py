@@ -1,18 +1,13 @@
-"""
-Enforcement API Router
-Endpoints for DMCA, Trust Score, Licensing, Monitoring, and Kill Switch.
-"""
-from fastapi import APIRouter, HTTPException
 from typing import Optional, List
 from pydantic import BaseModel
-from datetime import datetime
-
-from app.services.enforcement import enforcement_engine, DMCARequest
-from app.services.trust_score import trust_engine, TrustFactors
-from app.services.licensing import licensing_engine, LicenseType
-from app.services.theft_monitor import theft_monitor
+from fastapi import APIRouter, HTTPException, Depends
 from app.services.kill_switch import kill_switch
 from app.services.event_log import event_log, EventType
+from app.services.licensing import licensing_engine, LicenseType
+from app.services.theft_monitor import theft_monitor
+from app.services.enforcement import enforcement_engine, DMCARequest
+from app.services.trust_score import trust_engine, TrustFactors
+from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/api/enforcement", tags=["Enforcement"])
 
@@ -32,15 +27,20 @@ class GenerateDMCARequest(BaseModel):
 
 
 @router.post("/dmca/generate")
-async def generate_dmca_notice(request: GenerateDMCARequest):
+async def generate_dmca_notice(
+    request: GenerateDMCARequest,
+    current_user: dict = Depends(get_current_user)
+):
     """Generate a DMCA takedown notice"""
+    # Security: Override owner_email with authenticated user's email to prevent spoofing
+    request.owner_email = current_user["email"]
     dmca_request = DMCARequest(**request.dict())
     notice = enforcement_engine.generate_notice(dmca_request)
     
     # Log the event
     event_log.append_event(
         event_type=EventType.DMCA_GENERATED,
-        actor_id=request.owner_email,
+        actor_id=current_user["id"],
         asset_id=request.asset_hash,
         details={"notice_id": notice.notice_id, "platform": request.platform}
     )
@@ -74,7 +74,10 @@ class CalculateTrustRequest(BaseModel):
 
 
 @router.post("/trust/calculate")
-async def calculate_trust_score(request: CalculateTrustRequest):
+async def calculate_trust_score(
+    request: CalculateTrustRequest,
+    current_user: dict = Depends(get_current_user)
+):
     """Calculate trust score for a creator"""
     factors = TrustFactors(**request.dict())
     score = trust_engine.calculate_score(factors)
@@ -102,7 +105,10 @@ class CreateLicenseRequest(BaseModel):
 
 
 @router.post("/license/create")
-async def create_license(request: CreateLicenseRequest):
+async def create_license(
+    request: CreateLicenseRequest,
+    current_user: dict = Depends(get_current_user)
+):
     """Create a new license"""
     license = licensing_engine.generate_license(
         asset_hash=request.asset_hash,
@@ -116,7 +122,7 @@ async def create_license(request: CreateLicenseRequest):
     # Log the event
     event_log.append_event(
         event_type=EventType.LICENSE_GRANTED,
-        actor_id=request.licensor_name,
+        actor_id=current_user["id"],
         asset_id=request.asset_hash,
         details={"license_id": license.license_id, "type": request.license_type}
     )
@@ -160,7 +166,10 @@ class ReportTheftRequest(BaseModel):
 
 
 @router.post("/monitor/register")
-async def register_for_monitoring(request: RegisterMonitorRequest):
+async def register_for_monitoring(
+    request: RegisterMonitorRequest,
+    current_user: dict = Depends(get_current_user)
+):
     """Register an asset for theft monitoring"""
     asset = theft_monitor.register_asset(
         asset_id=request.asset_id,
@@ -172,7 +181,10 @@ async def register_for_monitoring(request: RegisterMonitorRequest):
 
 
 @router.post("/monitor/report-theft")
-async def report_theft(request: ReportTheftRequest):
+async def report_theft(
+    request: ReportTheftRequest,
+    current_user: dict = Depends(get_current_user)
+):
     """Report a theft detection"""
     try:
         alert = theft_monitor.report_theft(
@@ -219,8 +231,13 @@ class ActivateKillSwitchRequest(BaseModel):
 
 
 @router.post("/killswitch/activate")
-async def activate_kill_switch(request: ActivateKillSwitchRequest):
+async def activate_kill_switch(
+    request: ActivateKillSwitchRequest,
+    current_user: dict = Depends(get_current_user)
+):
     """Activate kill switch for an asset"""
+    # Security: Override owner_id with authenticated user's ID
+    request.owner_id = current_user["id"]
     dispute = kill_switch.activate_kill_switch(
         asset_id=request.asset_id,
         asset_hash=request.asset_hash,
@@ -232,7 +249,7 @@ async def activate_kill_switch(request: ActivateKillSwitchRequest):
     # Log the event
     event_log.append_event(
         event_type=EventType.DISPUTE_OPENED,
-        actor_id=request.owner_id,
+        actor_id=current_user["id"],
         asset_id=request.asset_id,
         details={"dispute_id": dispute.dispute_id, "reason": request.reason}
     )
@@ -253,7 +270,11 @@ async def get_dispute_banner(asset_hash: str):
 
 
 @router.post("/killswitch/deactivate/{dispute_id}")
-async def deactivate_kill_switch(dispute_id: str, resolution: str):
+async def deactivate_kill_switch(
+    dispute_id: str, 
+    resolution: str,
+    current_user: dict = Depends(get_current_user)
+):
     """Deactivate kill switch and resolve dispute"""
     success = kill_switch.deactivate_kill_switch(dispute_id, resolution)
     
@@ -299,7 +320,10 @@ class BlockchainTimestampRequest(BaseModel):
 
 
 @router.post("/blockchain/timestamp")
-async def create_blockchain_timestamp(request: BlockchainTimestampRequest):
+async def create_blockchain_timestamp(
+    request: BlockchainTimestampRequest,
+    current_user: dict = Depends(get_current_user)
+):
     """
     Create a FREE blockchain timestamp using OpenTimestamps.
     Anchors to Bitcoin blockchain at no cost.

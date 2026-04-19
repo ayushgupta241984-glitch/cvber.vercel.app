@@ -1,11 +1,15 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.models.schemas import ChatRequest, ChatResponse
 from app.services.vertex_ai import vertex_ai_service
+from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/mentor", tags=["mentor"])
 
 @router.post("/chat", response_model=ChatResponse)
-async def mentor_chat(request: ChatRequest):
+async def mentor_chat(
+    request: ChatRequest,
+    current_user: dict = Depends(get_current_user)
+):
     """
     Chat with the AI Security Mentor.
     """

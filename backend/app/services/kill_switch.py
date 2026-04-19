@@ -35,8 +35,12 @@ class KillSwitchEngine:
     """Content revocation and dispute management"""
     
     def __init__(self):
-        self.active_disputes: Dict[str, ContentDispute] = {}
-        self.revoked_assets: Dict[str, Dict[str, Any]] = {}
+        from supabase import create_client, Client
+        from app.config import settings
+        self.supabase: Client = create_client(
+            settings.supabase_url,
+            settings.supabase_service_role_key
+        )
     
     def activate_kill_switch(
         self,
@@ -46,7 +50,7 @@ class KillSwitchEngine:
         reason: str,
         affected_urls: List[str] = None
     ) -> ContentDispute:
-        """Activate kill switch for an asset"""
+        """Activate kill switch for an asset and store in DB"""
         dispute_id = self._generate_dispute_id(asset_id, owner_id)
         
         dispute = ContentDispute(
@@ -63,16 +67,23 @@ class KillSwitchEngine:
             affected_urls=affected_urls or []
         )
         
-        self.active_disputes[dispute_id] = dispute
-        
-        # Mark asset as revoked
-        self.revoked_assets[asset_hash] = {
-            "dispute_id": dispute_id,
-            "revoked_at": datetime.utcnow().isoformat(),
-            "reason": reason,
-            "message": "Content Under Dispute"
-        }
-        
+        # Store in Supabase
+        try:
+            db_data = {
+                "dispute_id": dispute_id,
+                "asset_id": asset_id,
+                "asset_hash": asset_hash,
+                "owner_id": owner_id,
+                "reason": reason,
+                "status": DisputeStatus.PENDING,
+                "kill_switch_active": True,
+                "affected_urls": affected_urls or [],
+                "created_at": dispute.created_at.isoformat()
+            }
+            self.supabase.table("disputes").insert(db_data).execute()
+        except Exception as e:
+            print(f"Database error activating kill switch: {e}")
+            
         return dispute
     
     def _generate_dispute_id(self, asset_id: str, owner_id: str) -> str:
@@ -81,17 +92,26 @@ class KillSwitchEngine:
         return f"DISPUTE-{hashlib.sha256(data.encode()).hexdigest()[:10].upper()}"
     
     def check_asset_status(self, asset_hash: str) -> Dict[str, Any]:
-        """Check if an asset is under dispute"""
-        if asset_hash in self.revoked_assets:
-            revocation = self.revoked_assets[asset_hash]
-            return {
-                "status": "revoked",
-                "display": True,
-                "message": revocation["message"],
-                "dispute_id": revocation["dispute_id"],
-                "blur_content": True,
-                "show_warning": True
-            }
+        """Check if an asset is under dispute using DB"""
+        try:
+            response = self.supabase.table("disputes")\
+                .select("*")\
+                .eq("asset_hash", asset_hash)\
+                .eq("kill_switch_active", True)\
+                .execute()
+            
+            if response.data:
+                dispute = response.data[0]
+                return {
+                    "status": "revoked",
+                    "display": True,
+                    "message": "Content Under Dispute",
+                    "dispute_id": dispute["dispute_id"],
+                    "blur_content": True,
+                    "show_warning": True
+                }
+        except Exception as e:
+            print(f"Error checking asset status: {e}")
         
         return {
             "status": "active",
@@ -102,20 +122,20 @@ class KillSwitchEngine:
         }
     
     def deactivate_kill_switch(self, dispute_id: str, resolution: str) -> bool:
-        """Deactivate kill switch and resolve dispute"""
-        dispute = self.active_disputes.get(dispute_id)
-        if not dispute:
+        """Deactivate kill switch and resolve dispute in DB"""
+        try:
+            self.supabase.table("disputes")\
+                .update({
+                    "kill_switch_active": False,
+                    "status": resolution,
+                    "resolved_at": datetime.utcnow().isoformat()
+                })\
+                .eq("dispute_id", dispute_id)\
+                .execute()
+            return True
+        except Exception as e:
+            print(f"Error deactivating kill switch: {e}")
             return False
-        
-        dispute.kill_switch_active = False
-        dispute.status = resolution
-        dispute.resolved_at = datetime.utcnow()
-        
-        # Remove from revoked assets
-        if dispute.asset_hash in self.revoked_assets:
-            del self.revoked_assets[dispute.asset_hash]
-        
-        return True
     
     def get_dispute_banner(self, asset_hash: str) -> Dict[str, Any]:
         """Get the dispute banner to display on content"""

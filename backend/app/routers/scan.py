@@ -15,11 +15,7 @@ router = APIRouter(prefix="/scan", tags=["scan"])
 supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
 
 
-def get_current_user():
-    """Dependency to get current authenticated user. 
-    TODO: Implement JWT token validation."""
-    # Placeholder - will be implemented with auth
-    return {"id": "00000000-0000-0000-0000-000000000000", "email": "user@example.com"}
+from app.dependencies import get_current_user
 
 
 @router.post("", response_model=ScanResponse)

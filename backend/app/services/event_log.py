@@ -40,7 +40,12 @@ class ImmutableEventLog:
     """Append-only event log with hash chaining"""
     
     def __init__(self):
-        self.events: List[AuditEvent] = []
+        from supabase import create_client, Client
+        from app.config import settings
+        self.supabase: Client = create_client(
+            settings.supabase_url,
+            settings.supabase_service_role_key
+        )
         self._genesis_hash = self._compute_hash("CVBER_GENESIS_BLOCK")
     
     def _compute_hash(self, data: str) -> str:
@@ -48,10 +53,20 @@ class ImmutableEventLog:
         return hashlib.sha256(data.encode()).hexdigest()
     
     def _get_last_hash(self) -> str:
-        """Get hash of last event, or genesis hash if empty"""
-        if not self.events:
-            return self._genesis_hash
-        return self.events[-1].event_hash
+        """Get hash of last event from DB, or genesis hash if empty"""
+        try:
+            response = self.supabase.table("audit_trail")\
+                .select("event_hash")\
+                .order("created_at", desc=True)\
+                .limit(1)\
+                .execute()
+            
+            if response.data:
+                return response.data[0]["event_hash"]
+        except Exception as e:
+            print(f"Error fetching last hash: {e}")
+            
+        return self._genesis_hash
     
     def append_event(
         self,
@@ -61,7 +76,7 @@ class ImmutableEventLog:
         asset_id: str = None,
         details: Dict[str, Any] = None
     ) -> AuditEvent:
-        """Append a new event to the log"""
+        """Append a new event to the log in DB"""
         timestamp = datetime.utcnow()
         previous_hash = self._get_last_hash()
         
@@ -80,7 +95,24 @@ class ImmutableEventLog:
         event_hash = self._compute_hash(json.dumps(event_data, sort_keys=True))
         event_id = f"EVT-{event_hash[:12].upper()}"
         
-        event = AuditEvent(
+        # Store in Supabase
+        try:
+            db_data = {
+                "event_id": event_id,
+                "event_type": event_type,
+                "actor_id": actor_id,
+                "actor_type": actor_type,
+                "asset_id": asset_id,
+                "details": details or {},
+                "previous_hash": previous_hash,
+                "event_hash": event_hash,
+                "created_at": timestamp.isoformat()
+            }
+            self.supabase.table("audit_trail").insert(db_data).execute()
+        except Exception as e:
+            print(f"Database error logging event: {e}")
+            
+        return AuditEvent(
             event_id=event_id,
             event_type=event_type,
             timestamp=timestamp,
@@ -91,44 +123,62 @@ class ImmutableEventLog:
             previous_hash=previous_hash,
             event_hash=event_hash
         )
-        
-        self.events.append(event)
-        return event
     
     def verify_chain_integrity(self) -> Dict[str, Any]:
-        """Verify the entire chain is intact"""
-        if not self.events:
-            return {"valid": True, "message": "Empty log"}
-        
-        # Check genesis
-        if self.events[0].previous_hash != self._genesis_hash:
-            return {"valid": False, "message": "Genesis block mismatch", "index": 0}
-        
-        # Check each subsequent event
-        for i in range(1, len(self.events)):
-            if self.events[i].previous_hash != self.events[i-1].event_hash:
-                return {
-                    "valid": False,
-                    "message": f"Chain broken at event {i}",
-                    "index": i,
-                    "expected": self.events[i-1].event_hash,
-                    "found": self.events[i].previous_hash
-                }
-        
-        return {
-            "valid": True,
-            "message": "Chain integrity verified",
-            "total_events": len(self.events),
-            "first_event": self.events[0].timestamp.isoformat(),
-            "last_event": self.events[-1].timestamp.isoformat()
-        }
-    
-    def get_asset_history(self, asset_id: str) -> List[AuditEvent]:
-        """Get all events for a specific asset"""
-        return [e for e in self.events if e.asset_id == asset_id]
-    
+        """Verify the entire chain is intact using DB data"""
+        try:
+            response = self.supabase.table("audit_trail")\
+                .select("*")\
+                .order("created_at", desc=False)\
+                .execute()
+            
+            events = response.data or []
+            
+            if not events:
+                return {"valid": True, "message": "Empty log"}
+            
+            # Check genesis
+            if events[0]["previous_hash"] != self._genesis_hash:
+                return {"valid": False, "message": "Genesis block mismatch", "index": 0}
+            
+            # Check each subsequent event
+            for i in range(1, len(events)):
+                if events[i]["previous_hash"] != events[i-1]["event_hash"]:
+                    return {
+                        "valid": False,
+                        "message": f"Chain broken at event {i}",
+                        "index": i,
+                        "expected": events[i-1]["event_hash"],
+                        "found": events[i]["previous_hash"]
+                    }
+            
+            return {
+                "valid": True,
+                "message": "Chain integrity verified",
+                "total_events": len(events),
+                "first_event": events[0]["created_at"],
+                "last_event": events[-1]["created_at"]
+            }
+        except Exception as e:
+            print(f"Error verifying chain integrity: {e}")
+            return {"valid": False, "error": str(e)}
+
+    def get_asset_history(self, asset_id: str) -> List[Dict[str, Any]]:
+        """Get all events for a specific asset from DB"""
+        try:
+            response = self.supabase.table("audit_trail")\
+                .select("*")\
+                .eq("asset_id", asset_id)\
+                .order("created_at", desc=True)\
+                .execute()
+            
+            return response.data or []
+        except Exception as e:
+            print(f"Error fetching asset history: {e}")
+            return []
+
     def export_evidence_packet(self, asset_id: str) -> Dict[str, Any]:
-        """Export evidence packet for legal proceedings"""
+        """Export evidence packet for legal proceedings using DB data"""
         asset_events = self.get_asset_history(asset_id)
         chain_verification = self.verify_chain_integrity()
         
@@ -140,12 +190,12 @@ class ImmutableEventLog:
             "total_events": len(asset_events),
             "timeline": [
                 {
-                    "event_id": e.event_id,
-                    "type": e.event_type,
-                    "timestamp": e.timestamp.isoformat(),
-                    "actor": e.actor_id,
-                    "details": e.details,
-                    "hash": e.event_hash
+                    "event_id": e.get("event_id"),
+                    "type": e.get("event_type"),
+                    "timestamp": e.get("created_at"),
+                    "actor": e.get("actor_id"),
+                    "details": e.get("details"),
+                    "hash": e.get("event_hash")
                 }
                 for e in asset_events
             ],

@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from app.config import settings
 from supabase import create_client
 import os
+from app.dependencies import get_current_user
 
-router = APIRouter(prefix="/diagnostics", tags=["diagnostics"])
+router = APIRouter(prefix="/diagnostics", tags=["diagnostics"], dependencies=[Depends(get_current_user)])
 
 @router.get("/supabase")
 async def check_supabase():

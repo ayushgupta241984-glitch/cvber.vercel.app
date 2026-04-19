@@ -1,5 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi import Request, Response
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.routers import scan, auth, mentor, enforcement, diagnostics
 from app.services.vertex_ai import vertex_ai_service
@@ -10,14 +15,40 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Log environment on startup for debugging
-logger.info(f"GROQ_API_KEY env var present: {os.getenv('GROQ_API_KEY', 'NOT SET')[:30]}...")
+# Log environment status on startup
+logger.info("Initializing CVBER Free API services...")
+if os.getenv('GROQ_API_KEY'):
+    logger.info("GROQ_API_KEY is configured.")
+else:
+    logger.warning("GROQ_API_KEY is not set. Falling back to Gemini.")
 
 # Create FastAPI app
+# Rate Limiter setup (Firewall layer)
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title="CVBER Free API",
     description="Cybersecurity platform with AI-powered threat detection and C2PA verification",
     version="1.0.1"
+)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Security Headers Middleware (WAF Layer)
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
+# Trusted Host Middleware
+app.add_middleware(
+    TrustedHostMiddleware, 
+    allowed_hosts=["localhost", "127.0.0.1", "*.cvber.app", "cvber.free.las.app"]
 )
 
 # Initialize Google Cloud Credentials (Legacy JSON) if provided via Env
