@@ -68,23 +68,15 @@ async def initialize_gcp_credentials():
         print("Note: No legacy GCP JSON credentials found. Using API Key mode for Gemini.")
 
 # Configure CORS
-# Handle wildcard origin properly
-if settings.parsed_allowed_origins == ["*"]:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origin_regex=".*",  # Allow all origins
-        allow_credentials=False,  # Can't use credentials with wildcard
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-else:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.parsed_allowed_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# For safety in varied deployment environments (e.g. Vercel Preview strings), we allow all origins.
+# Our Auth system uses 'Authorization: Bearer' headers instead of cookies, so allow_credentials=False is secure.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include routers
 app.include_router(scan.router)
