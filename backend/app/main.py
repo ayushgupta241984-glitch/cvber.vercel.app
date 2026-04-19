@@ -48,7 +48,7 @@ async def add_security_headers(request: Request, call_next):
 # Trusted Host Middleware
 app.add_middleware(
     TrustedHostMiddleware, 
-    allowed_hosts=["localhost", "127.0.0.1", "*.cvber.app", "cvber.free.las.app"]
+    allowed_hosts=["localhost", "127.0.0.1", "*.cvber.app", "cvber.free.las.app", "*.onrender.com"]
 )
 
 # Initialize Google Cloud Credentials (Legacy JSON) if provided via Env
