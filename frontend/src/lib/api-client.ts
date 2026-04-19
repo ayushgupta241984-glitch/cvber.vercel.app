@@ -28,11 +28,13 @@ export interface ScanResult {
 
 export const apiClient = {
     async scanFile(file: File): Promise<ScanResult> {
+        const token = localStorage.getItem('access_token');
         const formData = new FormData();
         formData.append('file', file);
 
         const response = await fetch(`${API_BASE_URL}/scan`, {
             method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: formData,
         });
 
@@ -44,11 +46,13 @@ export const apiClient = {
     },
 
     async verifyFile(file: File): Promise<any> {
+        const token = localStorage.getItem('access_token');
         const formData = new FormData();
         formData.append('file', file);
 
         const response = await fetch(`${API_BASE_URL}/scan/verify`, {
             method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: formData,
         });
 
@@ -60,7 +64,10 @@ export const apiClient = {
     },
 
     async getScanHistory(limit: number = 10): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}/scan/history?limit=${limit}`);
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${API_BASE_URL}/scan/history?limit=${limit}`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
 
         if (!response.ok) {
             throw new Error('Failed to fetch history');
@@ -116,10 +123,12 @@ export const apiClient = {
     },
 
     async chatWithMentor(message: string, history: any[] = []): Promise<any> {
+        const token = localStorage.getItem('access_token');
         const response = await fetch(`${API_BASE_URL}/mentor/chat`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             },
             body: JSON.stringify({ message, history }),
         });
