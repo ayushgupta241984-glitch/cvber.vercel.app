@@ -12,8 +12,11 @@ key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 s = create_client(url, key)
 
 def create_user():
-    email = "gupta16192425@gmail.com"
-    password = "UserPassword123!"
+    email = os.getenv("ADMIN_EMAIL", "gupta16192425@gmail.com")
+    password = os.getenv("ADMIN_PASSWORD")
+    if not password:
+        print("ERROR: ADMIN_PASSWORD not set in environment.")
+        return False
     full_name = "Ayush Gupta"
     
     print(f"Manually creating user: {email}")
