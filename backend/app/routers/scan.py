@@ -1,9 +1,9 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
 from uuid import uuid4, UUID
 from datetime import datetime
 from app.models.schemas import ScanResponse, RiskReport, VerifyRequest, VerifyResponse
 from app.services.vertex_ai import vertex_ai_service
-from app.services.c2pa_service import c2pa_service
+from app.services.c2pa_service import c2pa_service, embed_and_store_after_signing
 from app.services.storage import storage_service
 from app.services.metadata_engine import metadata_engine
 from supabase import create_client
@@ -140,6 +140,7 @@ async def scan_file(
 
 @router.post("/verify", response_model=VerifyResponse)
 async def verify_file(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_user)
 ):
@@ -208,6 +209,17 @@ async def verify_file(
         }
         
         supabase.table("audit_logs").insert(audit_log).execute()
+
+        # Dispatch background task: generate CLIP embedding for Art DNA registry
+        # This is non-blocking — signing response returns immediately
+        background_tasks.add_task(
+            embed_and_store_after_signing,
+            user_id=current_user["id"],
+            asset_id=str(verification_id),
+            file_bytes=file_buffer,
+            file_name=file.filename,
+            supabase_client=supabase
+        )
         
         return VerifyResponse(
             verification_id=verification_id,
