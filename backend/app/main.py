@@ -66,6 +66,12 @@ async def initialize_gcp_credentials():
             print(f"Failed to initialize legacy GCP credentials: {e}")
     else:
         print("Note: No legacy GCP JSON credentials found. Using API Key mode for Gemini.")
+        
+    # Pre-load and quantize CLIP model at startup
+    # so the first analysis request isn't slow
+    from app.services.clip_service import get_clip_model
+    get_clip_model()
+    logger.info("CLIP model ready")
 
 # Configure CORS
 # For safety in varied deployment environments (e.g. Vercel Preview strings), we allow all origins.
