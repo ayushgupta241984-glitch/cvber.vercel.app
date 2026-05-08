@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { signFile, verifyFile } from './c2pa-handler';
+import { signFile, verifyFile } from './c2pa-handler.js';
 
 dotenv.config();
 

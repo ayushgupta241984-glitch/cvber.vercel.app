@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "C2PA digital signature service for CVBER Free",
     "main": "dist/index.js",
+    "type": "module",
     "scripts": {
         "build": "tsc",
         "start": "node dist/index.js",

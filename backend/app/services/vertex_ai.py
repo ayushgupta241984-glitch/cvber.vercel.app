@@ -11,12 +11,12 @@ logger = logging.getLogger(__name__)
 
 # Try to import SDKs
 try:
-    import google.generativeai as genai
+    import google.genai as genai
     GENAI_AVAILABLE = True
-    logger.info("✅ google.generativeai imported successfully")
+    logger.info("✅ google.genai imported successfully")
 except ImportError as e:
     GENAI_AVAILABLE = False
-    logger.warning(f"⚠️ google.generativeai not available: {e}")
+    logger.warning(f"⚠️ google.genai not available: {e}")
 
 try:
     from groq import AsyncGroq
