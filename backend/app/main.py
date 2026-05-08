@@ -2,9 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi import Request, Response
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.routers import scan, auth, mentor, enforcement, diagnostics
 from app.services.vertex_ai import vertex_ai_service
@@ -23,15 +20,11 @@ else:
     logger.warning("GROQ_API_KEY is not set. Falling back to Gemini.")
 
 # Create FastAPI app
-# Rate Limiter setup (Firewall layer)
-limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title="CVBER Free API",
     description="Cybersecurity platform with AI-powered threat detection and C2PA verification",
     version="1.0.1"
 )
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Security Headers Middleware (WAF Layer)
 @app.middleware("http")
@@ -66,12 +59,6 @@ async def initialize_gcp_credentials():
             print(f"Failed to initialize legacy GCP credentials: {e}")
     else:
         print("Note: No legacy GCP JSON credentials found. Using API Key mode for Gemini.")
-        
-    # Pre-load and quantize CLIP model at startup
-    # so the first analysis request isn't slow
-    from app.services.clip_service import get_clip_model
-    get_clip_model()
-    logger.info("CLIP model ready")
 
 # Configure CORS
 # For safety in varied deployment environments (e.g. Vercel Preview strings), we allow all origins.
