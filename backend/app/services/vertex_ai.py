@@ -351,7 +351,7 @@ KNOWLEDGE CAPABILITIES:
                         # if retry fails, fall through to return original error
                         logger.error(f"Retry after fallback also failed: {e2}")
             # include provider in the response so frontend can know which service failed
-            return f"Digital Glitch ({self.provider}): {err_str[:100]}... Please check your API keys."
+            return f"AI service unavailable. Please check your API keys."
 
     def _clean_json_response(self, text: str) -> str:
         text = text.strip()

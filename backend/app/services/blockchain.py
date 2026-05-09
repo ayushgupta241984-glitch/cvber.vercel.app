@@ -11,6 +11,9 @@ import httpx
 import json
 from supabase import create_client
 from app.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TimestampProof(BaseModel):
@@ -46,6 +49,8 @@ class BlockchainTimestampService:
         "https://bob.btc.calendar.opentimestamps.org"
     ]
 
+    DEFAULT_TIMEOUT = 30.0  # seconds
+
     def __init__(self):
         self.supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
 
@@ -54,7 +59,28 @@ class BlockchainTimestampService:
         Create a blockchain timestamp for file content.
         Returns immediately with a pending proof.
         Proof becomes confirmed after Bitcoin block inclusion (~2 hours).
+
+        Args:
+            file_content: File content as bytes
+            asset_name: Name of the asset
+            user_id: User ID for database storage
+
+        Returns:
+            TimestampProof object
+
+        Raises:
+            ValueError: If file_content is empty or asset_name is empty
+            BlockchainError: If timestamp creation fails
         """
+        if not file_content:
+            raise ValueError("File content cannot be empty")
+
+        if not asset_name:
+            raise ValueError("Asset name cannot be empty")
+
+        if not user_id:
+            raise ValueError("User ID cannot be empty")
+
         # Hash the content
         content_hash = hashlib.sha256(file_content).hexdigest()
         proof_id = f"OTS-{content_hash[:16].upper()}"
@@ -64,7 +90,7 @@ class BlockchainTimestampService:
         status = "pending"
 
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=self.DEFAULT_TIMEOUT) as client:
                 # Submit hash to calendar
                 hash_bytes = bytes.fromhex(content_hash)
                 response = await client.post(
@@ -77,13 +103,13 @@ class BlockchainTimestampService:
                     # Get the timestamp proof (binary .ots file)
                     ots_proof = base64.b64encode(response.content).decode('utf-8')
                     status = "pending"  # Will be confirmed after Bitcoin inclusion
-                    print(f"[OK] OpenTimestamps proof created for {asset_name}")
+                    logger.info(f"OpenTimestamps proof created for {asset_name}")
                 else:
-                    print(f"[WARN] OpenTimestamps returned status {response.status_code}")
+                    logger.warning(f"OpenTimestamps returned status {response.status_code}")
                     status = "local_only"
         except Exception as e:
             # Fallback: Create local proof (not blockchain-anchored but still verifiable)
-            print(f"[ERROR] OpenTimestamps submit failed: {e}. Creating local proof.")
+            logger.error(f"OpenTimestamps submit failed: {e}. Creating local proof.")
             status = "local_only"
 
         proof = TimestampProof(
@@ -95,7 +121,8 @@ class BlockchainTimestampService:
             status=status,
             ots_proof=ots_proof,
             verification_url=f"https://opentimestamps.org/verify?hash={content_hash}",
-            bitcoin_block=None
+            bitcoin_block=None,
+            confirmed_at=None
         )
 
         # Store in database
@@ -114,17 +141,36 @@ class BlockchainTimestampService:
                     'created_via': 'cvber_api',
                     'file_size': len(file_content)
                 }
-            })
-            print(f"[OK] Proof stored in database: {proof_id}")
+            }).execute()
+            logger.info(f"Proof stored in database: {proof_id}")
         except Exception as e:
-            print(f"[ERROR] Failed to store proof in database: {e}")
+            logger.error(f"Failed to store proof in database: {e}")
+            # Continue anyway - we have the proof object
 
         return proof
 
     async def verify_timestamp(self, proof_id: str) -> Dict[str, Any]:
-        """Verify a timestamp proof"""
+        """
+        Verify a timestamp proof.
+
+        Args:
+            proof_id: ID of the proof to verify
+
+        Returns:
+            Dictionary with verification results
+
+        Raises:
+            ValueError: If proof_id is empty
+            BlockchainError: If verification fails
+        """
+        if not proof_id:
+            raise ValueError("Proof ID cannot be empty")
+
         try:
-            result = self.supabase.table('blockchain_proofs').select('*').eq('proof_id', proof_id).execute()
+            result = self.supabase.table('blockchain_proofs')\
+                .select('*')\
+                .eq('proof_id', proof_id)\
+                .execute()
 
             if not result.data:
                 return {"valid": False, "error": "Proof not found"}
@@ -152,14 +198,30 @@ class BlockchainTimestampService:
                 )
             }
         except Exception as e:
-            print(f"[ERROR] Failed to verify timestamp: {e}")
-            return {"valid": False, "error": str(e)}
+            logger.error(f"Failed to verify timestamp {proof_id}: {e}")
+            raise BlockchainError(f"Failed to verify timestamp: {str(e)}")
 
     def create_hash_proof(self, file_content: bytes, asset_name: str) -> Dict[str, Any]:
         """
         Synchronous hash proof for immediate use.
         Creates a verifiable hash without async calendar submission.
+
+        Args:
+            file_content: File content as bytes
+            asset_name: Name of the asset
+
+        Returns:
+            Dictionary with proof document
+
+        Raises:
+            ValueError: If file_content is empty or asset_name is empty
         """
+        if not file_content:
+            raise ValueError("File content cannot be empty")
+
+        if not asset_name:
+            raise ValueError("Asset name cannot be empty")
+
         content_hash = hashlib.sha256(file_content).hexdigest()
         timestamp = datetime.utcnow()
 
@@ -178,7 +240,7 @@ class BlockchainTimestampService:
                 "calendars": self.OTS_CALENDARS
             },
             "verification": {
-                "url": f"https://opentimestamps.org/info.html",
+                "url": "https://opentimestamps.org/info.html",
                 "instructions": [
                     "1. Download the .ots proof file",
                     "2. Visit opentimestamps.org",
@@ -193,12 +255,32 @@ class BlockchainTimestampService:
             )
         }
 
+        logger.info(f"Created hash proof for {asset_name}")
         return proof_document
 
     async def get_user_proofs(self, user_id: str) -> List[TimestampProof]:
-        """Get all blockchain proofs for a user"""
+        """
+        Get all blockchain proofs for a user.
+
+        Args:
+            user_id: User ID to fetch proofs for
+
+        Returns:
+            List of TimestampProof objects
+
+        Raises:
+            ValueError: If user_id is empty
+            BlockchainError: If retrieval fails
+        """
+        if not user_id:
+            raise ValueError("User ID cannot be empty")
+
         try:
-            result = self.supabase.table('blockchain_proofs').select('*').eq('user_id', user_id).order('created_at', desc=True).execute()
+            result = self.supabase.table('blockchain_proofs')\
+                .select('*')\
+                .eq('user_id', user_id)\
+                .order('created_at', desc=True)\
+                .execute()
 
             proofs = []
             for row in result.data:
@@ -214,15 +296,27 @@ class BlockchainTimestampService:
                     bitcoin_block=row.get('bitcoin_block')
                 ))
 
+            logger.info(f"Retrieved {len(proofs)} proofs for user {user_id}")
             return proofs
         except Exception as e:
-            print(f"[ERROR] Failed to get user proofs: {e}")
-            return []
+            logger.error(f"Failed to get user proofs for {user_id}: {e}")
+            raise BlockchainError(f"Failed to get user proofs: {str(e)}")
 
     async def get_all_proofs(self) -> List[TimestampProof]:
-        """Get all blockchain proofs (admin only)"""
+        """
+        Get all blockchain proofs (admin only).
+
+        Returns:
+            List of all TimestampProof objects
+
+        Raises:
+            BlockchainError: If retrieval fails
+        """
         try:
-            result = self.supabase.table('blockchain_proofs').select('*').order('created_at', desc=True).execute()
+            result = self.supabase.table('blockchain_proofs')\
+                .select('*')\
+                .order('created_at', desc=True)\
+                .execute()
 
             proofs = []
             for row in result.data:
@@ -238,10 +332,65 @@ class BlockchainTimestampService:
                     bitcoin_block=row.get('bitcoin_block')
                 ))
 
+            logger.info(f"Retrieved {len(proofs)} total proofs")
             return proofs
         except Exception as e:
-            print(f"[ERROR] Failed to get all proofs: {e}")
-            return []
+            logger.error(f"Failed to get all proofs: {e}")
+            raise BlockchainError(f"Failed to get all proofs: {str(e)}")
+
+    async def update_proof_status(
+        self,
+        proof_id: str,
+        status: str,
+        bitcoin_block: Optional[int] = None
+    ) -> bool:
+        """
+        Update the status of a proof (e.g., when confirmed on blockchain).
+
+        Args:
+            proof_id: ID of the proof to update
+            status: New status (pending, confirmed, failed)
+            bitcoin_block: Bitcoin block number if confirmed
+
+        Returns:
+            True if successful
+
+        Raises:
+            ValueError: If proof_id or status is empty
+            BlockchainError: If update fails
+        """
+        if not proof_id:
+            raise ValueError("Proof ID cannot be empty")
+
+        if not status:
+            raise ValueError("Status cannot be empty")
+
+        try:
+            update_data = {
+                'status': status
+            }
+
+            if bitcoin_block:
+                update_data['bitcoin_block'] = bitcoin_block
+
+            if status == 'confirmed':
+                update_data['confirmed_at'] = datetime.utcnow().isoformat()
+
+            self.supabase.table('blockchain_proofs')\
+                .update(update_data)\
+                .eq('proof_id', proof_id)\
+                .execute()
+
+            logger.info(f"Updated proof {proof_id} status to {status}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to update proof {proof_id}: {e}")
+            raise BlockchainError(f"Failed to update proof: {str(e)}")
+
+
+class BlockchainError(Exception):
+    """Custom exception for blockchain-related errors."""
+    pass
 
 
 # Singleton instance

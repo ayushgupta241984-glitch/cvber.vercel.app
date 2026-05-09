@@ -131,9 +131,8 @@ async def register(request: RegisterRequest):
         msg = str(e)
         if "User already registered" in msg:
             raise HTTPException(status_code=400, detail="User already registered")
-        
-        # Include raw error for debugging the "User not allowed" issue
-        raise HTTPException(status_code=400, detail=f"Registration failed: {msg} (Traceback: {tb[:200]}...)")
+
+        raise HTTPException(status_code=400, detail="Registration failed")
 
 
 @router.post("/login", response_model=AuthTokens)
@@ -176,15 +175,15 @@ async def login(request: LoginRequest):
         raise HTTPException(status_code=401, detail=f"Login failed: {str(e)}")
 
 
-from app.dependencies import get_current_user, oauth2_scheme
+from app.dependencies import get_current_user
 
 @router.get("/me", response_model=UserProfile)
-async def get_current_user_profile(user_id: str = Depends(get_current_user)):
+async def get_current_user_profile(current_user: dict = Depends(get_current_user)):
     """Get current user profile."""
     try:
         response = supabase.table("profiles")\
             .select("*")\
-            .eq("id", user_id)\
+            .eq("id", current_user["id"])\
             .single()\
             .execute()
         

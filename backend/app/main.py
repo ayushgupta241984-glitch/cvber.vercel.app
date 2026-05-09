@@ -54,11 +54,11 @@ async def initialize_gcp_credentials():
             os.makedirs(os.path.dirname(os.path.abspath(cred_path)), exist_ok=True)
             with open(cred_path, "w") as f:
                 f.write(gcp_json)
-            print(f"Legacy GCP credentials initialized at {cred_path}")
+            logger.info(f"Legacy GCP credentials initialized at {cred_path}")
         except Exception as e:
-            print(f"Failed to initialize legacy GCP credentials: {e}")
+            logger.error(f"Failed to initialize legacy GCP credentials: {e}")
     else:
-        print("Note: No legacy GCP JSON credentials found. Using API Key mode for Gemini.")
+        logger.info("Note: No legacy GCP JSON credentials found. Using API Key mode for Gemini.")
 
 # Configure CORS
 # For safety in varied deployment environments (e.g. Vercel Preview strings), we allow all origins.
@@ -85,16 +85,17 @@ async def root():
     return {
         "status": "online",
         "service": "CVBER Free API",
-        "version": "1.0.0"
+        "version": "1.0.1"
     }
 
 
 @app.get("/health")
 async def health_check():
     """Detailed health check."""
+    from datetime import datetime, timezone
     return {
         "status": "healthy",
-        "timestamp": "2025-12-29T14:00:00Z",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "services": {
             "api": "operational",
             "database": "operational",

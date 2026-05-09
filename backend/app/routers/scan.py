@@ -8,6 +8,9 @@ from app.services.storage import storage_service
 from app.services.metadata_engine import metadata_engine
 from supabase import create_client
 from app.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/scan", tags=["scan"])
 
@@ -41,9 +44,10 @@ async def scan_file(
         
         # Inject Digital ID (Metadata)
         # TODO: Get real user info from DB profile
+        user_email = current_user.get("email") or "Cvber User"
         creator_info = {
-            "name": current_user.get("email", "Cvber User").split('@')[0], 
-            "copyright_notice": f"© {datetime.now().year} {current_user.get('email', 'Cvber User')}. All rights reserved."
+            "name": user_email.split('@')[0] if '@' in user_email else "Cvber User",
+            "copyright_notice": f"© {datetime.now().year} {user_email}. All rights reserved."
         }
         
         try:
@@ -56,11 +60,11 @@ async def scan_file(
             # Update size after injection
             file_size = len(file_buffer)
         except Exception as e:
-            print(f"Metadata warning: {e}")
-        
+            logger.warning(f"Metadata warning: {e}")
+
         # Get file type
         file_type = file.content_type or "application/octet-stream"
-        
+
         # [NEW] Check for C2PA manifest BEFORE AI analysis
         has_c2pa = False
         try:
@@ -68,9 +72,10 @@ async def scan_file(
             if "image" in file_type or "video" in file_type:
                 v_res = await c2pa_service.verify_signature(file_buffer)
                 # If there are active manifests, it's a verified file
-                has_c2pa = v_res.get("active_manifest") is not None or len(v_res.get("manifests", {})) > 0
+                manifests = v_res.get("manifests")
+                has_c2pa = v_res.get("active_manifest") is not None or (manifests and len(manifests) > 0)
         except Exception as v_err:
-            print(f"C2PA auto-verify failed: {v_err}")
+            logger.warning(f"C2PA auto-verify failed: {v_err}")
 
         # Perform AI threat analysis (Now C2PA-aware)
         risk_report = await vertex_ai_service.analyze_file_threat(
@@ -99,8 +104,8 @@ async def scan_file(
             }
             supabase.table("audit_logs").insert(audit_log).execute()
         except Exception as db_err:
-            print(f"Warning: Failed to log to Supabase: {db_err}")
-        
+            logger.warning(f"Failed to log to Supabase: {db_err}")
+
         # Upload file to storage (OPTIONAL - Don't crash if bucket doesn't exist)
         try:
             file_path = await storage_service.upload_file(
@@ -109,7 +114,7 @@ async def scan_file(
                 user_id=UUID(current_user["id"])
             )
         except Exception as storage_err:
-            print(f"Warning: Failed to upload to Storage: {storage_err}")
+            logger.warning(f"Failed to upload to Storage: {storage_err}")
         
         return ScanResponse(
             scan_id=scan_id,
@@ -132,10 +137,10 @@ async def scan_file(
                 "created_at": datetime.utcnow().isoformat()
             }
             supabase.table("audit_logs").insert(error_log).execute()
-        except:
-            pass
-            
-        raise HTTPException(status_code=500, detail=f"Scan failed: {str(e)}")
+        except Exception as log_error:
+            logger.warning(f"Failed to log scan error: {log_error}")
+
+        raise HTTPException(status_code=500, detail="Scan failed")
 
 
 @router.post("/verify", response_model=VerifyResponse)
@@ -234,9 +239,10 @@ async def verify_file(
             },
             status="verified"
         )
-        
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
+        logger.error(f"Verification failed: {e}")
+        raise HTTPException(status_code=500, detail="Verification failed")
 
 
 @router.get("/history")
@@ -252,8 +258,9 @@ async def get_scan_history(
             .order("created_at", desc=True)\
             .limit(limit)\
             .execute()
-        
+
         return {"scans": response.data}
-        
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch history: {str(e)}")
+        logger.error(f"Failed to fetch history: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch history")
