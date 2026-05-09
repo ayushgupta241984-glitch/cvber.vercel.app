@@ -47,6 +47,28 @@ export function BlockchainStatus() {
     const pendingCount = proofs.filter(p => p.status === 'pending').length;
     const confirmedCount = proofs.filter(p => p.status === 'confirmed').length;
 
+    const getStatusIcon = (status: string) => {
+        switch (status) {
+            case 'confirmed':
+                return <CheckCircle className="h-4 w-4 text-green-500" />;
+            case 'pending':
+                return <Clock className="h-4 w-4 text-yellow-500 animate-pulse" />;
+            default:
+                return <AlertCircle className="h-4 w-4 text-gray-400" />;
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'confirmed':
+                return 'Anchored';
+            case 'pending':
+                return 'Pending (~2h)';
+            default:
+                return 'Local Only';
+        }
+    };
+
     return (
         <div className="bg-gradient-to-br from-purple-900 to-indigo-900 rounded-3xl shadow-xl overflow-hidden border border-purple-700/50">
             {/* Header - Always Visible */}
