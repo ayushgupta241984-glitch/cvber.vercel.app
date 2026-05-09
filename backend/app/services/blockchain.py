@@ -74,13 +74,13 @@ class BlockchainTimestampService:
                     # Get the timestamp proof (binary .ots file)
                     ots_proof = base64.b64encode(response.content).decode('utf-8')
                     status = "pending"  # Will be confirmed after Bitcoin inclusion
-                    print(f"✅ OpenTimestamps proof created for {asset_name}")
+                    print(f"[OK] OpenTimestamps proof created for {asset_name}")
                 else:
-                    print(f"⚠️ OpenTimestamps returned status {response.status_code}")
+                    print(f"[WARN] OpenTimestamps returned status {response.status_code}")
                     status = "local_only"
         except Exception as e:
             # Fallback: Create local proof (not blockchain-anchored but still verifiable)
-            print(f"❌ OpenTimestamps submit failed: {e}. Creating local proof.")
+            print(f"[ERROR] OpenTimestamps submit failed: {e}. Creating local proof.")
             status = "local_only"
 
         proof = TimestampProof(
