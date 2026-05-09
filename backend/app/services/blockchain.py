@@ -5,10 +5,12 @@ Uses OpenTimestamps for free Bitcoin blockchain anchoring.
 import hashlib
 import base64
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
 import httpx
 import json
+from supabase import create_client
+from app.config import settings
 
 
 class TimestampProof(BaseModel):
@@ -18,10 +20,11 @@ class TimestampProof(BaseModel):
     asset_name: str
     timestamp: datetime
     blockchain: str
-    status: str  # pending, confirmed
+    status: str  # pending, confirmed, local_only, failed
     ots_proof: Optional[str]  # Base64 encoded .ots proof file
     verification_url: str
     bitcoin_block: Optional[int]
+    confirmed_at: Optional[datetime]
 
 
 class BlockchainTimestampService:
@@ -44,9 +47,9 @@ class BlockchainTimestampService:
     ]
 
     def __init__(self):
-        self.proofs: Dict[str, TimestampProof] = {}
+        self.supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
 
-    async def create_timestamp(self, file_content: bytes, asset_name: str) -> TimestampProof:
+    async def create_timestamp(self, file_content: bytes, asset_name: str, user_id: str) -> TimestampProof:
         """
         Create a blockchain timestamp for file content.
         Returns immediately with a pending proof.
@@ -95,32 +98,62 @@ class BlockchainTimestampService:
             bitcoin_block=None
         )
 
-        self.proofs[proof_id] = proof
+        # Store in database
+        try:
+            self.supabase.table('blockchain_proofs').insert({
+                'user_id': user_id,
+                'proof_id': proof_id,
+                'asset_name': asset_name,
+                'asset_hash': content_hash,
+                'blockchain': 'bitcoin',
+                'status': status,
+                'ots_proof': ots_proof,
+                'verification_url': proof.verification_url,
+                'bitcoin_block': None,
+                'metadata': {
+                    'created_via': 'cvber_api',
+                    'file_size': len(file_content)
+                }
+            })
+            print(f"[OK] Proof stored in database: {proof_id}")
+        except Exception as e:
+            print(f"[ERROR] Failed to store proof in database: {e}")
+
         return proof
 
     async def verify_timestamp(self, proof_id: str) -> Dict[str, Any]:
         """Verify a timestamp proof"""
-        proof = self.proofs.get(proof_id)
+        try:
+            result = self.supabase.table('blockchain_proofs').select('*').eq('proof_id', proof_id).execute()
 
-        if not proof:
-            return {"valid": False, "error": "Proof not found"}
+            if not result.data:
+                return {"valid": False, "error": "Proof not found"}
 
-        # For now, return the proof status
-        # In production, you'd download and verify the .ots file against Bitcoin
-        return {
-            "valid": True,
-            "proof_id": proof.proof_id,
-            "asset_hash": proof.asset_hash,
-            "timestamp": proof.timestamp.isoformat(),
-            "blockchain": proof.blockchain,
-            "status": proof.status,
-            "verification_url": proof.verification_url,
-            "legal_statement": (
-                f"This digital asset was timestamped on {proof.timestamp.strftime('%B %d, %Y at %H:%M UTC')}. "
-                f"The SHA-256 hash ({proof.asset_hash[:16]}...) was submitted to the Bitcoin blockchain via OpenTimestamps. "
-                f"This constitutes cryptographic proof of existence at the stated time."
-            )
-        }
+            proof_data = result.data[0]
+
+            # Check if proof is confirmed
+            is_valid = proof_data['status'] == 'confirmed'
+
+            return {
+                "valid": is_valid,
+                "proof_id": proof_data['proof_id'],
+                "asset_hash": proof_data['asset_hash'],
+                "asset_name": proof_data['asset_name'],
+                "timestamp": proof_data['created_at'],
+                "blockchain": proof_data['blockchain'],
+                "status": proof_data['status'],
+                "verification_url": proof_data['verification_url'],
+                "bitcoin_block": proof_data.get('bitcoin_block'),
+                "confirmed_at": proof_data.get('confirmed_at'),
+                "legal_statement": (
+                    f"This digital asset was timestamped on {proof_data['created_at']}. "
+                    f"The SHA-256 hash ({proof_data['asset_hash'][:16]}...) was submitted to the Bitcoin blockchain via OpenTimestamps. "
+                    f"This constitutes cryptographic proof of existence at the stated time."
+                )
+            }
+        except Exception as e:
+            print(f"[ERROR] Failed to verify timestamp: {e}")
+            return {"valid": False, "error": str(e)}
 
     def create_hash_proof(self, file_content: bytes, asset_name: str) -> Dict[str, Any]:
         """
@@ -162,9 +195,53 @@ class BlockchainTimestampService:
 
         return proof_document
 
-    def get_all_proofs(self) -> Dict[str, TimestampProof]:
-        """Get all stored proofs"""
-        return self.proofs
+    async def get_user_proofs(self, user_id: str) -> List[TimestampProof]:
+        """Get all blockchain proofs for a user"""
+        try:
+            result = self.supabase.table('blockchain_proofs').select('*').eq('user_id', user_id).order('created_at', desc=True).execute()
+
+            proofs = []
+            for row in result.data:
+                proofs.append(TimestampProof(
+                    proof_id=row['proof_id'],
+                    asset_hash=row['asset_hash'],
+                    asset_name=row['asset_name'],
+                    timestamp=row['created_at'],
+                    blockchain=row['blockchain'],
+                    status=row['status'],
+                    ots_proof=row.get('ots_proof'),
+                    verification_url=row['verification_url'],
+                    bitcoin_block=row.get('bitcoin_block')
+                ))
+
+            return proofs
+        except Exception as e:
+            print(f"[ERROR] Failed to get user proofs: {e}")
+            return []
+
+    async def get_all_proofs(self) -> List[TimestampProof]:
+        """Get all blockchain proofs (admin only)"""
+        try:
+            result = self.supabase.table('blockchain_proofs').select('*').order('created_at', desc=True).execute()
+
+            proofs = []
+            for row in result.data:
+                proofs.append(TimestampProof(
+                    proof_id=row['proof_id'],
+                    asset_hash=row['asset_hash'],
+                    asset_name=row['asset_name'],
+                    timestamp=row['created_at'],
+                    blockchain=row['blockchain'],
+                    status=row['status'],
+                    ots_proof=row.get('ots_proof'),
+                    verification_url=row['verification_url'],
+                    bitcoin_block=row.get('bitcoin_block')
+                ))
+
+            return proofs
+        except Exception as e:
+            print(f"[ERROR] Failed to get all proofs: {e}")
+            return []
 
 
 # Singleton instance

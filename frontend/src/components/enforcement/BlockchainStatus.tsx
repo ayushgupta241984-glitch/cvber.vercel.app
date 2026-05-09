@@ -76,27 +76,37 @@ export function BlockchainStatus() {
     const refreshStatus = async () => {
         setIsLoading(true);
         try {
-            // Refresh all pending proofs
-            const updatedProofs = [...proofs];
-            for (const proof of updatedProofs) {
-                if (proof.status === 'pending') {
-                    try {
-                        const result = await apiClient.verifyBlockchainTimestamp(proof.proof_id);
-                        if (result.valid && result.status === 'confirmed') {
-                            proof.status = 'confirmed';
-                        }
-                    } catch (e) {
-                        console.error(`Failed to verify proof ${proof.proof_id}:`, e);
-                    }
-                }
+            // Fetch fresh proofs from backend
+            const result = await apiClient.getUserBlockchainProofs();
+            if (result.success) {
+                setProofs(result.proofs);
             }
-            setProofs(updatedProofs);
         } catch (e) {
             console.error('Failed to refresh blockchain status:', e);
         } finally {
             setIsLoading(false);
         }
     };
+
+    // Load proofs from backend on mount
+    useEffect(() => {
+        const loadProofs = async () => {
+            try {
+                const result = await apiClient.getUserBlockchainProofs();
+                if (result.success) {
+                    setProofs(result.proofs);
+                }
+            } catch (e) {
+                console.error('Failed to load blockchain proofs:', e);
+            }
+        };
+
+        loadProofs();
+
+        // Refresh every 30 seconds to check for status updates
+        const interval = setInterval(loadProofs, 30000);
+        return () => clearInterval(interval);
+    }, []);
 
     const pendingCount = proofs.filter(p => p.status === 'pending').length;
     const confirmedCount = proofs.filter(p => p.status === 'confirmed').length;
@@ -187,9 +197,10 @@ export function BlockchainStatus() {
                                                         {proof.asset_hash.slice(0, 16)}...
                                                     </code>
                                                     <button
-                                                        onClick={() => copyHash(proof.asset_hash)}
-                                                        className="text-purple-400 hover:text-white transition-colors"
-                                                    >
+                                                    onClick={() => copyHash(proof.asset_hash)}
+                                                    type="button"
+                                                    className="text-purple-400 hover:text-white transition-colors"
+                                                >
                                                         {copied === proof.asset_hash ? (
                                                             <Check className="h-3 w-3" />
                                                         ) : (

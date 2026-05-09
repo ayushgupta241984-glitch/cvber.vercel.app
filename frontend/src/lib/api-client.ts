@@ -204,4 +204,18 @@ export const apiClient = {
 
         return response.json();
     },
+
+    async getUserBlockchainProofs(): Promise<any> {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${API_BASE_URL}/api/enforcement/blockchain/proofs`, {
+            method: 'GET',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch blockchain proofs');
+        }
+
+        return response.json();
+    },
 };

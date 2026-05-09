@@ -333,9 +333,13 @@ async def create_blockchain_timestamp(
         file_bytes = bytes.fromhex(request.file_hash)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid hash format")
-    
-    proof = await blockchain_service.create_timestamp(file_bytes, request.asset_name)
-    
+
+    proof = await blockchain_service.create_timestamp(
+        file_bytes,
+        request.asset_name,
+        current_user["id"]
+    )
+
     return {
         "success": True,
         "proof": proof.dict(),
@@ -351,7 +355,7 @@ async def verify_blockchain_timestamp(proof_id: str):
 
 
 @router.post("/blockchain/hash-proof")
-async def create_hash_proof(request: BlockchainTimestampRequest):
+async def create_hash_proof(request: BlockchainTimestampRequest, current_user: dict = Depends(get_current_user)):
     """
     Create an immediate hash proof document.
     Synchronous - no blockchain submission, but creates verifiable proof.
@@ -360,6 +364,19 @@ async def create_hash_proof(request: BlockchainTimestampRequest):
         file_bytes = bytes.fromhex(request.file_hash)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid hash format")
-    
+
     proof = blockchain_service.create_hash_proof(file_bytes, request.asset_name)
     return proof
+
+
+@router.get("/blockchain/proofs")
+async def get_user_blockchain_proofs(current_user: dict = Depends(get_current_user)):
+    """Get all blockchain proofs for the current user"""
+    proofs = await blockchain_service.get_user_proofs(current_user["id"])
+    return {
+        "success": True,
+        "proofs": [proof.dict() for proof in proofs],
+        "total": len(proofs),
+        "pending": len([p for p in proofs if p.status == "pending"]),
+        "confirmed": len([p for p in proofs if p.status == "confirmed"])
+    }
