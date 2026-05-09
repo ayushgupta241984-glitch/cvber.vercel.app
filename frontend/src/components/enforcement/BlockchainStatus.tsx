@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link2, CheckCircle, Clock, AlertCircle, RefreshCw, ExternalLink, Copy, Check } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
 
 interface BlockchainProof {
     proof_id: string;
@@ -74,10 +75,27 @@ export function BlockchainStatus() {
 
     const refreshStatus = async () => {
         setIsLoading(true);
-        // In production, this would call the backend to check status
-        // For now, simulate a refresh
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setIsLoading(false);
+        try {
+            // Refresh all pending proofs
+            const updatedProofs = [...proofs];
+            for (const proof of updatedProofs) {
+                if (proof.status === 'pending') {
+                    try {
+                        const result = await apiClient.verifyBlockchainTimestamp(proof.proof_id);
+                        if (result.valid && result.status === 'confirmed') {
+                            proof.status = 'confirmed';
+                        }
+                    } catch (e) {
+                        console.error(`Failed to verify proof ${proof.proof_id}:`, e);
+                    }
+                }
+            }
+            setProofs(updatedProofs);
+        } catch (e) {
+            console.error('Failed to refresh blockchain status:', e);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const pendingCount = proofs.filter(p => p.status === 'pending').length;

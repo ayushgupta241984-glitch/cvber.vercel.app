@@ -156,4 +156,52 @@ export const apiClient = {
 
         return response.json();
     },
+
+    async createBlockchainTimestamp(assetName: string, fileHash: string): Promise<any> {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${API_BASE_URL}/api/enforcement/blockchain/timestamp`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ asset_name: assetName, file_hash: fileHash }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create blockchain timestamp');
+        }
+
+        return response.json();
+    },
+
+    async verifyBlockchainTimestamp(proofId: string): Promise<any> {
+        const response = await fetch(`${API_BASE_URL}/api/enforcement/blockchain/verify/${proofId}`, {
+            method: 'GET',
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to verify blockchain timestamp');
+        }
+
+        return response.json();
+    },
+
+    async createHashProof(assetName: string, fileHash: string): Promise<any> {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${API_BASE_URL}/api/enforcement/blockchain/hash-proof`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ asset_name: assetName, file_hash: fileHash }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create hash proof');
+        }
+
+        return response.json();
+    },
 };
