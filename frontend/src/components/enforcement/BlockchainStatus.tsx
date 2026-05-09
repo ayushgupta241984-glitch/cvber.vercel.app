@@ -20,74 +20,6 @@ export function BlockchainStatus() {
     const [isLoading, setIsLoading] = useState(false);
     const [copied, setCopied] = useState<string | null>(null);
 
-    // Load proofs from localStorage
-    useEffect(() => {
-        const loadProofs = () => {
-            const saved = localStorage.getItem('cvber_blockchain_proofs');
-            if (saved) {
-                try {
-                    setProofs(JSON.parse(saved));
-                } catch (e) {
-                    console.error('Failed to load blockchain proofs:', e);
-                }
-            }
-        };
-
-        loadProofs();
-
-        // Listen for updates from upload flow
-        window.addEventListener('blockchain-update', loadProofs);
-        return () => window.removeEventListener('blockchain-update', loadProofs);
-    }, []);
-
-    // Save proofs to localStorage
-    useEffect(() => {
-        localStorage.setItem('cvber_blockchain_proofs', JSON.stringify(proofs));
-    }, [proofs]);
-
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case 'confirmed':
-                return <CheckCircle className="h-4 w-4 text-green-500" />;
-            case 'pending':
-                return <Clock className="h-4 w-4 text-yellow-500 animate-pulse" />;
-            default:
-                return <AlertCircle className="h-4 w-4 text-gray-400" />;
-        }
-    };
-
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case 'confirmed':
-                return 'Anchored';
-            case 'pending':
-                return 'Pending (~2h)';
-            default:
-                return 'Local Only';
-        }
-    };
-
-    const copyHash = (hash: string) => {
-        navigator.clipboard.writeText(hash);
-        setCopied(hash);
-        setTimeout(() => setCopied(null), 2000);
-    };
-
-    const refreshStatus = async () => {
-        setIsLoading(true);
-        try {
-            // Fetch fresh proofs from backend
-            const result = await apiClient.getUserBlockchainProofs();
-            if (result.success) {
-                setProofs(result.proofs);
-            }
-        } catch (e) {
-            console.error('Failed to refresh blockchain status:', e);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     // Load proofs from backend on mount
     useEffect(() => {
         const loadProofs = async () => {
@@ -95,6 +27,9 @@ export function BlockchainStatus() {
                 const result = await apiClient.getUserBlockchainProofs();
                 if (result.success) {
                     setProofs(result.proofs);
+                    console.log('Loaded blockchain proofs from backend:', result.proofs);
+                } else {
+                    console.error('Failed to load blockchain proofs:', result);
                 }
             } catch (e) {
                 console.error('Failed to load blockchain proofs:', e);
@@ -107,9 +42,6 @@ export function BlockchainStatus() {
         const interval = setInterval(loadProofs, 30000);
         return () => clearInterval(interval);
     }, []);
-
-    const pendingCount = proofs.filter(p => p.status === 'pending').length;
-    const confirmedCount = proofs.filter(p => p.status === 'confirmed').length;
 
     return (
         <div className="bg-gradient-to-br from-purple-900 to-indigo-900 rounded-3xl shadow-xl overflow-hidden border border-purple-700/50">

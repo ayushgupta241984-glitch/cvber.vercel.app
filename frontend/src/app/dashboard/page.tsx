@@ -116,9 +116,13 @@ export default function DashboardPage() {
         // Create blockchain timestamp
         try {
             const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+            const token = localStorage.getItem('access_token');
             const response = await fetch(`${backendUrl}/api/enforcement/blockchain/timestamp`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     asset_name: rawFile.name,
                     file_hash: fileHash
@@ -127,22 +131,12 @@ export default function DashboardPage() {
 
             if (response.ok) {
                 const proofData = await response.json();
+                console.log('Blockchain timestamp created:', proofData);
 
-                // Save proof to blockchain proofs storage
-                const existingProofs = JSON.parse(localStorage.getItem('cvber_blockchain_proofs') || '[]');
-                existingProofs.unshift({
-                    proof_id: proofData.proof?.proof_id,
-                    asset_name: rawFile.name,
-                    asset_hash: fileHash,
-                    timestamp: new Date().toISOString(),
-                    blockchain: 'bitcoin',
-                    status: proofData.proof?.status || 'pending',
-                    verification_url: `${window.location.origin}/verify/${fileHash}`
-                });
-                localStorage.setItem('cvber_blockchain_proofs', JSON.stringify(existingProofs));
-
-                // Force re-render of BlockchainStatus
+                // Force re-render of BlockchainStatus by dispatching event
                 window.dispatchEvent(new Event('blockchain-update'));
+            } else {
+                console.error('Blockchain timestamp failed:', response.status);
             }
         } catch (error) {
             console.error('Blockchain timestamp failed:', error);
@@ -193,9 +187,11 @@ export default function DashboardPage() {
                                 </div>
                                 <span className="text-xl font-black tracking-tighter">ANTIGRAVITY</span>
                             </div>
-                            <button
+                            <button 
+                                type="button"
                                 onClick={() => setIsSidebarOpen(false)}
                                 className="lg:hidden p-2 text-zinc-500 hover:text-white transition-colors"
+                                title="Close sidebar"
                             >
                                 <ChevronRight className="w-5 h-5 rotate-180" />
                             </button>
