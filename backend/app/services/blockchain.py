@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
 import httpx
+import json
 
 
 class TimestampProof(BaseModel):
@@ -27,24 +28,24 @@ class BlockchainTimestampService:
     """
     Free blockchain timestamping using OpenTimestamps.
     Anchors to Bitcoin blockchain at no cost.
-    
+
     How it works:
     1. Hash the file content
     2. Submit hash to OpenTimestamps calendars
     3. Get a proof file (.ots) that can be verified against Bitcoin
     4. After ~2 hours, proof is anchored in a Bitcoin block
     """
-    
+
     OTS_CALENDARS = [
         "https://a.pool.opentimestamps.org",
         "https://b.pool.opentimestamps.org",
         "https://alice.btc.calendar.opentimestamps.org",
         "https://bob.btc.calendar.opentimestamps.org"
     ]
-    
+
     def __init__(self):
         self.proofs: Dict[str, TimestampProof] = {}
-    
+
     async def create_timestamp(self, file_content: bytes, asset_name: str) -> TimestampProof:
         """
         Create a blockchain timestamp for file content.
@@ -54,30 +55,34 @@ class BlockchainTimestampService:
         # Hash the content
         content_hash = hashlib.sha256(file_content).hexdigest()
         proof_id = f"OTS-{content_hash[:16].upper()}"
-        
+
         # Try to submit to OpenTimestamps calendar
         ots_proof = None
         status = "pending"
-        
+
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=30.0) as client:
                 # Submit hash to calendar
                 hash_bytes = bytes.fromhex(content_hash)
                 response = await client.post(
                     f"{self.OTS_CALENDARS[0]}/digest",
                     content=hash_bytes,
-                    headers={"Content-Type": "application/x-www-form-urlencoded"}
+                    headers={"Content-Type": "application/octet-stream"}
                 )
-                
+
                 if response.status_code == 200:
-                    # Get the timestamp proof
+                    # Get the timestamp proof (binary .ots file)
                     ots_proof = base64.b64encode(response.content).decode('utf-8')
                     status = "pending"  # Will be confirmed after Bitcoin inclusion
+                    print(f"✅ OpenTimestamps proof created for {asset_name}")
+                else:
+                    print(f"⚠️ OpenTimestamps returned status {response.status_code}")
+                    status = "local_only"
         except Exception as e:
             # Fallback: Create local proof (not blockchain-anchored but still verifiable)
-            print(f"OpenTimestamps submit failed: {e}. Creating local proof.")
+            print(f"❌ OpenTimestamps submit failed: {e}. Creating local proof.")
             status = "local_only"
-        
+
         proof = TimestampProof(
             proof_id=proof_id,
             asset_hash=content_hash,
@@ -89,17 +94,17 @@ class BlockchainTimestampService:
             verification_url=f"https://opentimestamps.org/verify?hash={content_hash}",
             bitcoin_block=None
         )
-        
+
         self.proofs[proof_id] = proof
         return proof
-    
+
     async def verify_timestamp(self, proof_id: str) -> Dict[str, Any]:
         """Verify a timestamp proof"""
         proof = self.proofs.get(proof_id)
-        
+
         if not proof:
             return {"valid": False, "error": "Proof not found"}
-        
+
         # For now, return the proof status
         # In production, you'd download and verify the .ots file against Bitcoin
         return {
@@ -116,7 +121,7 @@ class BlockchainTimestampService:
                 f"This constitutes cryptographic proof of existence at the stated time."
             )
         }
-    
+
     def create_hash_proof(self, file_content: bytes, asset_name: str) -> Dict[str, Any]:
         """
         Synchronous hash proof for immediate use.
@@ -124,7 +129,7 @@ class BlockchainTimestampService:
         """
         content_hash = hashlib.sha256(file_content).hexdigest()
         timestamp = datetime.utcnow()
-        
+
         # Create proof document
         proof_document = {
             "version": "1.0",
@@ -154,8 +159,12 @@ class BlockchainTimestampService:
                 "can be verified by any party with access to the Bitcoin blockchain."
             )
         }
-        
+
         return proof_document
+
+    def get_all_proofs(self) -> Dict[str, TimestampProof]:
+        """Get all stored proofs"""
+        return self.proofs
 
 
 # Singleton instance
