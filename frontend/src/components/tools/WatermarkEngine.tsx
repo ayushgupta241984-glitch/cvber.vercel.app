@@ -6,7 +6,7 @@ import { useRef, useEffect, useState } from 'react';
 interface WatermarkEngineProps {
     file: {
         name: string;
-        previewUrl: string;
+        previewUrl?: string;
     } | null;
     isOpen: boolean;
     onClose: () => void;
@@ -35,7 +35,7 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
     const drawWatermark = () => {
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
-        if (!canvas || !ctx || !file) return;
+        if (!canvas || !ctx || !file || !file.previewUrl) return;
 
         setIsProcessing(true);
         const img = new Image();

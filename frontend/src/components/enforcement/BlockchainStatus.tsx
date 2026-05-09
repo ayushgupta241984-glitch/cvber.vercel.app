@@ -69,6 +69,26 @@ export function BlockchainStatus() {
         }
     };
 
+    const copyHash = (hash: string) => {
+        navigator.clipboard.writeText(hash);
+        setCopied(hash);
+        setTimeout(() => setCopied(null), 2000);
+    };
+
+    const refreshStatus = async () => {
+        setIsLoading(true);
+        try {
+            const result = await apiClient.getUserBlockchainProofs();
+            if (result.success) {
+                setProofs(result.proofs);
+            }
+        } catch (e) {
+            console.error('Failed to refresh blockchain proofs:', e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="bg-gradient-to-br from-purple-900 to-indigo-900 rounded-3xl shadow-xl overflow-hidden border border-purple-700/50">
             {/* Header - Always Visible */}

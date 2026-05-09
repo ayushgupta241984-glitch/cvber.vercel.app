@@ -11,6 +11,36 @@ import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
 import { LayoutGrid, Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, Settings, LogOut, ChevronRight, ArrowUpRight, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface FileData {
+    id: string;
+    name: string;
+    size: number;
+    hash?: string;
+    status: 'safe' | 'warning' | 'scanning' | 'danger';
+    riskScore?: number;
+    originalityScore?: number;
+    isScreenshot?: boolean;
+    forensicSummary?: string;
+    aiProvider?: string;
+    aiModel?: string;
+    uploadedAt: string;
+    previewUrl?: string;
+}
+
+interface UploadResult {
+    scan_id: string;
+    risk_report?: {
+        overall_risk_score: number;
+        originality_score: number;
+        is_screenshot: boolean;
+        file_metadata?: {
+            forensic_summary: string;
+            ai_provider: string;
+            ai_model: string;
+        };
+    };
+}
+
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -28,8 +58,8 @@ const itemVariants = {
 
 export default function DashboardPage() {
     const [activeTab, setActiveTab] = useState<'ai' | 'blockchain'>('ai');
-    const [files, setFiles] = useState<any[]>([]);
-    const [selectedFile, setSelectedFile] = useState<any>(null);
+    const [files, setFiles] = useState<FileData[]>([]);
+    const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [isWatermarkOpen, setIsWatermarkOpen] = useState(false);
 
@@ -86,7 +116,7 @@ export default function DashboardPage() {
         window.location.href = '/';
     };
 
-    const handleUploadComplete = async (result: any, rawFile: File) => {
+    const handleUploadComplete = async (result: UploadResult, rawFile: File) => {
         const previewUrl = URL.createObjectURL(rawFile);
 
         // Compute SHA-256 hash of the file
@@ -95,12 +125,16 @@ export default function DashboardPage() {
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-        const newFile = {
+        const status: 'safe' | 'warning' | 'scanning' | 'danger' = result.risk_report
+            ? (result.risk_report.overall_risk_score < 30 ? 'safe' : result.risk_report.overall_risk_score < 70 ? 'warning' : 'danger')
+            : 'scanning';
+
+        const newFile: FileData = {
             id: result.scan_id,
             name: rawFile.name,
             size: rawFile.size,
-            hash: fileHash, // Store the hash
-            status: result.risk_report ? (result.risk_report.overall_risk_score < 30 ? 'safe' : 'warning') : 'scanning',
+            hash: fileHash,
+            status,
             riskScore: result.risk_report?.overall_risk_score,
             originalityScore: result.risk_report?.originality_score,
             isScreenshot: result.risk_report?.is_screenshot,
@@ -143,19 +177,19 @@ export default function DashboardPage() {
         }
     };
 
-    const handleView = (file: any) => {
+    const handleView = (file: FileData) => {
         setSelectedFile(file);
         setIsViewerOpen(true);
         if (window.innerWidth < 1024) setIsSidebarOpen(false);
     };
 
-    const handleWatermark = (file: any) => {
+    const handleWatermark = (file: FileData) => {
         setSelectedFile(file);
         setIsWatermarkOpen(true);
         if (window.innerWidth < 1024) setIsSidebarOpen(false);
     };
 
-    const handleDelete = (file: any) => {
+    const handleDelete = (file: FileData) => {
         if (confirm(`Are you sure you want to delete "${file.name}"?`)) {
             setFiles(prev => prev.filter(f => f.id !== file.id));
         }
@@ -215,12 +249,12 @@ export default function DashboardPage() {
 
                     <div className="p-4 border-t border-zinc-900 space-y-4">
                         {user && (
-                            <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/5">
+                            <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
                                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-purple-500/20 border border-white/10">
-                                    {user.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                    {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
                                 </div>
                                 <div className="flex flex-col overflow-hidden">
-                                    <span className="text-sm font-bold text-white truncate tracking-tight">{user.full_name}</span>
+                                    <span className="text-sm font-bold text-white truncate tracking-tight">{user.full_name || 'User'}</span>
                                     <span className="text-[9px] font-black uppercase tracking-widest text-purple-500/80 leading-none mt-0.5">Verified Artist</span>
                                 </div>
                             </div>
