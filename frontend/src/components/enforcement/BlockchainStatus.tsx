@@ -43,6 +43,10 @@ export function BlockchainStatus() {
         return () => clearInterval(interval);
     }, []);
 
+    // Calculate counts from proofs
+    const pendingCount = proofs.filter(p => p.status === 'pending').length;
+    const confirmedCount = proofs.filter(p => p.status === 'confirmed').length;
+
     return (
         <div className="bg-gradient-to-br from-purple-900 to-indigo-900 rounded-3xl shadow-xl overflow-hidden border border-purple-700/50">
             {/* Header - Always Visible */}
