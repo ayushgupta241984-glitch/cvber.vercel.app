@@ -19,13 +19,19 @@ services:
         sync: false
       - key: GROQ_API_KEY
         sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
       - key: ALLOWED_ORIGINS
-        value: "*"
+        value: "https://cvber.free.las.app,https://cvber.vercel.app"
       - key: C2PA_SERVICE_URL
         fromService:
             name: cvber-c2pa
             type: web
             property: host
+      - key: BACKEND_URL
+        value: "https://cvber-backend.onrender.com"
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
 
   - type: web
     name: cvber-c2pa
@@ -41,3 +47,5 @@ services:
         value: production
       - key: PORT
         value: "3001"
+      - key: C2PA_KEY_VERSION
+        value: "v1"

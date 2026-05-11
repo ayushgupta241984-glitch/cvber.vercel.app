@@ -2,6 +2,9 @@ import { Builder, Reader, LocalSigner } from '@contentauth/c2pa-node';
 import * as fs from 'fs';
 import * as path from 'path';
 
+const MAX_TEMP_FILE_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+const SIGNED_FILES_DIR = path.join(process.cwd(), 'signed-files');
+
 interface SignResult {
     signedFileUrl: string;
     manifest: any;
@@ -15,9 +18,46 @@ interface VerifyResult {
     errors?: string[];
 }
 
-/**
- * Sign a file with C2PA digital signature
- */
+function getCertPaths(): { certPath: string; keyPath: string } {
+    return {
+        certPath: process.env.C2PA_CERT || 'certs/certificate.pem',
+        keyPath: process.env.C2PA_PRIVATE_KEY || 'certs/private.key',
+    };
+}
+
+function cleanupOldTempFiles(): void {
+    try {
+        if (!fs.existsSync(SIGNED_FILES_DIR)) return;
+        const now = Date.now();
+        for (const file of fs.readdirSync(SIGNED_FILES_DIR)) {
+            const filePath = path.join(SIGNED_FILES_DIR, file);
+            try {
+                const stat = fs.statSync(filePath);
+                if (now - stat.mtimeMs > MAX_TEMP_FILE_AGE_MS) {
+                    fs.unlinkSync(filePath);
+                }
+            } catch {
+                // skip files we can't stat
+            }
+        }
+    } catch {
+        // cleanup is best-effort
+    }
+}
+
+function validateCertificates(certPath: string, keyPath: string): void {
+    if (!fs.existsSync(certPath)) {
+        throw new Error(`C2PA certificate not found at: ${certPath}`);
+    }
+    if (!fs.existsSync(keyPath)) {
+        throw new Error(`C2PA private key not found at: ${keyPath}`);
+    }
+    const certContent = fs.readFileSync(certPath, 'utf-8');
+    if (!certContent.includes('BEGIN CERTIFICATE')) {
+        throw new Error('Invalid certificate format: missing BEGIN CERTIFICATE header');
+    }
+}
+
 export async function signFile(
     fileBuffer: Buffer,
     metadata: {
@@ -27,17 +67,13 @@ export async function signFile(
         scan_results?: any;
     }
 ): Promise<SignResult> {
+    let tempInputPath: string | null = null;
+    let tempOutputPath: string | null = null;
+
     try {
-        // Check for keys
-        const certPath = process.env.C2PA_CERT || 'certs/certificate.pem';
-        const keyPath = process.env.C2PA_PRIVATE_KEY || 'certs/private.key';
+        const { certPath, keyPath } = getCertPaths();
+        validateCertificates(certPath, keyPath);
 
-        if (!fs.existsSync(certPath) || !fs.existsSync(keyPath)) {
-            throw new Error(`C2PA keys not found at ${certPath} or ${keyPath}. Cannot sign.`);
-        }
-
-        // Create Signer
-        // key and cert must be Buffers
         const signer = LocalSigner.newSigner(
             fs.readFileSync(certPath),
             fs.readFileSync(keyPath),
@@ -46,100 +82,69 @@ export async function signFile(
 
         const builder = Builder.new();
 
-        // Add assertions
         const actionsAssertion = {
             actions: [
                 {
                     action: 'c2pa.scanned',
                     when: metadata.timestamp,
                     softwareAgent: 'CVBER Free AI Scanner',
-                    parameters: {
-                        author: metadata.author
-                    }
+                    parameters: { author: metadata.author }
                 }
             ]
         };
-
         builder.addAssertion('c2pa.actions', actionsAssertion);
 
-        // Add scan results if provided
         if (metadata.scan_results) {
             builder.addAssertion('cvber.scan_results', metadata.scan_results);
         }
 
-        // Sign the file
-        // Input: SourceAsset { buffer: Buffer }
-        // Output: DestinationAsset { buffer: Buffer } (to get buffer back)
-        // Note: The third argument 'output' in .sign() populates the buffer or writes to file.
-        // If we pass a buffer, it seems it expects us to provide a buffer implementation or something.
-        // Actually, looking at docs (inferred), usually strict output means we might need to use a temp file if buffer output isn't easy.
-        // But let's try { buffer: Buffer.alloc(0) } approach or similar? 
-        // Or wait, the .sign return type is Buffer (the manifest bytes?) or the whole asset?
-        // "returns the bytes of the c2pa_manifest that was embedded" -> Wait.
-        // .sign(signer, input, output).
+        cleanupOldTempFiles();
 
-        // For simplicity and robustness given unknown API details, let's use temp files.
-        const outputDir = path.join(process.cwd(), 'signed-files');
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
+        if (!fs.existsSync(SIGNED_FILES_DIR)) {
+            fs.mkdirSync(SIGNED_FILES_DIR, { recursive: true });
         }
-        const tempInputPath = path.join(outputDir, `temp-input-${Date.now()}.bin`);
+
+        const timestamp = Date.now();
+        tempInputPath = path.join(SIGNED_FILES_DIR, `temp-input-${timestamp}.bin`);
         fs.writeFileSync(tempInputPath, fileBuffer);
 
-        const outputFilename = `signed-${Date.now()}.bin`;
-        const outputPath = path.join(outputDir, outputFilename);
+        const outputFilename = `signed-${timestamp}.bin`;
+        tempOutputPath = path.join(SIGNED_FILES_DIR, outputFilename);
 
-        // Sign using file paths
         builder.signFile(
             signer,
             tempInputPath,
-            { path: outputPath } as any
+            { path: tempOutputPath } as any
         );
 
-        // Clean up temp input
-        try { fs.unlinkSync(tempInputPath); } catch (e) { }
-
-        // Read signed file back to verify/return? Or just return path.
-        // The original API returned signedFileUrl.
-
-        // Get manifest definition for return
         const manifest = builder.getManifestDefinition();
 
         return {
-            signedFileUrl: outputPath,
+            signedFileUrl: tempOutputPath,
             manifest: manifest,
             signature: 'c2pa-signature-hash',
-            kmsKeyVersion: 'v1'
+            kmsKeyVersion: process.env.C2PA_KEY_VERSION || 'v1'
         };
     } catch (error: any) {
         console.error('C2PA signing error:', error);
         throw new Error(`Failed to sign file: ${error.message}`);
+    } finally {
+        // Guaranteed cleanup of temp input file
+        if (tempInputPath) {
+            try { fs.unlinkSync(tempInputPath); } catch { /* ignore */ }
+        }
     }
 }
 
-/**
- * Verify C2PA signature on a file
- */
 export async function verifyFile(fileBuffer: Buffer): Promise<VerifyResult> {
     try {
-        // Reader.fromAsset expects SourceAsset.
-        // We use cast to any to ensure we can pass { buffer } if supported, checks are weak.
         const reader = await Reader.fromAsset({ buffer: fileBuffer } as any);
 
         if (!reader) {
-            return {
-                valid: false,
-                manifest: null,
-                errors: ['No C2PA manifest found']
-            };
+            return { valid: false, manifest: null, errors: ['No C2PA manifest found'] };
         }
 
         const manifestStore = reader.json();
-
-        // Validation logic
-        // manifestStore.validation_status (snake_case usually in Rust bindings?)
-        // The previous code used validationStatus (camelCase).
-        // Let's check both or cast to any.
         const storeAny = manifestStore as any;
         const validationStatus = storeAny.validation_status || storeAny.validationStatus || [];
 
@@ -153,10 +158,6 @@ export async function verifyFile(fileBuffer: Buffer): Promise<VerifyResult> {
         };
     } catch (error: any) {
         console.error('C2PA verification error:', error);
-        return {
-            valid: false,
-            manifest: null,
-            errors: [error.message]
-        };
+        return { valid: false, manifest: null, errors: [error.message] };
     }
 }

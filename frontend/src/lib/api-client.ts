@@ -1,5 +1,66 @@
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-const API_BASE_URL = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+const BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/+$/, '');
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
+class ApiError extends Error {
+    status: number;
+    details: any;
+
+    constructor(message: string, status: number, details?: any) {
+        super(message);
+        this.name = 'ApiError';
+        this.status = status;
+        this.details = details;
+    }
+}
+
+async function delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchWithRetry(url: string, options: RequestInit, retries: number = MAX_RETRIES): Promise<Response> {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            return response;
+        } catch (err) {
+            if (attempt === retries) throw err;
+            console.warn(`Request failed (attempt ${attempt}/${retries}), retrying...`);
+            await delay(RETRY_DELAY_MS * attempt);
+        }
+    }
+    throw new Error('Request failed after all retries');
+}
+
+function getAuthHeaders(): Record<string, string> {
+    if (typeof window === 'undefined') return {};
+    const token = localStorage.getItem('access_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+async function handleResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+        let detail: string | undefined;
+        try {
+            const body = await response.json();
+            detail = body.detail || body.message || body.error;
+        } catch {
+            // ignore parse errors
+        }
+        throw new ApiError(detail || `HTTP ${response.status}`, response.status, detail);
+    }
+    return response.json();
+}
+
+async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> {
+    const headers: Record<string, string> = {
+        ...getAuthHeaders(),
+        ...(options.headers as Record<string, string> || {}),
+    };
+    const response = await fetchWithRetry(url, { ...options, headers });
+    return handleResponse<T>(response);
+}
 
 export interface ScanResult {
     scan_id: string;
@@ -27,195 +88,83 @@ export interface ScanResult {
 }
 
 export const apiClient = {
-    async scanFile(file: File): Promise<ScanResult> {
-        const token = localStorage.getItem('access_token');
+    async scanFile(file: File, onProgress?: (pct: number) => void): Promise<ScanResult> {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch(`${API_BASE_URL}/scan`, {
+        const response = await fetchWithRetry(`${BASE_URL}/scan`, {
             method: 'POST',
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            headers: getAuthHeaders(),
             body: formData,
         });
-
-        if (!response.ok) {
-            throw new Error('Scan failed');
-        }
-
-        return response.json();
+        return handleResponse<ScanResult>(response);
     },
 
     async verifyFile(file: File): Promise<any> {
-        const token = localStorage.getItem('access_token');
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch(`${API_BASE_URL}/scan/verify`, {
+        const response = await fetchWithRetry(`${BASE_URL}/scan/verify`, {
             method: 'POST',
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            headers: getAuthHeaders(),
             body: formData,
         });
-
-        if (!response.ok) {
-            throw new Error('Verification failed');
-        }
-
-        return response.json();
+        return handleResponse<any>(response);
     },
 
     async getScanHistory(limit: number = 10): Promise<any> {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`${API_BASE_URL}/scan/history?limit=${limit}`, {
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch history');
-        }
-
-        return response.json();
+        return fetchJson(`${BASE_URL}/scan/history?limit=${limit}`);
     },
 
     async login(email: string, password: string): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        return fetchJson(`${BASE_URL}/auth/login`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
         });
-
-        if (!response.ok) {
-            let errorMessage = 'Login failed';
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.detail || errorData.message || errorMessage;
-            } catch (e) {
-                // If response is not JSON, stick to default
-            }
-            throw new Error(errorMessage);
-        }
-
-        return response.json();
     },
 
     async register(email: string, password: string, fullName?: string): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        return fetchJson(`${BASE_URL}/auth/register`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password, full_name: fullName }),
         });
-
-        if (!response.ok) {
-            let errorMessage = 'Registration failed';
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.detail || errorData.message || errorMessage;
-            } catch (e) {
-                // If response is not JSON
-            }
-            throw new Error(errorMessage);
-        }
-
-        return response.json();
     },
 
     async chatWithMentor(message: string, history: any[] = []): Promise<any> {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`${API_BASE_URL}/mentor/chat`, {
+        return fetchJson(`${BASE_URL}/mentor/chat`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message, history }),
         });
-
-        if (!response.ok) {
-            throw new Error('Failed to get AI response');
-        }
-
-        return response.json();
     },
 
     async getUserProfile(): Promise<any> {
-        const token = localStorage.getItem('access_token');
-        if (!token) throw new Error('No token found');
-
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch profile');
-        }
-
-        return response.json();
+        return fetchJson(`${BASE_URL}/auth/me`);
     },
 
     async createBlockchainTimestamp(assetName: string, fileHash: string): Promise<any> {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`${API_BASE_URL}/api/enforcement/blockchain/timestamp`, {
+        return fetchJson(`${BASE_URL}/api/enforcement/blockchain/timestamp`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ asset_name: assetName, file_hash: fileHash }),
         });
-
-        if (!response.ok) {
-            throw new Error('Failed to create blockchain timestamp');
-        }
-
-        return response.json();
     },
 
     async verifyBlockchainTimestamp(proofId: string): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}/api/enforcement/blockchain/verify/${proofId}`, {
-            method: 'GET',
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to verify blockchain timestamp');
-        }
-
-        return response.json();
+        return fetchJson(`${BASE_URL}/api/enforcement/blockchain/verify/${proofId}`);
     },
 
     async createHashProof(assetName: string, fileHash: string): Promise<any> {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`${API_BASE_URL}/api/enforcement/blockchain/hash-proof`, {
+        return fetchJson(`${BASE_URL}/api/enforcement/blockchain/hash-proof`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ asset_name: assetName, file_hash: fileHash }),
         });
-
-        if (!response.ok) {
-            throw new Error('Failed to create hash proof');
-        }
-
-        return response.json();
     },
 
     async getUserBlockchainProofs(): Promise<any> {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`${API_BASE_URL}/api/enforcement/blockchain/proofs`, {
-            method: 'GET',
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch blockchain proofs');
-        }
-
-        return response.json();
+        return fetchJson(`${BASE_URL}/api/enforcement/blockchain/proofs`);
     },
 };

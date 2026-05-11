@@ -38,9 +38,11 @@ class Settings(BaseSettings):
     # NOTE: Do NOT commit real API keys. Provide your Groq API key via environment or .env.
     groq_api_key: Optional[str] = None
     
-    # Vertex AI
+    # AI Model Configuration
     vertex_ai_location: str = "us-central1"
     vertex_ai_model: str = "gemini-1.5-flash-002"
+    google_model: str = "gemini-1.5-flash"
+    groq_model: str = "llama-3.3-70b-versatile"
     
     # Cloud KMS
     kms_keyring: str = "cvber-free-keyring"

@@ -1,19 +1,52 @@
 """
 Storage Service
-Manages file storage in Supabase with proper error handling and logging.
+Manages file storage in Supabase with proper error handling, path sanitization, and retry logic.
 """
 from supabase import create_client, Client
 from app.config import settings
 from typing import Optional, BinaryIO
 from uuid import UUID
 import hashlib
+import re
+import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
 
+ALLOWED_MIME_TYPES = {
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/tiff',
+    'image/bmp', 'image/svg+xml',
+    'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
+    'application/pdf', 'application/zip', 'application/gzip',
+    'text/plain', 'text/html', 'text/css', 'text/javascript',
+    'application/json', 'application/xml',
+}
+
+MAX_FILE_SIZE_MB = 100
+MAX_STORAGE_PER_USER_MB = 500
+
+
+def sanitize_path_component(component: str) -> str:
+    """Remove path traversal and dangerous characters from a path component."""
+    s = component.replace('\\', '/')
+    s = re.sub(r'\.\./', '', s)
+    s = re.sub(r'\.\.$', '', s)
+    s = re.sub(r'[<>:"|?*]', '_', s)
+    s = s.strip('/')
+    return s
+
+
+def validate_mime_type(mime_type: str) -> bool:
+    """Validate that the MIME type is in the allowed list."""
+    return mime_type.lower() in ALLOWED_MIME_TYPES
+
 
 class StorageService:
-    """Service for managing file storage in Supabase."""
+    """Service for managing file storage in Supabase with production hardening."""
+
+    MAX_RETRIES = 3
+    RETRY_DELAY_SECONDS = 1.0
+    BUCKET_NAMES = {"safe-vault", "scan-results"}
 
     def __init__(self):
         self.supabase: Client = create_client(
@@ -23,53 +56,77 @@ class StorageService:
         self.safe_vault_bucket = "safe-vault"
         self.scan_results_bucket = "scan-results"
 
+    async def ensure_buckets_exist(self):
+        """Create required storage buckets if they don't already exist."""
+        for bucket_name in self.BUCKET_NAMES:
+            try:
+                existing = self.supabase.storage.get_bucket(bucket_name)
+                if existing:
+                    logger.info(f"Bucket '{bucket_name}' already exists.")
+                    continue
+            except Exception:
+                pass
+            try:
+                self.supabase.storage.create_bucket(
+                    bucket_name,
+                    options={"public": False, "allowed_mime_types": list(ALLOWED_MIME_TYPES)}
+                )
+                logger.info(f"Created bucket '{bucket_name}'.")
+            except Exception as e:
+                logger.warning(f"Could not create bucket '{bucket_name}': {e}")
+
+    async def _retry_operation(self, operation, *args, **kwargs):
+        """Retry a storage operation up to MAX_RETRIES times with exponential backoff."""
+        last_exception = None
+        for attempt in range(1, self.MAX_RETRIES + 1):
+            try:
+                return operation(*args, **kwargs)
+            except Exception as e:
+                last_exception = e
+                if attempt < self.MAX_RETRIES:
+                    wait = self.RETRY_DELAY_SECONDS * (2 ** (attempt - 1))
+                    logger.warning(f"Storage operation failed (attempt {attempt}/{self.MAX_RETRIES}), retrying in {wait:.1f}s: {e}")
+                    await asyncio.sleep(wait)
+        raise StorageError(f"Operation failed after {self.MAX_RETRIES} retries: {last_exception}")
+
     async def upload_file(
         self,
         file_buffer: bytes,
         file_name: str,
         user_id: UUID,
-        bucket: str = None
+        bucket: str = None,
+        content_type: str = None
     ) -> str:
-        """
-        Upload file to Supabase storage.
-
-        Args:
-            file_buffer: File content as bytes
-            file_name: Name of the file
-            user_id: User ID for organizing files
-            bucket: Storage bucket name (defaults to safe-vault)
-
-        Returns:
-            File path in storage
-
-        Raises:
-            ValueError: If file_buffer is empty
-            StorageError: If upload fails
-        """
         if not file_buffer:
             raise ValueError("File buffer cannot be empty")
-
         if not file_name:
             raise ValueError("File name cannot be empty")
+        if len(file_buffer) > MAX_FILE_SIZE_MB * 1024 * 1024:
+            raise ValueError(f"File size exceeds {MAX_FILE_SIZE_MB}MB limit")
+
+        safe_name = sanitize_path_component(file_name)
+        safe_user_id = sanitize_path_component(str(user_id))
+        if not safe_user_id:
+            raise ValueError("Invalid user ID after sanitization")
+        if not safe_name:
+            raise ValueError("Invalid file name after sanitization")
 
         bucket_name = bucket or self.safe_vault_bucket
+        file_path = f"{safe_user_id}/{safe_name}"
 
-        # Create user-specific path
-        file_path = f"{user_id}/{file_name}"
+        final_content_type = content_type or "application/octet-stream"
 
         try:
-            # Upload to Supabase storage
-            response = self.supabase.storage.from_(bucket_name).upload(
+            await self._retry_operation(
+                self.supabase.storage.from_(bucket_name).upload,
                 file_path,
                 file_buffer,
-                file_options={"content-type": "application/octet-stream"}
+                file_options={"content-type": final_content_type, "upsert": "true"}
             )
-
-            logger.info(f"Successfully uploaded file: {file_path} to bucket: {bucket_name}")
+            logger.info(f"Uploaded file: {file_path} to bucket: {bucket_name}")
             return file_path
-
         except Exception as e:
-            logger.error(f"Failed to upload file {file_name} to bucket {bucket_name}: {e}")
+            logger.error(f"Failed to upload {file_name} to {bucket_name}: {e}")
             raise StorageError(f"Failed to upload file: {str(e)}")
 
     async def download_file(
@@ -77,32 +134,18 @@ class StorageService:
         file_path: str,
         bucket: str = None
     ) -> bytes:
-        """
-        Download file from Supabase storage.
-
-        Args:
-            file_path: Path to file in storage
-            bucket: Storage bucket name
-
-        Returns:
-            File content as bytes
-
-        Raises:
-            ValueError: If file_path is empty
-            StorageError: If download fails
-        """
         if not file_path:
             raise ValueError("File path cannot be empty")
-
         bucket_name = bucket or self.safe_vault_bucket
-
+        safe_path = sanitize_path_component(file_path)
         try:
-            response = self.supabase.storage.from_(bucket_name).download(file_path)
-            logger.info(f"Successfully downloaded file: {file_path} from bucket: {bucket_name}")
+            response = await self._retry_operation(
+                self.supabase.storage.from_(bucket_name).download,
+                safe_path
+            )
             return response
-
         except Exception as e:
-            logger.error(f"Failed to download file {file_path} from bucket {bucket_name}: {e}")
+            logger.error(f"Failed to download {safe_path} from {bucket_name}: {e}")
             raise StorageError(f"Failed to download file: {str(e)}")
 
     async def delete_file(
@@ -110,32 +153,19 @@ class StorageService:
         file_path: str,
         bucket: str = None
     ) -> bool:
-        """
-        Delete file from Supabase storage.
-
-        Args:
-            file_path: Path to file in storage
-            bucket: Storage bucket name
-
-        Returns:
-            True if successful
-
-        Raises:
-            ValueError: If file_path is empty
-            StorageError: If deletion fails
-        """
         if not file_path:
             raise ValueError("File path cannot be empty")
-
         bucket_name = bucket or self.safe_vault_bucket
-
+        safe_path = sanitize_path_component(file_path)
         try:
-            self.supabase.storage.from_(bucket_name).remove([file_path])
-            logger.info(f"Successfully deleted file: {file_path} from bucket: {bucket_name}")
+            await self._retry_operation(
+                self.supabase.storage.from_(bucket_name).remove,
+                [safe_path]
+            )
+            logger.info(f"Deleted file: {safe_path} from {bucket_name}")
             return True
-
         except Exception as e:
-            logger.error(f"Failed to delete file {file_path} from bucket {bucket_name}: {e}")
+            logger.error(f"Failed to delete {safe_path} from {bucket_name}: {e}")
             raise StorageError(f"Failed to delete file: {str(e)}")
 
     async def get_file_url(
@@ -144,67 +174,36 @@ class StorageService:
         bucket: str = None,
         expires_in: int = 3600
     ) -> str:
-        """
-        Get signed URL for file access.
-
-        Args:
-            file_path: Path to file in storage
-            bucket: Storage bucket name
-            expires_in: URL expiration time in seconds
-
-        Returns:
-            Signed URL
-
-        Raises:
-            ValueError: If file_path is empty or expires_in is invalid
-            StorageError: If URL generation fails
-        """
         if not file_path:
             raise ValueError("File path cannot be empty")
-
         if expires_in <= 0:
             raise ValueError("expires_in must be positive")
-
         bucket_name = bucket or self.safe_vault_bucket
-
+        safe_path = sanitize_path_component(file_path)
         try:
-            response = self.supabase.storage.from_(bucket_name).create_signed_url(
-                file_path,
+            response = await self._retry_operation(
+                self.supabase.storage.from_(bucket_name).create_signed_url,
+                safe_path,
                 expires_in
             )
             signed_url = response.get("signedURL")
-
             if not signed_url:
                 raise StorageError("Failed to generate signed URL: No URL returned")
-
-            logger.info(f"Generated signed URL for file: {file_path} in bucket: {bucket_name}")
             return signed_url
-
         except Exception as e:
-            logger.error(f"Failed to generate signed URL for {file_path} in bucket {bucket_name}: {e}")
+            logger.error(f"Failed to generate signed URL for {safe_path} in {bucket_name}: {e}")
             raise StorageError(f"Failed to generate signed URL: {str(e)}")
 
     @staticmethod
-    def calculate_hash(file_buffer: bytes) -> str:
-        """
-        Calculate SHA-256 hash of file content.
-
-        Args:
-            file_buffer: File content as bytes
-
-        Returns:
-            Hexadecimal hash string
-
-        Raises:
-            ValueError: If file_buffer is empty
-        """
+    def calculate_hash(file_buffer: bytes, algorithm: str = "sha256") -> str:
         if not file_buffer:
             raise ValueError("File buffer cannot be empty")
-
         try:
-            return hashlib.sha256(file_buffer).hexdigest()
+            h = hashlib.new(algorithm)
+            h.update(file_buffer)
+            return h.hexdigest()
         except Exception as e:
-            logger.error(f"Failed to calculate hash: {e}")
+            logger.error(f"Failed to calculate hash ({algorithm}): {e}")
             raise StorageError(f"Failed to calculate hash: {str(e)}")
 
     async def file_exists(
@@ -212,23 +211,12 @@ class StorageService:
         file_path: str,
         bucket: str = None
     ) -> bool:
-        """
-        Check if a file exists in storage.
-
-        Args:
-            file_path: Path to file in storage
-            bucket: Storage bucket name
-
-        Returns:
-            True if file exists, False otherwise
-        """
         if not file_path:
             return False
-
         bucket_name = bucket or self.safe_vault_bucket
-
+        safe_path = sanitize_path_component(file_path)
         try:
-            self.supabase.storage.from_(bucket_name).get_public_url(file_path)
+            self.supabase.storage.from_(bucket_name).get_public_url(safe_path)
             return True
         except Exception:
             return False
@@ -238,37 +226,15 @@ class StorageService:
         file_path: str,
         bucket: str = None
     ) -> dict:
-        """
-        Get file metadata from storage.
-
-        Args:
-            file_path: Path to file in storage
-            bucket: Storage bucket name
-
-        Returns:
-            Dictionary with file metadata
-
-        Raises:
-            ValueError: If file_path is empty
-            StorageError: If metadata retrieval fails
-        """
         if not file_path:
             raise ValueError("File path cannot be empty")
-
         bucket_name = bucket or self.safe_vault_bucket
-
+        safe_path = sanitize_path_component(file_path)
         try:
-            # Get public URL as a proxy for file existence
-            public_url = self.supabase.storage.from_(bucket_name).get_public_url(file_path)
-
-            return {
-                "path": file_path,
-                "bucket": bucket_name,
-                "public_url": public_url,
-                "exists": True
-            }
+            public_url = self.supabase.storage.from_(bucket_name).get_public_url(safe_path)
+            return {"path": safe_path, "bucket": bucket_name, "public_url": public_url, "exists": True}
         except Exception as e:
-            logger.error(f"Failed to get file info for {file_path} in bucket {bucket_name}: {e}")
+            logger.error(f"Failed to get file info for {safe_path} in {bucket_name}: {e}")
             raise StorageError(f"Failed to get file info: {str(e)}")
 
 

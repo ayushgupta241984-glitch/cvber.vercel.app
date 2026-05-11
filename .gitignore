@@ -26,6 +26,10 @@ yarn-error.log*
 .env.local
 .env.*.local
 service-account.json
+*.pem
+*.key
+!certs/*.pem
+!certs/*.key
 
 # IDE
 .vscode/
@@ -33,6 +37,7 @@ service-account.json
 *.swp
 *.swo
 *~
+.hintrc
 
 # OS
 .DS_Store
@@ -48,3 +53,8 @@ htmlcov/
 
 # C2PA
 c2pa-service/signed-files/
+
+# Secrets
+**/secrets/
+credentials.json
+*.cred
