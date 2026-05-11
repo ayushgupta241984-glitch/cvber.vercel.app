@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     vertex_ai_model: str = "gemini-1.5-flash-002"
     google_model: str = "gemini-1.5-flash"
     groq_model: str = "llama-3.3-70b-versatile"
+    groq_vision_model: str = "llama-3.2-90b-vision-preview"
     
     # Cloud KMS
     kms_keyring: str = "cvber-free-keyring"

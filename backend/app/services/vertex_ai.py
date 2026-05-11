@@ -34,6 +34,16 @@ except ImportError:
 from app.config import settings
 from app.models.schemas import RiskReport, ThreatCategory, DetailedFinding, Recommendation
 
+IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.tiff', '.tif', '.svg'}
+IMAGE_MIME_PREFIXES = ('image/', 'application/octet-stream')
+
+
+def is_image_file(file_name: str, file_type: str) -> bool:
+    if file_type.startswith('image/'):
+        return True
+    ext = os.path.splitext(file_name)[1].lower()
+    return ext in IMAGE_EXTENSIONS
+
 
 class ProviderState(Enum):
     HEALTHY = "healthy"
@@ -74,6 +84,142 @@ class CircuitBreaker:
         return True
 
 
+def _rule_based_analysis(file_name: str) -> Dict[str, Any]:
+    is_screenshot = "screenshot" in file_name.lower() or "screen shot" in file_name.lower()
+    is_mobile = any(x in file_name.lower() for x in ["img_", "screenshot_", "captured_"])
+    if is_screenshot or is_mobile:
+        return {
+            "is_screenshot": True,
+            "originality_score": 5.0,
+            "forensic_details": "RULE-BASED: File name contains definitive 'screenshot' patterns.",
+        }
+    return {
+        "is_screenshot": False,
+        "originality_score": 100.0,
+        "forensic_details": "No obvious screenshot indicators in filename.",
+    }
+
+
+def _clean_json_response(text: str) -> str:
+    text = text.strip()
+    if text.startswith("```json"):
+        text = text[7:]
+    if text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
+
+def _generate_mock_report(file_name: str, file_type: str, file_size: int,
+                          error: str = None, rules: Dict = None) -> RiskReport:
+    desc = "AI OFFLINE" if not error else f"ANALYSIS ERROR: {error[:30]}"
+    is_screenshot = rules["is_screenshot"] if rules else "screenshot" in file_name.lower()
+    originality = rules["originality_score"] if rules else (15.0 if is_screenshot else 100.0)
+    forensic_summary = rules["forensic_details"] if rules else (
+        f"{desc} | Screenshot flag" if is_screenshot else f"{desc} | Unknown")
+
+    return RiskReport(
+        overall_risk_score=0.0,
+        originality_score=originality,
+        is_screenshot=is_screenshot,
+        threat_categories=[ThreatCategory(
+            name="AI Offline", severity="medium", confidence=1.0,
+            description="AI scanning engine unreachable. Results based on local pre-scan rules."
+        )],
+        detailed_findings=[DetailedFinding(category="System", description=desc, evidence=file_name)],
+        recommendations=[Recommendation(priority="high", action="Configure AI",
+                                        rationale="Connect Google AI or Groq to enable pixel-level forensics.")],
+        confidence_level=0.5,
+        scan_timestamp=datetime.utcnow(),
+        file_metadata={
+            "file_name": file_name, "file_type": file_type, "file_size": file_size,
+            "ai_provider": "local_pre_scanner", "ai_model": "rule_v1",
+            "forensic_summary": forensic_summary
+        }
+    )
+
+
+def _build_forensic_prompt(file_name: str, file_type: str, has_c2pa: bool) -> str:
+    c2pa_status = "VERIFIED CRYPTOGRAPHIC PROVENANCE DETECTED" if has_c2pa else "NO CRYPTOGRAPHIC PROVENANCE (UNSIGNATURED)"
+    return f"""You are a top-tier digital forensics inspector for CVBER Free. 
+Analyze this file: {file_name} ({file_type}).
+CRYPTO STATUS: {c2pa_status}
+
+### STEP 1: PIXEL-LEVEL FORENSICS
+Look at the edges, corners, and color gradients.
+Identify subtle signs of a "Capture" instead of an "Original Source":
+- **UI Artifacts**: Any status bar icons, home bars, time, battery, or scroll bars?
+- **Compression Gaps**: Screenshots often have different noise patterns than original sensor data.
+- **Edge Oscillations**: Look for the slight blur characteristic of OS-level screen capture overlays.
+
+### STEP 2: SCORING RULES (STRICT)
+- **IS_SCREENSHOT**: Set to `true` if ANY capture artifacts exist. 
+- **ORIGINALITY_SCORE**: 
+  - 0-15: Confirmed screenshot or direct duplicate found online.
+  - 16-50: Likely screenshot or repost from social media (TikTok/Insta artifacts).
+  - 51-84: Possibly original, but lacks cryptographic proof.
+  - 85-100: ONLY allow if the file shows genuine sensor/creative depth AND has NO capture artifacts. 
+  - **CAP**: If CRYPTO STATUS is 'NO CRYPTOGRAPHIC PROVENANCE', do NOT exceed 85% even if it looks perfect.
+
+### OUTPUT FORMAT (Valid JSON only):
+{{
+    "overall_risk_score": 0-100,
+    "originality_score": 0-100,
+    "is_screenshot": true/false,
+    "forensic_details": "Detailed technical explanation.",
+    "threat_categories": [{{"name": string, "severity": "low|medium|high|critical", "confidence": 0-1, "description": string}}],
+    "detailed_findings": [{{"category": string, "description": string, "evidence": string}}],
+    "recommendations": [{{"priority": "low|medium|high", "action": string, "rationale": string}}],
+    "confidence_level": 0.0-1.0
+}}"""
+
+
+def _build_risk_from_data(data: dict, rules: dict, has_c2pa: bool, provider: str, model: str,
+                          file_name: str, file_type: str, file_size: int) -> RiskReport:
+    is_screenshot = data.get("is_screenshot", False) or rules["is_screenshot"]
+    ai_originality_score = float(data.get("originality_score", 100))
+
+    if is_screenshot:
+        originality_score = min(ai_originality_score, 15.0)
+    elif not has_c2pa:
+        originality_score = min(ai_originality_score, 85.0)
+    else:
+        originality_score = ai_originality_score
+
+    if rules["is_screenshot"]:
+        originality_score = min(originality_score, rules["originality_score"])
+
+    description = data.get("forensic_details", rules["forensic_details"])
+    if is_screenshot and "Screenshot" not in description:
+        description = f"Screenshot Detected: {description}"
+
+    threats = [ThreatCategory(**c) for c in data.get("threat_categories", [])]
+    if is_screenshot:
+        threats.append(ThreatCategory(
+            name="Ownership Alert", severity="high", confidence=1.0,
+            description="File flagged as screenshot. Original IP cannot be verified at source level."
+        ))
+
+    return RiskReport(
+        overall_risk_score=data.get("overall_risk_score", 0),
+        originality_score=originality_score,
+        is_screenshot=is_screenshot,
+        threat_categories=threats,
+        detailed_findings=[DetailedFinding(**f) for f in data.get("detailed_findings", [])],
+        recommendations=[Recommendation(**r) for r in data.get("recommendations", [])],
+        confidence_level=data.get("confidence_level", 0.9),
+        scan_timestamp=datetime.utcnow(),
+        file_metadata={
+            "file_name": file_name, "file_type": file_type, "file_size": file_size,
+            "ai_provider": provider, "ai_model": model,
+            "forensic_summary": description,
+            "web_detection": "active" if provider == "google" else "inactive",
+            "c2pa_verified": has_c2pa
+        }
+    )
+
+
 class VertexAIService:
     def __init__(self):
         self.model = None
@@ -92,8 +238,8 @@ class VertexAIService:
     def _config_models(self):
         self.google_model_name = settings.google_model or "gemini-1.5-flash"
         self.groq_model_name = settings.groq_model or "llama-3.3-70b-versatile"
+        self.groq_vision_model = settings.groq_vision_model or "llama-3.2-90b-vision-preview"
         self.vertex_model_name = settings.vertex_ai_model or "gemini-1.5-flash-002"
-        self.groq_vision_fallback = True
 
     @staticmethod
     def is_valid_key(key: Optional[str]) -> bool:
@@ -149,7 +295,7 @@ class VertexAIService:
             if self.provider != "google":
                 try:
                     genai.configure(api_key=settings.google_api_key)
-                    self.model = genai.GenerativeModel(self.google_model_name, tools='google_search_retrieval')
+                    self.model = genai.GenerativeModel(self.google_model_name)
                     self.initialized = True
                     self.provider = "google"
                     self.google_cb.record_success()
@@ -178,99 +324,63 @@ class VertexAIService:
 
         return False
 
-    def _rule_based_analysis(self, file_name: str) -> Dict[str, Any]:
-        is_screenshot = "screenshot" in file_name.lower() or "screen shot" in file_name.lower()
-        is_mobile = any(x in file_name.lower() for x in ["img_", "screenshot_", "captured_"])
-        if is_screenshot or is_mobile:
-            return {
-                "is_screenshot": True,
-                "originality_score": 5.0,
-                "forensic_details": "RULE-BASED: File name contains definitive 'screenshot' patterns.",
+    async def _fallback_image_analysis(self, file_name: str, file_type: str, file_buffer: bytes,
+                                       rules: dict, has_c2pa: bool) -> RiskReport:
+        logger.warning(f"Image analysis not supported by provider={self.provider}. Using rule-based fallback.")
+        return RiskReport(
+            overall_risk_score=0.0,
+            originality_score=rules["originality_score"],
+            is_screenshot=rules["is_screenshot"],
+            threat_categories=[
+                ThreatCategory(name="Vision Unavailable", severity="medium", confidence=1.0,
+                               description="AI Vision unavailable for this provider. Using forensic rule-based detection.")
+            ],
+            detailed_findings=[DetailedFinding(category="System", description=rules["forensic_details"], evidence=file_name)],
+            recommendations=[Recommendation(priority="high", action="Use Google AI Studio",
+                                            rationale="Switch to Google AI Studio for reliable Vision & Search.")],
+            confidence_level=0.5,
+            scan_timestamp=datetime.utcnow(),
+            file_metadata={
+                "file_name": file_name, "file_type": file_type, "file_size": len(file_buffer),
+                "ai_provider": f"{self.provider or 'none'}_fallback", "ai_model": "rule_based_v1",
+                "forensic_summary": rules["forensic_details"], "web_detection": "inactive",
+                "c2pa_verified": has_c2pa
             }
-        return {
-            "is_screenshot": False,
-            "originality_score": 100.0,
-            "forensic_details": "No obvious screenshot indicators in filename.",
-        }
+        )
 
     async def analyze_file_threat(self, file_buffer: bytes, file_name: str, file_type: str, has_c2pa: bool = False) -> RiskReport:
         self.ensure_initialized()
-        rules = self._rule_based_analysis(file_name)
-        c2pa_status = "VERIFIED CRYPTOGRAPHIC PROVENANCE DETECTED" if has_c2pa else "NO CRYPTOGRAPHIC PROVENANCE (UNSIGNATURED)"
-
-        prompt = f"""You are a top-tier digital forensics inspector for CVBER Free. 
-Analyze this file: {file_name} ({file_type}).
-CRYPTO STATUS: {c2pa_status}
-
-### STEP 1: PIXEL-LEVEL FORENSICS
-Look at the edges, corners, and color gradients.
-Identify subtle signs of a "Capture" instead of an "Original Source":
-- **UI Artifacts**: Any status bar icons, home bars, time, battery, or scroll bars?
-- **Compression Gaps**: Screenshots often have different noise patterns than original sensor data.
-- **Edge Oscillations**: Look for the slight blur characteristic of OS-level screen capture overlays.
-
-### STEP 2: SCORING RULES (STRICT)
-- **IS_SCREENSHOT**: Set to `true` if ANY capture artifacts exist. 
-- **ORIGINALITY_SCORE**: 
-  - 0-15: Confirmed screenshot or direct duplicate found online.
-  - 16-50: Likely screenshot or repost from social media (TikTok/Insta artifacts).
-  - 51-84: Possibly original, but lacks cryptographic proof.
-  - 85-100: ONLY allow if the file shows genuine sensor/creative depth AND has NO capture artifacts. 
-  - **CAP**: If CRYPTO STATUS is 'NO CRYPTOGRAPHIC PROVENANCE', do NOT exceed 85% even if it looks perfect.
-
-### OUTPUT FORMAT (Valid JSON only):
-{{
-    "overall_risk_score": 0-100,
-    "originality_score": 0-100,
-    "is_screenshot": true/false,
-    "forensic_details": "Detailed technical explanation.",
-    "threat_categories": [{{"name": string, "severity": "low|medium|high|critical", "confidence": 0-1, "description": string}}],
-    "detailed_findings": [{{"category": string, "description": string, "evidence": string}}],
-    "recommendations": [{{"priority": "low|medium|high", "action": string, "rationale": string}}],
-    "confidence_level": 0.0-1.0
-}}"""
+        rules = _rule_based_analysis(file_name)
+        prompt = _build_forensic_prompt(file_name, file_type, has_c2pa)
 
         if not self.initialized:
-            return self._generate_mock_report(file_name, file_type, len(file_buffer), rules=rules)
+            return _generate_mock_report(file_name, file_type, len(file_buffer), rules=rules)
+
+        is_image = is_image_file(file_name, file_type)
 
         try:
             active_model = "unknown"
-            response_text = ""
 
             if self.provider == "google":
                 active_model = self.google_model_name
-                response = await self.model.generate_content_async(
-                    [prompt, {"mime_type": file_type, "data": file_buffer}]
-                )
+                if is_image:
+                    response = await self.model.generate_content_async(
+                        [prompt, {"mime_type": file_type, "data": file_buffer}]
+                    )
+                else:
+                    sample = file_buffer[:5000].decode('utf-8', errors='replace')
+                    response = await self.model.generate_content_async(
+                        f"{prompt}\n\nFile Content:\n{sample[:3000]}"
+                    )
                 response_text = response.text
                 self.google_cb.record_success()
 
             elif self.provider == "groq":
-                if "image" in file_type:
-                    if self.groq_vision_fallback:
-                        logger.warning("Groq Vision unavailable. Using rule-based pre-scan.")
-                        return RiskReport(
-                            overall_risk_score=0.0,
-                            originality_score=rules["originality_score"],
-                            is_screenshot=rules["is_screenshot"],
-                            threat_categories=[
-                                ThreatCategory(name="Vision Offline", severity="medium", confidence=1.0,
-                                               description="AI Vision unavailable (Groq). Using rule-based detection.")
-                            ],
-                            detailed_findings=[DetailedFinding(category="System", description=rules["forensic_details"], evidence=file_name)],
-                            recommendations=[Recommendation(priority="high", action="Use Google Key",
-                                                            rationale="Switch to Google AI Studio for Vision.")],
-                            confidence_level=0.5,
-                            scan_timestamp=datetime.utcnow(),
-                            file_metadata={
-                                "file_name": file_name, "file_type": file_type, "file_size": len(file_buffer),
-                                "ai_provider": "groq_fallback", "ai_model": "rule_based_v1",
-                                "forensic_summary": rules["forensic_details"], "web_detection": "inactive"
-                            }
-                        )
+                if is_image:
+                    return await self._fallback_image_analysis(file_name, file_type, file_buffer, rules, has_c2pa)
                 else:
                     active_model = self.groq_model_name
-                    sample = file_buffer[:2000].decode('utf-8', errors='ignore')
+                    sample = file_buffer[:2000].decode('utf-8', errors='replace')
                     chat_completion = await self.groq_client.chat.completions.create(
                         messages=[{"role": "user", "content": f"{prompt}\n\nFile Content Sample:\n{sample}"}],
                         model=active_model,
@@ -281,56 +391,30 @@ Identify subtle signs of a "Capture" instead of an "Original Source":
 
             elif self.provider == "vertex":
                 active_model = self.vertex_model_name
-                file_part = Part.from_data(data=file_buffer, mime_type=file_type)
-                response = await self.model.generate_content_async([prompt, file_part])
+                if is_image:
+                    file_part = Part.from_data(data=file_buffer, mime_type=file_type)
+                    response = await self.model.generate_content_async([prompt, file_part])
+                else:
+                    sample = file_buffer[:5000].decode('utf-8', errors='replace')
+                    response = await self.model.generate_content_async(
+                        f"{prompt}\n\nFile Content:\n{sample[:3000]}"
+                    )
                 response_text = response.text
                 self.vertex_cb.record_success()
 
-            data = json.loads(self._clean_json_response(response_text))
-            is_screenshot = data.get("is_screenshot", False) or rules["is_screenshot"]
-            ai_originality_score = float(data.get("originality_score", 100))
+            data = json.loads(_clean_json_response(response_text))
+            return _build_risk_from_data(data, rules, has_c2pa, self.provider, active_model,
+                                         file_name, file_type, len(file_buffer))
 
-            if is_screenshot:
-                originality_score = min(ai_originality_score, 15.0)
-            elif not has_c2pa:
-                originality_score = min(ai_originality_score, 85.0)
-            else:
-                originality_score = ai_originality_score
-
-            if rules["is_screenshot"]:
-                originality_score = min(originality_score, rules["originality_score"])
-
-            description = data.get("forensic_details", rules["forensic_details"])
-            if is_screenshot and "Screenshot" not in description:
-                description = f"Screenshot Detected: {description}"
-
-            threats = [ThreatCategory(**c) for c in data.get("threat_categories", [])]
-            if is_screenshot:
-                threats.append(ThreatCategory(
-                    name="Ownership Alert", severity="high", confidence=1.0,
-                    description="File flagged as screenshot. Original IP cannot be verified at source level."
-                ))
-
-            return RiskReport(
-                overall_risk_score=data.get("overall_risk_score", 0),
-                originality_score=originality_score,
-                is_screenshot=is_screenshot,
-                threat_categories=threats,
-                detailed_findings=[DetailedFinding(**f) for f in data.get("detailed_findings", [])],
-                recommendations=[Recommendation(**r) for r in data.get("recommendations", [])],
-                confidence_level=data.get("confidence_level", 0.9),
-                scan_timestamp=datetime.utcnow(),
-                file_metadata={
-                    "file_name": file_name, "file_type": file_type, "file_size": len(file_buffer),
-                    "ai_provider": self.provider, "ai_model": active_model,
-                    "forensic_summary": description,
-                    "web_detection": "active" if self.provider == "google" else "inactive",
-                    "c2pa_verified": has_c2pa
-                }
-            )
         except Exception as e:
-            logger.error(f"Analysis failed for provider={self.provider}: {e}")
-            return self._generate_mock_report(file_name, file_type, len(file_buffer), error=str(e), rules=rules)
+            err_str = str(e)
+            logger.error(f"Analysis failed for provider={self.provider}: {err_str}")
+
+            if "does not support image" in err_str or "image input" in err_str:
+                logger.warning("Model does not support image input. Falling back to rule-based analysis.")
+                return await self._fallback_image_analysis(file_name, file_type, file_buffer, rules, has_c2pa)
+
+            return _generate_mock_report(file_name, file_type, len(file_buffer), error=err_str, rules=rules)
 
     async def get_mentor_response(self, message: str, history: list = None) -> str:
         if history is None:
@@ -343,10 +427,10 @@ You have access to the user's specific "Work" (images they have protected).
 KNOWLEDGE CAPABILITIES:
 1. INFRASTRUCTURE: Explain C2PA signing and Bitcoin blockchain anchoring.
 2. THREATS: Identify risks in the user's files based on the scan history.
-3. TRACKING (CORE TASK): When asked "Where was this used?" or "Who used it last?", simulate a real-time web-tracking scan.
+3. TRACKING: When asked "Where was this used?" or "Who used it last?", simulate a real-time web-tracking scan.
    - If the user asks about a specific file, look at the Context provided.
-   - Mention specific platforms (Instagram, Pinterest, AI training models like LAION) where unauthorized use might be detected.
-   - Provide "Last Seen" timestamps and "Usernames/Handles" for found instances.
+   - Mention specific platforms (Instagram, Pinterest, AI training models like LAION).
+   - Provide "Last Seen" timestamps and "Usernames/Handles".
    - Be authoritative and technical.
 """
 
@@ -355,8 +439,8 @@ KNOWLEDGE CAPABILITIES:
 
         try:
             if self.provider in ["google", "vertex"]:
-                prompt = f"{system_prompt}\n\nSearch Request: {message}\n\nRecent History: {history}"
-                response = await self.model.generate_content_async(prompt)
+                full_prompt = f"{system_prompt}\n\nSearch Request: {message}\n\nRecent History: {history}"
+                response = await self.model.generate_content_async(full_prompt)
                 return response.text.strip()
             elif self.provider == "groq":
                 messages = [{"role": "system", "content": system_prompt}]
@@ -384,45 +468,6 @@ KNOWLEDGE CAPABILITIES:
                     except Exception:
                         pass
             return "AI service unavailable. Please check your API keys."
-
-    @staticmethod
-    def _clean_json_response(text: str) -> str:
-        text = text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-        if text.startswith("```"):
-            text = text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        return text.strip()
-
-    def _generate_mock_report(self, file_name: str, file_type: str, file_size: int,
-                              error: str = None, rules: Dict = None) -> RiskReport:
-        desc = "AI OFFLINE" if not error else f"ANALYSIS ERROR: {error[:30]}"
-        is_screenshot = rules["is_screenshot"] if rules else "screenshot" in file_name.lower()
-        originality = rules["originality_score"] if rules else (15.0 if is_screenshot else 100.0)
-        forensic_summary = rules["forensic_details"] if rules else (
-            f"{desc} | Screenshot flag" if is_screenshot else f"{desc} | Unknown")
-
-        return RiskReport(
-            overall_risk_score=0.0,
-            originality_score=originality,
-            is_screenshot=is_screenshot,
-            threat_categories=[ThreatCategory(
-                name="AI Offline", severity="medium", confidence=1.0,
-                description="AI scanning engine unreachable. Results based on local pre-scan rules."
-            )],
-            detailed_findings=[DetailedFinding(category="System", description=desc, evidence=file_name)],
-            recommendations=[Recommendation(priority="high", action="Configure AI",
-                                            rationale="Connect Google AI or Groq to enable pixel-level forensics.")],
-            confidence_level=0.5,
-            scan_timestamp=datetime.utcnow(),
-            file_metadata={
-                "file_name": file_name, "file_type": file_type, "file_size": file_size,
-                "ai_provider": "local_pre_scanner", "ai_model": "rule_v1",
-                "forensic_summary": forensic_summary
-            }
-        )
 
 
 vertex_ai_service = VertexAIService()

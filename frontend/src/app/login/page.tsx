@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Shield, Mail, Lock, AlertCircle, Github } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import Logo from '@/components/common/Logo';
 
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
@@ -77,7 +77,6 @@ export default function LoginPage() {
                 </div>
 
                 <div className="bg-[#12121A] border border-zinc-800 rounded-3xl p-8 shadow-2xl shadow-purple-500/5">
-                    {/* OAuth Buttons */}
                     <div className="space-y-3 mb-6">
                         <button
                             onClick={() => handleOAuthLogin('google')}
@@ -174,5 +173,17 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-zinc-600 border-t-white rounded-full animate-spin" />
+            </div>
+        }>
+            <LoginForm />
+        </Suspense>
     );
 }

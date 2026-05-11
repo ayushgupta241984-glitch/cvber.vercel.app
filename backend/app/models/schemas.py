@@ -86,6 +86,10 @@ class VerifyResponse(BaseModel):
     status: str
 
 
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
 class AuthTokens(BaseModel):
     access_token: str
     refresh_token: str

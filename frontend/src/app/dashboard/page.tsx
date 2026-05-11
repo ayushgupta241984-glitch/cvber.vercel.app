@@ -8,6 +8,7 @@ import { ScreenshotGuard } from '@/components/security/ScreenshotGuard';
 import { FileViewer } from '@/components/dashboard/FileViewer';
 import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
 import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
+import { BASE_URL } from '@/lib/api-client';
 import { LayoutGrid, Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, Settings, LogOut, ChevronRight, ArrowUpRight, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -87,7 +88,7 @@ export default function DashboardPage() {
             const token = localStorage.getItem('access_token');
             if (token) {
                 try {
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/auth/me`, {
+                    const response = await fetch(`${BASE_URL}/auth/me`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.ok) {
@@ -149,9 +150,8 @@ export default function DashboardPage() {
 
         // Create blockchain timestamp
         try {
-            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${backendUrl}/api/enforcement/blockchain/timestamp`, {
+            const response = await fetch(`${BASE_URL}/api/enforcement/blockchain/timestamp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

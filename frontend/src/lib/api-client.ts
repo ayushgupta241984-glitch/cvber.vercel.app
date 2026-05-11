@@ -1,9 +1,9 @@
-const BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/+$/, '');
+export const BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;
 
-class ApiError extends Error {
+export class ApiError extends Error {
     status: number;
     details: any;
 
@@ -25,12 +25,21 @@ async function fetchWithRetry(url: string, options: RequestInit, retries: number
             const response = await fetch(url, options);
             return response;
         } catch (err) {
-            if (attempt === retries) throw err;
+            if (attempt === retries) {
+                const isNetworkError = err instanceof TypeError && err.message === 'Failed to fetch';
+                if (isNetworkError) {
+                    throw new ApiError(
+                        `Cannot connect to backend at ${BASE_URL}. Make sure the server is running and NEXT_PUBLIC_BACKEND_URL is set correctly.`,
+                        0
+                    );
+                }
+                throw err;
+            }
             console.warn(`Request failed (attempt ${attempt}/${retries}), retrying...`);
             await delay(RETRY_DELAY_MS * attempt);
         }
     }
-    throw new Error('Request failed after all retries');
+    throw new ApiError('Request failed after all retries', 0);
 }
 
 function getAuthHeaders(): Record<string, string> {
@@ -88,6 +97,8 @@ export interface ScanResult {
 }
 
 export const apiClient = {
+    getBaseUrl: () => BASE_URL,
+
     async scanFile(file: File, onProgress?: (pct: number) => void): Promise<ScanResult> {
         const formData = new FormData();
         formData.append('file', file);
@@ -169,7 +180,7 @@ export const apiClient = {
     },
 
     async getOAuthUrl(provider: string): Promise<{ url: string; provider: string }> {
-        const response = await fetchWithRetry(`${BASE_URL}/auth/oauth/${provider}`);
+        const response = await fetchWithRetry(`${BASE_URL}/auth/oauth/${provider}`, { method: 'GET' });
         return handleResponse<{ url: string; provider: string }>(response);
     },
 

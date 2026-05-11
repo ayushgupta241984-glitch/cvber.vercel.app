@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { FileText, Check, Copy, DollarSign, Users, Building } from 'lucide-react';
+import { BASE_URL } from '@/lib/api-client';
 
 interface LicenseGeneratorProps {
     asset: {
@@ -52,8 +53,7 @@ export function LicenseGenerator({ asset, licensorName, onClose }: LicenseGenera
 
         setIsLoading(true);
         try {
-            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-            const response = await fetch(`${backendUrl}/api/enforcement/license/create`, {
+            const response = await fetch(`${BASE_URL}/api/enforcement/license/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Scale, FileText, AlertTriangle, Send, Copy, Check, ExternalLink, ArrowRight } from 'lucide-react';
+import { BASE_URL } from '@/lib/api-client';
 
 interface DMCAGeneratorProps {
     asset: {
@@ -34,8 +35,7 @@ export function DMCAGenerator({ asset, onClose }: DMCAGeneratorProps) {
     const handleGenerate = async () => {
         setIsLoading(true);
         try {
-            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-            const response = await fetch(`${backendUrl}/api/enforcement/dmca/generate`, {
+            const response = await fetch(`${BASE_URL}/api/enforcement/dmca/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

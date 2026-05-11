@@ -4,7 +4,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from supabase import create_client
 from app.config import settings
-from app.models.schemas import LoginRequest, RegisterRequest, AuthTokens, UserProfile
+from app.models.schemas import LoginRequest, RegisterRequest, AuthTokens, UserProfile, RefreshRequest
 from app.dependencies import get_current_user
 from uuid import uuid4
 import logging
@@ -138,9 +138,9 @@ async def login(request: LoginRequest):
 
 
 @router.post("/refresh")
-async def refresh_token(refresh_token: str):
+async def refresh_token(request: RefreshRequest):
     try:
-        payload = jwt.decode(refresh_token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+        payload = jwt.decode(request.refresh_token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
         if payload.get("type") != "refresh":
             raise HTTPException(status_code=401, detail="Invalid refresh token")
 

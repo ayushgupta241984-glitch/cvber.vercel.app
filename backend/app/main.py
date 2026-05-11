@@ -47,12 +47,22 @@ app.add_middleware(
     allowed_hosts=[
         "localhost", "127.0.0.1", "0.0.0.0",
         "*.cvber.app", "cvber.free.las.app", "*.onrender.com",
+        "*.vercel.app",
     ]
 )
 
+cors_origins = settings.parsed_allowed_origins
+cors_regex = None
+
+if settings.allowed_origins == "*":
+    cors_origins = ["*"]
+else:
+    cors_regex = r"https://.*\.vercel\.app"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.parsed_allowed_origins if settings.allowed_origins != "*" else ["*"],
+    allow_origins=cors_origins,
+    allow_origin_regex=cors_regex,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept"],
