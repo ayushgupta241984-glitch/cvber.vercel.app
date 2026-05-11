@@ -167,4 +167,17 @@ export const apiClient = {
     async getUserBlockchainProofs(): Promise<any> {
         return fetchJson(`${BASE_URL}/api/enforcement/blockchain/proofs`);
     },
+
+    async getOAuthUrl(provider: string): Promise<{ url: string; provider: string }> {
+        const response = await fetchWithRetry(`${BASE_URL}/auth/oauth/${provider}`);
+        return handleResponse<{ url: string; provider: string }>(response);
+    },
+
+    async refreshToken(refreshToken: string): Promise<any> {
+        return fetchJson(`${BASE_URL}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+    },
 };

@@ -5,198 +5,251 @@ from passlib.context import CryptContext
 from supabase import create_client
 from app.config import settings
 from app.models.schemas import LoginRequest, RegisterRequest, AuthTokens, UserProfile
+from app.dependencies import get_current_user
 from uuid import uuid4
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-# Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# Supabase client
 supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
-    """Create JWT access token."""
     to_encode = data.copy()
-    
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
-    
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.jwt_algorithm)
-    
-    return encoded_jwt
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
+    to_encode.update({"exp": expire, "type": "access"})
+    return jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
+def create_refresh_token(data: dict):
+    to_encode = data.copy()
+    to_encode.update({"exp": datetime.utcnow() + timedelta(days=30), "type": "refresh"})
+    return jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify password against hash."""
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    """Hash password."""
     return pwd_context.hash(password)
 
 
 @router.post("/register", response_model=AuthTokens)
 async def register(request: RegisterRequest):
-    """
-    Register new user with email and password.
-    
-    - Creates user in Supabase Auth
-    - Creates profile record (optional, won't fail signup)
-    - Returns JWT tokens
-    """
     try:
-        # Register user with Supabase Admin API to skip email confirmation
-        # We use the admin api because we have the service_role_key initialized in 'supabase' client
-        try:
-            # Create user and auto-confirm email
-            user_attributes = {
-                "email": request.email,
-                "password": request.password,
-                "email_confirm": True,
-                "user_metadata": {"full_name": request.full_name}
-            }
-            # Note: supabase-py v2+ often expects keyword arguments
-            admin_response = supabase.auth.admin.create_user(attributes=user_attributes)
-            
-            if not admin_response.user:
-                 raise Exception("Admin creation failed: No user returned")
-                 
-            user_id = admin_response.user.id
-            
-        except Exception as create_error:
-            import traceback
-            tb = traceback.format_exc()
-            print(f"Admin Registration internal error:\n{tb}")
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Admin creation failed: {str(create_error)} (Type: {type(create_error).__name__})"
-            )
-
-        # Now sign in to get tokens
-        auth_response = supabase.auth.sign_in_with_password(credentials={
+        user_attributes = {
             "email": request.email,
-            "password": request.password
-        })
-        
-        if not auth_response.user:
-            raise HTTPException(status_code=400, detail="Registration successful but auto-login failed")
-        
-        # Try to create profile (optional - won't fail signup if profiles table doesn't exist)
+            "password": request.password,
+            "email_confirm": True,
+            "user_metadata": {"full_name": request.full_name or ""}
+        }
+
+        try:
+            admin_response = supabase.auth.admin.create_user(user_attributes)
+        except Exception as create_error:
+            err_msg = str(create_error)
+            if "already registered" in err_msg.lower():
+                raise HTTPException(status_code=409, detail="User already registered")
+            if "weak password" in err_msg.lower():
+                raise HTTPException(status_code=400, detail="Password is too weak. Use at least 6 characters.")
+            logger.error(f"Admin create_user failed: {err_msg}")
+            raise HTTPException(status_code=400, detail=f"Registration failed: {err_msg}")
+
+        if not admin_response.user:
+            raise HTTPException(status_code=400, detail="Registration failed: no user returned")
+
+        user_id = admin_response.user.id
+
+        try:
+            auth_response = supabase.auth.sign_in_with_password({
+                "email": request.email,
+                "password": request.password
+            })
+        except Exception as login_err:
+            logger.warning(f"Auto-login after registration failed: {login_err}")
+            auth_response = None
+
         try:
             profile = {
                 "id": user_id,
                 "email": request.email,
-                "full_name": request.full_name,
+                "full_name": request.full_name or "",
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
             supabase.table("profiles").insert(profile).execute()
         except Exception as profile_error:
-            # Profile creation is optional - log but don't fail
-            # Check if it is a missing table error to give better logs
-            error_msg = str(profile_error)
-            if "relation \"public.profiles\" does not exist" in error_msg or "42P01" in error_msg:
-                print(f"CRITICAL WARNING: Database schema not initialized. 'profiles' table missing. Run migrations!")
-            print(f"Warning: Could not create profile: {profile_error}")
-        
-        # Create JWT tokens
-        access_token = create_access_token(
-            data={"sub": user_id, "email": request.email}
-        )
-        
-        refresh_token = create_access_token(
-            data={"sub": user_id, "email": request.email},
-            expires_delta=timedelta(days=7)
-        )
-        
+            err = str(profile_error)
+            if "relation" in err or "42P01" in err:
+                logger.warning("Profiles table missing. Run database migrations.")
+            else:
+                logger.warning(f"Profile creation warning: {err}")
+
+        access_token = create_access_token(data={"sub": user_id, "email": request.email})
+        refresh_token = create_refresh_token(data={"sub": user_id, "email": request.email})
+
         return AuthTokens(
             access_token=access_token,
             refresh_token=refresh_token,
             expires_in=settings.access_token_expire_minutes * 60
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
-        import traceback
-        tb = traceback.format_exc()
-        print(f"Registration error:\n{tb}")
-        # Improve error message for specific cases
-        msg = str(e)
-        if "User already registered" in msg:
-            raise HTTPException(status_code=400, detail="User already registered")
-
+        logger.error(f"Registration error: {e}")
         raise HTTPException(status_code=400, detail="Registration failed")
 
 
 @router.post("/login", response_model=AuthTokens)
 async def login(request: LoginRequest):
-    """
-    Login with email and password.
-    
-    - Authenticates user
-    - Returns JWT tokens
-    """
     try:
-        # Authenticate with Supabase
-        auth_response = supabase.auth.sign_in_with_password(credentials={
+        auth_response = supabase.auth.sign_in_with_password({
             "email": request.email,
             "password": request.password
         })
-        
-        if not auth_response.user:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-        
+
+        if not auth_response or not auth_response.user:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+
         user_id = auth_response.user.id
-        
-        # Create JWT tokens
-        access_token = create_access_token(
-            data={"sub": user_id, "email": request.email}
-        )
-        
-        refresh_token = create_access_token(
-            data={"sub": user_id, "email": request.email},
-            expires_delta=timedelta(days=7)
-        )
-        
+
+        access_token = create_access_token(data={"sub": user_id, "email": request.email})
+        refresh_token = create_refresh_token(data={"sub": user_id, "email": request.email})
+
         return AuthTokens(
             access_token=access_token,
             refresh_token=refresh_token,
             expires_in=settings.access_token_expire_minutes * 60
         )
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Login failed: {str(e)}")
+        err_msg = str(e)
+        if "Invalid login credentials" in err_msg:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        logger.error(f"Login error: {err_msg}")
+        raise HTTPException(status_code=401, detail="Login failed")
 
 
-from app.dependencies import get_current_user
+@router.post("/refresh")
+async def refresh_token(refresh_token: str):
+    try:
+        payload = jwt.decode(refresh_token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+        user_id = payload.get("sub")
+        email = payload.get("email")
+        if not user_id or not email:
+            raise HTTPException(status_code=401, detail="Invalid refresh token payload")
+
+        new_access = create_access_token(data={"sub": user_id, "email": email})
+        new_refresh = create_refresh_token(data={"sub": user_id, "email": email})
+
+        return {
+            "access_token": new_access,
+            "refresh_token": new_refresh,
+            "token_type": "bearer",
+            "expires_in": settings.access_token_expire_minutes * 60
+        }
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+
+
+@router.get("/oauth/{provider}")
+async def oauth_login(provider: str):
+    valid_providers = {"google", "github", "discord"}
+    if provider not in valid_providers:
+        raise HTTPException(status_code=400, detail=f"Unsupported provider. Use: {', '.join(valid_providers)}")
+
+    try:
+        redirect_to = f"{settings.backend_url}/auth/oauth/callback"
+        response = supabase.auth.sign_in_with_oauth({
+            "provider": provider,
+            "options": {"redirect_to": redirect_to}
+        })
+        if not response or not response.url:
+            raise HTTPException(status_code=500, detail="Failed to generate OAuth URL")
+        return {"url": response.url, "provider": provider}
+    except Exception as e:
+        logger.error(f"OAuth URL generation failed for {provider}: {e}")
+        raise HTTPException(status_code=500, detail=f"OAuth setup failed for {provider}")
+
+
+@router.get("/oauth/callback")
+async def oauth_callback(code: str = None, error: str = None, error_description: str = None):
+    if error:
+        raise HTTPException(status_code=400, detail=f"OAuth error: {error_description or error}")
+
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing authorization code")
+
+    try:
+        session = supabase.auth.exchange_code_for_session({"auth_code": code})
+        if not session or not session.user:
+            raise HTTPException(status_code=401, detail="OAuth authentication failed")
+
+        user_id = session.user.id
+        email = session.user.email or ""
+
+        access_token = create_access_token(data={"sub": user_id, "email": email})
+        refresh_token = create_refresh_token(data={"sub": user_id, "email": email})
+
+        try:
+            profile = {
+                "id": user_id,
+                "email": email,
+                "full_name": session.user.user_metadata.get("full_name", ""),
+                "avatar_url": session.user.user_metadata.get("avatar_url", ""),
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat()
+            }
+            supabase.table("profiles").upsert(profile).execute()
+        except Exception as e:
+            logger.warning(f"Profile upsert after OAuth: {e}")
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "expires_in": settings.access_token_expire_minutes * 60,
+            "user": {
+                "id": user_id,
+                "email": email,
+                "full_name": session.user.user_metadata.get("full_name", ""),
+            }
+        }
+    except Exception as e:
+        logger.error(f"OAuth callback error: {e}")
+        raise HTTPException(status_code=500, detail="OAuth callback processing failed")
+
 
 @router.get("/me", response_model=UserProfile)
 async def get_current_user_profile(current_user: dict = Depends(get_current_user)):
-    """Get current user profile."""
     try:
-        response = supabase.table("profiles")\
-            .select("*")\
-            .eq("id", current_user["id"])\
-            .single()\
-            .execute()
-        
+        response = supabase.table("profiles").select("*").eq("id", current_user["id"]).single().execute()
+
         if not response.data:
-            raise HTTPException(status_code=404, detail="User not found")
-        
+            return UserProfile(
+                id=current_user["id"],
+                email=current_user.get("email", ""),
+                full_name=None,
+                avatar_url=None,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+
         return response.data
-        
+
     except Exception as e:
-        error_msg = str(e)
-        if "relation \"public.profiles\" does not exist" in error_msg or "42P01" in error_msg:
-             raise HTTPException(
-                 status_code=503, 
-                 detail="Database schema not initialized. Please run migrations."
-             )
-        raise HTTPException(status_code=500, detail=f"Failed to fetch profile: {str(e)}")
+        err = str(e)
+        if "relation" in err or "42P01" in err:
+            raise HTTPException(status_code=503, detail="Database schema not initialized. Please run migrations.")
+        logger.error(f"Profile fetch error: {err}")
+        raise HTTPException(status_code=500, detail="Failed to fetch profile")
