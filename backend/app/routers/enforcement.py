@@ -1,6 +1,7 @@
 from typing import Optional, List
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Depends
+from app.config import settings
 from app.services.kill_switch import kill_switch
 from app.services.event_log import event_log, EventType
 from app.services.licensing import licensing_engine, LicenseType
@@ -348,11 +349,15 @@ async def export_evidence_packet(asset_id: str, current_user: dict = Depends(get
 
 # ============== BLOCKCHAIN TIMESTAMPS ==============
 
+from supabase import create_client
 from app.services.blockchain import blockchain_service
+
+supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
 
 class BlockchainTimestampRequest(BaseModel):
     asset_name: str
     file_hash: str  # Pre-computed SHA-256 hash of file
+    scan_id: Optional[str] = None  # Link to vault file
 
 
 @router.post("/blockchain/timestamp")
@@ -378,6 +383,23 @@ async def create_blockchain_timestamp(
             request.asset_name,
             current_user["id"]
         )
+
+        # Link proof to vault file if scan_id provided
+        if request.scan_id:
+            try:
+                vault_resp = supabase.table("vault_files")\
+                    .select("id")\
+                    .eq("scan_id", request.scan_id)\
+                    .eq("user_id", current_user["id"])\
+                    .single()\
+                    .execute()
+                if vault_resp.data:
+                    supabase.table("blockchain_proofs")\
+                        .update({"vault_file_id": vault_resp.data["id"]})\
+                        .eq("proof_id", proof.proof_id)\
+                        .execute()
+            except Exception as link_err:
+                logger.warning(f"Failed to link proof to vault file: {link_err}")
 
         return {
             "success": True,

@@ -155,11 +155,11 @@ export const apiClient = {
         return fetchJson(`${BASE_URL}/auth/me`);
     },
 
-    async createBlockchainTimestamp(assetName: string, fileHash: string): Promise<any> {
+    async createBlockchainTimestamp(assetName: string, fileHash: string, scanId?: string): Promise<any> {
         return fetchJson(`${BASE_URL}/api/enforcement/blockchain/timestamp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ asset_name: assetName, file_hash: fileHash }),
+            body: JSON.stringify({ asset_name: assetName, file_hash: fileHash, scan_id: scanId }),
         });
     },
 
@@ -204,4 +204,9 @@ export const apiClient = {
     async deleteVaultFile(scanId: string): Promise<{ deleted: boolean; scan_id: string }> {
         return fetchJson(`${BASE_URL}/vault/files/${scanId}`, { method: 'DELETE' });
     },
+
+    async getVaultFileWithProofs(scanId: string): Promise<{ file: any; blockchain_proofs: any[] }> {
+        return fetchJson(`${BASE_URL}/vault/files/${scanId}/proofs`);
+    },
+
 };

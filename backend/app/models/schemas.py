@@ -58,6 +58,7 @@ class ScanResponse(BaseModel):
     message: Optional[str] = None
     storage_url: Optional[str] = None  # Signed URL to view/download the stored file
     storage_path: Optional[str] = None  # Internal path in Supabase Storage
+    original_hash: Optional[str] = None  # SHA-256 hex digest of the file
 
 
 class C2PAManifest(BaseModel):
@@ -139,6 +140,24 @@ class VaultFile(BaseModel):
     is_screenshot: bool = False
     storage_url: Optional[str] = None
     created_at: datetime
+
+
+class BlockchainProof(BaseModel):
+    proof_id: str
+    asset_hash: str
+    asset_name: str
+    status: str  # pending, confirmed, local_only
+    verification_url: str
+    blockchain: str
+    bitcoin_block: Optional[int] = None
+    created_at: datetime
+    confirmed_at: Optional[datetime] = None
+    vault_file_id: Optional[UUID] = None
+
+
+class VaultFileDetail(BaseModel):
+    file: VaultFile
+    blockchain_proofs: List[BlockchainProof] = []
 
 
 class VaultFileList(BaseModel):

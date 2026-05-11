@@ -112,6 +112,7 @@ async def scan_file(
 
         storage_path = None
         storage_url = None
+        original_hash = storage_service.calculate_hash(file_buffer)
         try:
             storage_path = await storage_service.upload_file(
                 file_buffer=file_buffer,
@@ -128,7 +129,7 @@ async def scan_file(
                     "storage_path": storage_path,
                     "bucket": storage_service.safe_vault_bucket,
                     "content_type": file_type,
-                    "original_hash": storage_service.calculate_hash(file_buffer),
+                    "original_hash": original_hash,
                     "risk_score": risk_report.overall_risk_score,
                     "originality_score": risk_report.originality_score,
                     "is_screenshot": risk_report.is_screenshot,
@@ -150,7 +151,8 @@ async def scan_file(
             risk_report=risk_report,
             message="Scan completed successfully",
             storage_url=storage_url,
-            storage_path=storage_path
+            storage_path=storage_path,
+            original_hash=original_hash
         )
 
     except HTTPException:

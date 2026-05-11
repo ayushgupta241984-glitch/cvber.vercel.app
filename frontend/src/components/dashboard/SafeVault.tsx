@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, Download, Shield, AlertTriangle, CheckCircle, Trash2 } from 'lucide-react';
+import { FileText, Download, Shield, AlertTriangle, CheckCircle, Trash2, Anchor } from 'lucide-react';
 
 interface FileItem {
     id: string;
@@ -19,9 +19,10 @@ interface SafeVaultProps {
     onView?: (file: FileItem) => void;
     onWatermark?: (file: FileItem) => void;
     onDelete?: (file: FileItem) => void;
+    onTimestamp?: (file: FileItem) => void;
 }
 
-export function SafeVault({ files = [], onView, onWatermark, onDelete }: SafeVaultProps) {
+export function SafeVault({ files = [], onView, onWatermark, onDelete, onTimestamp }: SafeVaultProps) {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'safe':
@@ -158,6 +159,13 @@ export function SafeVault({ files = [], onView, onWatermark, onDelete }: SafeVau
                                     title="Delete"
                                 >
                                     <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                    onClick={() => onTimestamp?.(file)}
+                                    className="px-2 py-1.5 bg-orange-500/10 text-orange-500 text-xs font-bold rounded-lg hover:bg-orange-500/20 transition-colors border border-orange-500/20 active:scale-95"
+                                    title="Anchor to Blockchain"
+                                >
+                                    <Anchor className="h-3.5 w-3.5" />
                                 </button>
                                 <button
                                     onClick={() => onView?.(file)}

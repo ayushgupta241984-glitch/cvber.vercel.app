@@ -42,6 +42,7 @@ interface UploadResult {
         };
     };
     storage_url?: string;  // Signed URL for the stored file
+    original_hash?: string;  // SHA-256 hash from backend
 }
 
 const containerVariants = {
@@ -116,6 +117,7 @@ export default function DashboardPage() {
                         id: f.scan_id,
                         name: f.file_name,
                         size: f.file_size,
+                        hash: f.original_hash || undefined,
                         status: f.risk_score !== null
                             ? (f.risk_score < 30 ? 'safe' : f.risk_score < 70 ? 'warning' : 'danger')
                             : 'safe',
@@ -162,7 +164,8 @@ export default function DashboardPage() {
         const arrayBuffer = await rawFile.arrayBuffer();
         const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        let fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        if (result.original_hash) fileHash = result.original_hash;
 
         const status: 'safe' | 'warning' | 'scanning' | 'danger' = result.risk_report
             ? (result.risk_report.overall_risk_score < 30 ? 'safe' : result.risk_report.overall_risk_score < 70 ? 'warning' : 'danger')
@@ -189,28 +192,13 @@ export default function DashboardPage() {
 
         // Create blockchain timestamp
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await fetch(`${BASE_URL}/api/enforcement/blockchain/timestamp`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                },
-                body: JSON.stringify({
-                    asset_name: rawFile.name,
-                    file_hash: fileHash
-                })
-            });
-
-            if (response.ok) {
-                const proofData = await response.json();
-                console.log('Blockchain timestamp created:', proofData);
-
-                // Force re-render of BlockchainStatus by dispatching event
-                window.dispatchEvent(new Event('blockchain-update'));
-            } else {
-                console.error('Blockchain timestamp failed:', response.status);
-            }
+            const timestampResult = await apiClient.createBlockchainTimestamp(
+                rawFile.name,
+                fileHash,
+                result.scan_id
+            );
+            console.log('Blockchain timestamp created:', timestampResult);
+            window.dispatchEvent(new Event('blockchain-update'));
         } catch (error) {
             console.error('Blockchain timestamp failed:', error);
         }
@@ -236,6 +224,22 @@ export default function DashboardPage() {
             console.error("Failed to delete from backend:", err);
         }
         setFiles(prev => prev.filter(f => f.id !== file.id));
+    };
+
+    const handleTimestamp = async (file: FileData) => {
+        const hash = file.hash;
+        if (!hash) {
+            alert("File hash not available. Cannot create blockchain timestamp.");
+            return;
+        }
+        try {
+            const result = await apiClient.createBlockchainTimestamp(file.name, hash, file.id);
+            console.log('Blockchain timestamp created:', result);
+            alert(`Blockchain proof created: ${result.proof?.status || 'pending'}`);
+            window.dispatchEvent(new Event('blockchain-update'));
+        } catch (err: any) {
+            alert(err?.message || 'Failed to create blockchain timestamp');
+        }
     };
 
     const navItems = [
@@ -433,6 +437,7 @@ export default function DashboardPage() {
                                                     onView={handleView}
                                                     onWatermark={handleWatermark}
                                                     onDelete={handleDelete}
+                                                    onTimestamp={handleTimestamp}
                                                 />
                                             </div>
                                         </div>

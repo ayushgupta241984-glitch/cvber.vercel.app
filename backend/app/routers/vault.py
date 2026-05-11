@@ -1,11 +1,13 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from uuid import UUID
 from datetime import datetime
+from typing import Optional
 from supabase import create_client
 from app.config import settings
 from app.dependencies import get_current_user
 from app.services.storage import storage_service
-from app.models.schemas import VaultFile, VaultFileList
+from app.models.schemas import VaultFile, VaultFileList, VaultFileDetail, BlockchainProof
+from app.services.blockchain import blockchain_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -165,3 +167,79 @@ async def delete_vault_file(
     except Exception as e:
         logger.error(f"Failed to delete file: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete file")
+
+
+@router.get("/files/{scan_id}/proofs", response_model=VaultFileDetail)
+async def get_vault_file_with_proofs(
+    scan_id: UUID,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get vault file details plus linked blockchain proofs."""
+    try:
+        file_resp = supabase.table("vault_files")\
+            .select("*")\
+            .eq("scan_id", str(scan_id))\
+            .eq("user_id", current_user["id"])\
+            .single()\
+            .execute()
+
+        if not file_resp.data:
+            raise HTTPException(status_code=404, detail="File not found")
+
+        item = file_resp.data
+        signed_url = None
+        try:
+            signed_url = await storage_service.get_file_url(
+                file_path=item["storage_path"],
+                bucket=item.get("bucket", "safe-vault")
+            )
+        except Exception:
+            pass
+
+        vault_file = VaultFile(
+            id=item["id"],
+            scan_id=item["scan_id"],
+            file_name=item["file_name"],
+            file_size=item.get("file_size", 0),
+            storage_path=item["storage_path"],
+            bucket=item.get("bucket", "safe-vault"),
+            content_type=item.get("content_type", "application/octet-stream"),
+            original_hash=item.get("original_hash"),
+            risk_score=item.get("risk_score"),
+            originality_score=item.get("originality_score"),
+            is_screenshot=item.get("is_screenshot", False),
+            storage_url=signed_url,
+            created_at=item.get("created_at", datetime.utcnow())
+        )
+
+        # Fetch linked blockchain proofs
+        proofs = []
+        try:
+            proof_resp = supabase.table("blockchain_proofs")\
+                .select("*")\
+                .eq("vault_file_id", item["id"])\
+                .order("created_at", desc=True)\
+                .execute()
+
+            for p in proof_resp.data or []:
+                proofs.append(BlockchainProof(
+                    proof_id=p["proof_id"],
+                    asset_hash=p["asset_hash"],
+                    asset_name=p["asset_name"],
+                    status=p["status"],
+                    verification_url=p["verification_url"],
+                    blockchain=p.get("blockchain", "bitcoin"),
+                    bitcoin_block=p.get("bitcoin_block"),
+                    created_at=p.get("created_at", datetime.utcnow()),
+                    confirmed_at=p.get("confirmed_at"),
+                    vault_file_id=p.get("vault_file_id")
+                ))
+        except Exception as proof_err:
+            logger.debug(f"Failed to fetch proofs: {proof_err}")
+
+        return VaultFileDetail(file=vault_file, blockchain_proofs=proofs)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get file with proofs: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get file details")
