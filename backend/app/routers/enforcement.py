@@ -361,18 +361,20 @@ async def create_blockchain_timestamp(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Create a FREE blockchain timestamp using OpenTimestamps.
-    Anchors to Bitcoin blockchain at no cost.
+        Create a FREE blockchain timestamp using OpenTimestamps.
+        Anchors to Bitcoin blockchain at no cost.
     """
     try:
-        # Convert hash to bytes for timestamping
-        file_bytes = bytes.fromhex(request.file_hash)
+        # Validate hash format (SHA-256 hex string)
+        if len(request.file_hash) != 64:
+            raise HTTPException(status_code=400, detail="Invalid hash: must be 64 hex characters")
+        bytes.fromhex(request.file_hash)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid hash format")
 
     try:
         proof = await blockchain_service.create_timestamp(
-            file_bytes,
+            request.file_hash,
             request.asset_name,
             current_user["id"]
         )
@@ -400,16 +402,18 @@ async def create_hash_proof(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Create an immediate hash proof document.
-    Synchronous - no blockchain submission, but creates verifiable proof.
+        Create an immediate hash proof document.
+        Synchronous - no blockchain submission, but creates verifiable proof.
     """
     try:
-        file_bytes = bytes.fromhex(request.file_hash)
+        if len(request.file_hash) != 64:
+            raise HTTPException(status_code=400, detail="Invalid hash: must be 64 hex characters")
+        bytes.fromhex(request.file_hash)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid hash format")
 
     try:
-        proof = blockchain_service.create_hash_proof(file_bytes, request.asset_name)
+        proof = blockchain_service.create_hash_proof(request.file_hash, request.asset_name)
         return proof
     except Exception as e:
         logger.error(f"Failed to create hash proof: {e}")

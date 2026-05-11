@@ -54,14 +54,14 @@ class BlockchainTimestampService:
     def __init__(self):
         self.supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
 
-    async def create_timestamp(self, file_content: bytes, asset_name: str, user_id: str) -> TimestampProof:
+    async def create_timestamp(self, file_hash_hex: str, asset_name: str, user_id: str) -> TimestampProof:
         """
-        Create a blockchain timestamp for file content.
+        Create a blockchain timestamp for a file hash.
         Returns immediately with a pending proof.
         Proof becomes confirmed after Bitcoin block inclusion (~2 hours).
 
         Args:
-            file_content: File content as bytes
+            file_hash_hex: SHA-256 hash of the file as a hex string
             asset_name: Name of the asset
             user_id: User ID for database storage
 
@@ -69,11 +69,11 @@ class BlockchainTimestampService:
             TimestampProof object
 
         Raises:
-            ValueError: If file_content is empty or asset_name is empty
+            ValueError: If file_hash_hex is empty or asset_name is empty
             BlockchainError: If timestamp creation fails
         """
-        if not file_content:
-            raise ValueError("File content cannot be empty")
+        if not file_hash_hex:
+            raise ValueError("File hash cannot be empty")
 
         if not asset_name:
             raise ValueError("Asset name cannot be empty")
@@ -81,8 +81,7 @@ class BlockchainTimestampService:
         if not user_id:
             raise ValueError("User ID cannot be empty")
 
-        # Hash the content
-        content_hash = hashlib.sha256(file_content).hexdigest()
+        content_hash = file_hash_hex.lower().strip()
         proof_id = f"OTS-{content_hash[:16].upper()}"
 
         # Try to submit to OpenTimestamps calendar
@@ -90,9 +89,9 @@ class BlockchainTimestampService:
         status = "pending"
 
         try:
+            hash_bytes = bytes.fromhex(content_hash)
             async with httpx.AsyncClient(timeout=self.DEFAULT_TIMEOUT) as client:
-                # Submit hash to calendar
-                hash_bytes = bytes.fromhex(content_hash)
+                # Submit hash bytes to calendar
                 response = await client.post(
                     f"{self.OTS_CALENDARS[0]}/digest",
                     content=hash_bytes,
@@ -139,13 +138,11 @@ class BlockchainTimestampService:
                 'bitcoin_block': None,
                 'metadata': {
                     'created_via': 'cvber_api',
-                    'file_size': len(file_content)
                 }
             }).execute()
             logger.info(f"Proof stored in database: {proof_id}")
         except Exception as e:
             logger.error(f"Failed to store proof in database: {e}")
-            # Continue anyway - we have the proof object
 
         return proof
 
@@ -201,28 +198,28 @@ class BlockchainTimestampService:
             logger.error(f"Failed to verify timestamp {proof_id}: {e}")
             raise BlockchainError(f"Failed to verify timestamp: {str(e)}")
 
-    def create_hash_proof(self, file_content: bytes, asset_name: str) -> Dict[str, Any]:
+    def create_hash_proof(self, file_hash_hex: str, asset_name: str) -> Dict[str, Any]:
         """
         Synchronous hash proof for immediate use.
         Creates a verifiable hash without async calendar submission.
 
         Args:
-            file_content: File content as bytes
+            file_hash_hex: SHA-256 hash of the file as a hex string
             asset_name: Name of the asset
 
         Returns:
             Dictionary with proof document
 
         Raises:
-            ValueError: If file_content is empty or asset_name is empty
+            ValueError: If file_hash_hex is empty or asset_name is empty
         """
-        if not file_content:
-            raise ValueError("File content cannot be empty")
+        if not file_hash_hex:
+            raise ValueError("File hash cannot be empty")
 
         if not asset_name:
             raise ValueError("Asset name cannot be empty")
 
-        content_hash = hashlib.sha256(file_content).hexdigest()
+        content_hash = file_hash_hex.lower().strip()
         timestamp = datetime.utcnow()
 
         # Create proof document
