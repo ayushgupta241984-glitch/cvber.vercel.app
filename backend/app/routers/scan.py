@@ -110,13 +110,37 @@ async def scan_file(
         except Exception as db_err:
             logger.warning(f"Failed to log to Supabase: {db_err}")
 
+        storage_path = None
+        storage_url = None
         try:
-            file_path = await storage_service.upload_file(
+            storage_path = await storage_service.upload_file(
                 file_buffer=file_buffer,
                 file_name=file.filename,
                 user_id=UUID(current_user["id"]),
                 content_type=file_type
             )
+            try:
+                vault_record = {
+                    "user_id": current_user["id"],
+                    "scan_id": str(scan_id),
+                    "file_name": file.filename,
+                    "file_size": file_size,
+                    "storage_path": storage_path,
+                    "bucket": storage_service.safe_vault_bucket,
+                    "content_type": file_type,
+                    "original_hash": storage_service.calculate_hash(file_buffer),
+                    "risk_score": risk_report.overall_risk_score,
+                    "originality_score": risk_report.originality_score,
+                    "is_screenshot": risk_report.is_screenshot,
+                }
+                supabase.table("vault_files").insert(vault_record).execute()
+            except Exception as vault_err:
+                logger.warning(f"Failed to record vault file: {vault_err}")
+
+            try:
+                storage_url = await storage_service.get_file_url(storage_path)
+            except Exception as url_err:
+                logger.debug(f"Failed to generate signed URL: {url_err}")
         except Exception as storage_err:
             logger.warning(f"Failed to upload to Storage: {storage_err}")
 
@@ -124,7 +148,9 @@ async def scan_file(
             scan_id=scan_id,
             status="completed",
             risk_report=risk_report,
-            message="Scan completed successfully"
+            message="Scan completed successfully",
+            storage_url=storage_url,
+            storage_path=storage_path
         )
 
     except HTTPException:

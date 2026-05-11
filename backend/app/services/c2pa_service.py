@@ -1,10 +1,11 @@
 import httpx
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from app.config import settings
 from app.models.schemas import RiskReport, C2PASignature, C2PAManifest
+from app.services.storage import storage_service, StorageError
 from datetime import datetime
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 logger = logging.getLogger(__name__)
 
@@ -155,17 +156,19 @@ async def embed_and_store_after_signing(
         # 2. Generate thumbnail (200x200 center-cropped JPEG)
         thumbnail_bytes = generate_thumbnail(file_bytes, size=(200, 200))
 
-        # 3. Upload thumbnail to Supabase Storage
+        # 3. Upload thumbnail to Supabase Storage via storage_service
         thumbnail_path = f"thumbnails/{user_id}/{asset_id}_thumb.jpg"
         thumbnail_url = None
         try:
-            supabase_client.storage.from_("thumbnails").upload(
-                thumbnail_path,
-                thumbnail_bytes,
-                {"content-type": "image/jpeg", "upsert": "true"}
+            thumb_path = await storage_service.upload_file(
+                file_buffer=thumbnail_bytes,
+                file_name=f"{asset_id}_thumb.jpg",
+                user_id=UUID(user_id),
+                bucket=storage_service.thumbnails_bucket,
+                content_type="image/jpeg"
             )
-            thumbnail_url = supabase_client.storage.from_("thumbnails").get_public_url(thumbnail_path)
-        except Exception as storage_err:
+            thumbnail_url = storage_service.supabase.storage.from_("thumbnails").get_public_url(thumb_path)
+        except StorageError as storage_err:
             logger.warning(f"Thumbnail upload failed (non-critical): {storage_err}")
 
         # 4. Get artist profile info

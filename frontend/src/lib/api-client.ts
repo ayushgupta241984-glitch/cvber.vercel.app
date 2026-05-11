@@ -191,4 +191,17 @@ export const apiClient = {
             body: JSON.stringify({ refresh_token: refreshToken }),
         });
     },
+
+    // Vault API
+    async listVaultFiles(limit: number = 50, offset: number = 0): Promise<{ files: any[]; total: number }> {
+        return fetchJson(`${BASE_URL}/vault/files?limit=${limit}&offset=${offset}`);
+    },
+
+    async getVaultFileUrl(scanId: string): Promise<{ url: string; file_name: string; scan_id: string }> {
+        return fetchJson(`${BASE_URL}/vault/files/${scanId}/url`);
+    },
+
+    async deleteVaultFile(scanId: string): Promise<{ deleted: boolean; scan_id: string }> {
+        return fetchJson(`${BASE_URL}/vault/files/${scanId}`, { method: 'DELETE' });
+    },
 };

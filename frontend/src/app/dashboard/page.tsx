@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FileUploader } from '@/components/dashboard/FileUploader';
 import { SafeVault } from '@/components/dashboard/SafeVault';
 import { SecurityMentor } from '@/components/chat/SecurityMentor';
@@ -8,7 +8,7 @@ import { ScreenshotGuard } from '@/components/security/ScreenshotGuard';
 import { FileViewer } from '@/components/dashboard/FileViewer';
 import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
 import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
-import { BASE_URL } from '@/lib/api-client';
+import { apiClient, BASE_URL } from '@/lib/api-client';
 import { LayoutGrid, Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, Settings, LogOut, ChevronRight, ArrowUpRight, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,6 +26,7 @@ interface FileData {
     aiModel?: string;
     uploadedAt: string;
     previewUrl?: string;
+    storageUrl?: string;  // Signed URL from backend storage
 }
 
 interface UploadResult {
@@ -40,6 +41,7 @@ interface UploadResult {
             ai_model: string;
         };
     };
+    storage_url?: string;  // Signed URL for the stored file
 }
 
 const containerVariants = {
@@ -67,7 +69,7 @@ export default function DashboardPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [user, setUser] = useState<{ full_name: string } | null>(null);
 
-    // Persistence: Load from Memory
+    // Persistence: Load from Memory + Backend Vault
     useEffect(() => {
         const saved = localStorage.getItem('cvber_vault_memory');
         if (saved) {
@@ -104,6 +106,42 @@ export default function DashboardPage() {
             }
         };
         fetchProfile();
+
+        // Fetch vault files from backend
+        const fetchVault = async () => {
+            try {
+                const vault = await apiClient.listVaultFiles(100, 0);
+                if (vault.files && vault.files.length > 0) {
+                    const vaultFiles: FileData[] = vault.files.map((f: any) => ({
+                        id: f.scan_id,
+                        name: f.file_name,
+                        size: f.file_size,
+                        status: f.risk_score !== null
+                            ? (f.risk_score < 30 ? 'safe' : f.risk_score < 70 ? 'warning' : 'danger')
+                            : 'safe',
+                        riskScore: f.risk_score,
+                        originalityScore: f.originality_score,
+                        isScreenshot: f.is_screenshot,
+                        uploadedAt: f.created_at,
+                        storageUrl: f.storage_url,
+                        previewUrl: f.storage_url || undefined,
+                    }));
+                    setFiles(prev => {
+                        const existingIds = new Set(prev.map(p => p.id));
+                        const merged = [...prev];
+                        for (const vf of vaultFiles) {
+                            if (!existingIds.has(vf.id)) {
+                                merged.push(vf);
+                            }
+                        }
+                        return merged;
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to fetch vault files:", err);
+            }
+        };
+        fetchVault();
     }, []);
 
     // Persistence: Save to Memory
@@ -118,7 +156,7 @@ export default function DashboardPage() {
     };
 
     const handleUploadComplete = async (result: UploadResult, rawFile: File) => {
-        const previewUrl = URL.createObjectURL(rawFile);
+        const previewUrl = result.storage_url || URL.createObjectURL(rawFile);
 
         // Compute SHA-256 hash of the file
         const arrayBuffer = await rawFile.arrayBuffer();
@@ -143,7 +181,8 @@ export default function DashboardPage() {
             aiProvider: result.risk_report?.file_metadata?.ai_provider,
             aiModel: result.risk_report?.file_metadata?.ai_model,
             uploadedAt: new Date().toISOString(),
-            previewUrl: previewUrl
+            previewUrl: previewUrl,
+            storageUrl: result.storage_url
         };
 
         setFiles(prev => [newFile, ...prev]);
@@ -189,10 +228,14 @@ export default function DashboardPage() {
         if (window.innerWidth < 1024) setIsSidebarOpen(false);
     };
 
-    const handleDelete = (file: FileData) => {
-        if (confirm(`Are you sure you want to delete "${file.name}"?`)) {
-            setFiles(prev => prev.filter(f => f.id !== file.id));
+    const handleDelete = async (file: FileData) => {
+        if (!confirm(`Delete "${file.name}" from vault?`)) return;
+        try {
+            await apiClient.deleteVaultFile(file.id);
+        } catch (err) {
+            console.error("Failed to delete from backend:", err);
         }
+        setFiles(prev => prev.filter(f => f.id !== file.id));
     };
 
     const navItems = [

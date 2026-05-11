@@ -46,7 +46,7 @@ class StorageService:
 
     MAX_RETRIES = 3
     RETRY_DELAY_SECONDS = 1.0
-    BUCKET_NAMES = {"safe-vault", "scan-results"}
+    BUCKET_NAMES = {"safe-vault", "scan-results", "thumbnails"}
 
     def __init__(self):
         self.supabase: Client = create_client(
@@ -55,6 +55,7 @@ class StorageService:
         )
         self.safe_vault_bucket = "safe-vault"
         self.scan_results_bucket = "scan-results"
+        self.thumbnails_bucket = "thumbnails"
 
     async def ensure_buckets_exist(self):
         """Create required storage buckets if they don't already exist."""

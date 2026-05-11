@@ -56,6 +56,8 @@ class ScanResponse(BaseModel):
     status: str  # "pending", "scanning", "completed", "failed"
     risk_report: Optional[RiskReport] = None
     message: Optional[str] = None
+    storage_url: Optional[str] = None  # Signed URL to view/download the stored file
+    storage_path: Optional[str] = None  # Internal path in Supabase Storage
 
 
 class C2PAManifest(BaseModel):
@@ -121,6 +123,27 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     context_used: Optional[List[str]] = []
+
+
+class VaultFile(BaseModel):
+    id: UUID
+    scan_id: UUID
+    file_name: str
+    file_size: int
+    storage_path: str
+    bucket: str
+    content_type: str
+    original_hash: Optional[str] = None
+    risk_score: Optional[float] = None
+    originality_score: Optional[float] = None
+    is_screenshot: bool = False
+    storage_url: Optional[str] = None
+    created_at: datetime
+
+
+class VaultFileList(BaseModel):
+    files: List[VaultFile]
+    total: int
 
 
 class AuditLog(BaseModel):
