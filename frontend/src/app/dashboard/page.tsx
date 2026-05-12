@@ -9,7 +9,7 @@ import { FileViewer } from '@/components/dashboard/FileViewer';
 import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
 import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
 import { apiClient, BASE_URL } from '@/lib/api-client';
-import { LayoutGrid, Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, Settings, LogOut, ChevronRight, ArrowUpRight, Sparkles } from 'lucide-react';
+import { LayoutGrid, Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, Settings, LogOut, ChevronRight, ArrowUpRight, Sparkles, Anchor } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FileData {
@@ -69,6 +69,9 @@ export default function DashboardPage() {
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [user, setUser] = useState<{ full_name: string } | null>(null);
+    const [selectedBlockchainFile, setSelectedBlockchainFile] = useState<FileData | null>(null);
+    const [blockchainFileProofs, setBlockchainFileProofs] = useState<any[]>([]);
+    const [proofsLoading, setProofsLoading] = useState(false);
 
     // Persistence: Load from Memory + Backend Vault
     useEffect(() => {
@@ -224,6 +227,20 @@ export default function DashboardPage() {
             console.error("Failed to delete from backend:", err);
         }
         setFiles(prev => prev.filter(f => f.id !== file.id));
+    };
+
+    const loadBlockchainProofs = async (file: FileData) => {
+        setSelectedBlockchainFile(file);
+        setProofsLoading(true);
+        try {
+            const result = await apiClient.getVaultFileWithProofs(file.id);
+            setBlockchainFileProofs(result.blockchain_proofs || []);
+        } catch (err) {
+            console.error("Failed to load proofs:", err);
+            setBlockchainFileProofs([]);
+        } finally {
+            setProofsLoading(false);
+        }
     };
 
     const handleTimestamp = async (file: FileData) => {
@@ -482,11 +499,86 @@ export default function DashboardPage() {
                                                 </div>
                                             </div>
 
-                                            {/* Placeholder for Historical Proofs component */}
-                                            <div className="p-12 border-2 border-dashed border-zinc-800 rounded-3xl text-center">
-                                                <Hash className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-                                                <p className="text-zinc-500 font-medium">Select an asset from the vault to view blockchain proof history</p>
+                                            {/* Vault Files + Blockchain Proofs */}
+                                            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                                                {files.length === 0 ? (
+                                                    <div className="p-12 border-2 border-dashed border-zinc-800 rounded-3xl text-center">
+                                                        <Hash className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
+                                                        <p className="text-zinc-500 font-medium">Scan a file first to see it here</p>
+                                                    </div>
+                                                ) : files.map((f) => (
+                                                    <div
+                                                        key={f.id}
+                                                        onClick={() => loadBlockchainProofs(f)}
+                                                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                                                            selectedBlockchainFile?.id === f.id
+                                                                ? 'border-orange-500/40 bg-orange-500/5'
+                                                                : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-700'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <FileText className="w-5 h-5 text-zinc-500 shrink-0" />
+                                                                <span className="text-sm font-bold text-white truncate">{f.name}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 shrink-0">
+                                                                {f.hash && (
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); handleTimestamp(f); }}
+                                                                        className="px-2 py-1 bg-orange-500/10 text-orange-500 text-[10px] font-bold rounded-lg hover:bg-orange-500/20 border border-orange-500/20"
+                                                                    >
+                                                                        Anchor
+                                                                    </button>
+                                                                )}
+                                                                <span className="text-[10px] text-zinc-500 font-bold uppercase">
+                                                                    {(f.size / 1024).toFixed(0)}KB
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
+
+                                            {/* Selected file proofs */}
+                                            {selectedBlockchainFile && (
+                                                <div className="border-t border-zinc-800 pt-4 mt-4">
+                                                    <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                                                        <Anchor className="w-4 h-4 text-orange-400" />
+                                                        Proofs for {selectedBlockchainFile.name}
+                                                    </h3>
+                                                    {proofsLoading ? (
+                                                        <div className="flex items-center justify-center py-8">
+                                                            <div className="w-6 h-6 border-2 border-zinc-600 border-t-orange-500 rounded-full animate-spin" />
+                                                        </div>
+                                                    ) : blockchainFileProofs.length === 0 ? (
+                                                        <div className="p-6 border border-dashed border-zinc-800 rounded-2xl text-center">
+                                                            <p className="text-zinc-500 text-sm">No blockchain proofs yet. Click Anchor to create one.</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-3">
+                                                            {blockchainFileProofs.map((proof: any) => (
+                                                                <div key={proof.proof_id} className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800">
+                                                                    <div className="flex items-center justify-between mb-2">
+                                                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{proof.status === 'confirmed' ? 'Anchored' : proof.status === 'pending' ? 'Pending (~2h)' : 'Local'}</span>
+                                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                                                            proof.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                                                            proof.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                                                                            'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'
+                                                                        }`}>
+                                                                            {proof.status}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className="text-[10px] text-zinc-600 font-mono truncate mb-2">{proof.proof_id}</p>
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="text-[10px] text-zinc-500">{new Date(proof.created_at).toLocaleString()}</span>
+                                                                        <a href={proof.verification_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-orange-400 hover:underline font-bold">Verify on OTS ↗</a>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
