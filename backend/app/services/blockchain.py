@@ -9,6 +9,7 @@ from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
 import httpx
 import json
+import time
 from supabase import create_client
 from app.config import settings
 import logging
@@ -82,7 +83,7 @@ class BlockchainTimestampService:
             raise ValueError("User ID cannot be empty")
 
         content_hash = file_hash_hex.lower().strip()
-        proof_id = f"OTS-{content_hash[:16].upper()}"
+        proof_id = f"OTS-{content_hash[:12].upper()}-{int(time.time() * 1000)}"
 
         # Try to submit to OpenTimestamps calendar
         ots_proof = None

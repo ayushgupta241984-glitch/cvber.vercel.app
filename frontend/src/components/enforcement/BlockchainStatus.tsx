@@ -27,7 +27,6 @@ export function BlockchainStatus() {
                 const result = await apiClient.getUserBlockchainProofs();
                 if (result.success) {
                     setProofs(result.proofs);
-                    console.log('Loaded blockchain proofs from backend:', result.proofs);
                 } else {
                     console.error('Failed to load blockchain proofs:', result);
                 }
@@ -38,9 +37,16 @@ export function BlockchainStatus() {
 
         loadProofs();
 
+        // Listen for blockchain-update events (dispatched after creating a timestamp)
+        const handleUpdate = () => loadProofs();
+        window.addEventListener('blockchain-update', handleUpdate);
+
         // Refresh every 30 seconds to check for status updates
         const interval = setInterval(loadProofs, 30000);
-        return () => clearInterval(interval);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('blockchain-update', handleUpdate);
+        };
     }, []);
 
     // Calculate counts from proofs
