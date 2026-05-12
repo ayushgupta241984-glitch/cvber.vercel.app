@@ -252,8 +252,11 @@ export default function DashboardPage() {
         try {
             const result = await apiClient.createBlockchainTimestamp(file.name, hash, file.id);
             console.log('Blockchain timestamp created:', result);
-            alert(`Blockchain proof created: ${result.proof?.status || 'pending'}`);
             window.dispatchEvent(new Event('blockchain-update'));
+            // Refresh proofs if this file is currently selected
+            if (selectedBlockchainFile?.id === file.id) {
+                await loadBlockchainProofs(file);
+            }
         } catch (err: any) {
             alert(err?.message || 'Failed to create blockchain timestamp');
         }
