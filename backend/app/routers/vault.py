@@ -55,6 +55,8 @@ async def list_vault_files(
                 risk_score=item.get("risk_score"),
                 originality_score=item.get("originality_score"),
                 is_screenshot=item.get("is_screenshot", False),
+                proof_required=item.get("proof_required", False),
+                ownership_proof_status=item.get("ownership_proof_status"),
                 storage_url=signed_url,
                 created_at=item.get("created_at", datetime.utcnow())
             ))

@@ -187,7 +187,9 @@ export default function DashboardPage() {
     };
 
     const checkProofRequired = (file: FileData) => {
-        if (file.proofRequired && file.ownershipProofStatus !== 'verified') {
+        const needsProof = file.proofRequired === true && file.ownershipProofStatus !== 'verified';
+        if (needsProof) {
+            console.log('Proof required for file:', file.name, file.proofRequired, file.ownershipProofStatus);
             setProofModalFile(file);
             return true;
         }
