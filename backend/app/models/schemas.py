@@ -138,6 +138,8 @@ class VaultFile(BaseModel):
     risk_score: Optional[float] = None
     originality_score: Optional[float] = None
     is_screenshot: bool = False
+    proof_required: bool = False
+    ownership_proof_status: Optional[str] = None
     storage_url: Optional[str] = None
     created_at: datetime
 

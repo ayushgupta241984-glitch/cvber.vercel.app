@@ -280,3 +280,53 @@ async def get_vault_file_with_proofs(
     except Exception as e:
         logger.error(f"Failed to get file with proofs: {e}")
         raise HTTPException(status_code=500, detail="Failed to get file details")
+
+
+@router.post("/files/{scan_id}/ownership-proof")
+async def submit_ownership_proof(
+    scan_id: UUID,
+    proof_type: str,
+    proof_text: str = "",
+    proof_url: str = "",
+    current_user: dict = Depends(get_current_user)
+):
+    """Submit proof of ownership for a file that was flagged as screenshot/not original"""
+    try:
+        # Verify file belongs to user
+        vault_resp = supabase.table("vault_files")\
+            .select("id, proof_required")\
+            .eq("scan_id", str(scan_id))\
+            .eq("user_id", current_user["id"])\
+            .single()\
+            .execute()
+        
+        if not vault_resp.data:
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Check if proof is actually required
+        if not vault_resp.data.get("proof_required"):
+            return {"success": True, "message": "Proof not required for this file"}
+        
+        # Insert ownership proof
+        proof_data = {
+            "scan_id": str(scan_id),
+            "user_id": current_user["id"],
+            "proof_type": proof_type,
+            "proof_text": proof_text[:500] if proof_text else "",
+            "proof_url": proof_url[:500] if proof_url else "",
+            "status": "pending"
+        }
+        supabase.table("ownership_proofs").insert(proof_data).execute()
+        
+        # Update vault file status
+        supabase.table("vault_files")\
+            .update({"ownership_proof_status": "pending"})\
+            .eq("scan_id", str(scan_id))\
+            .execute()
+        
+        return {"success": True, "message": "Ownership proof submitted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to submit ownership proof: {e}")
+        raise HTTPException(status_code=500, detail="Failed to submit proof")

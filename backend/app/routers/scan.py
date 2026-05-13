@@ -307,6 +307,9 @@ async def scan_file(
                 content_type=file_type
             )
             try:
+                # Require proof if screenshot or low originality
+                proof_required = risk_report.is_screenshot or risk_report.originality_score < 50
+                
                 vault_record = {
                     "user_id": current_user["id"],
                     "scan_id": str(scan_id),
@@ -319,6 +322,8 @@ async def scan_file(
                     "risk_score": risk_report.overall_risk_score,
                     "originality_score": risk_report.originality_score,
                     "is_screenshot": risk_report.is_screenshot,
+                    "proof_required": proof_required,
+                    "ownership_proof_status": "pending" if proof_required else None,
                 }
                 supabase.table("vault_files").insert(vault_record).execute()
             except Exception as vault_err:

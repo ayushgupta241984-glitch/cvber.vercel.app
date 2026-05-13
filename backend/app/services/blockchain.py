@@ -46,9 +46,9 @@ class BlockchainTimestampService:
 
     OTS_CALENDARS = [
         "https://a.pool.opentimestamps.org",
-        "https://b.pool.opentimestamps.org",
-        "https://alice.btc.calendar.opentimestamps.org",
-        "https://bob.btc.calendar.opentimestamps.org"
+        "https://b.pool.opentimestamps.org", 
+        "https://ots.btc.ax",
+        "https://ots1.btc.li"
     ]
 
     DEFAULT_TIMEOUT = 30.0  # seconds
