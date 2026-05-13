@@ -325,9 +325,14 @@ async def scan_file(
                     "proof_required": proof_required,
                     "ownership_proof_status": "pending" if proof_required else None,
                 }
-                supabase.table("vault_files").insert(vault_record).execute()
+                vault_insert = supabase.table("vault_files").insert(vault_record).execute()
+                if not vault_insert.data:
+                    raise HTTPException(status_code=500, detail="Failed to save to vault")
+            except HTTPException:
+                raise
             except Exception as vault_err:
-                logger.warning(f"Failed to record vault file: {vault_err}")
+                logger.error(f"Failed to record vault file: {vault_err}")
+                raise HTTPException(status_code=500, detail=f"Vault save failed: {vault_err}")
 
             try:
                 storage_url = await storage_service.get_file_url(storage_path)
