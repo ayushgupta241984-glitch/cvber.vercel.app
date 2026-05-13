@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Link2, CheckCircle, Clock, AlertCircle, RefreshCw, ExternalLink, Copy, Check } from 'lucide-react';
-import { apiClient } from '@/lib/api-client';
+import { Link2, CheckCircle, Clock, AlertCircle, RefreshCw, ExternalLink, Copy, Check, Download } from 'lucide-react';
+import { apiClient, BASE_URL } from '@/lib/api-client';
 
 interface BlockchainProof {
     proof_id: string;
@@ -12,6 +12,7 @@ interface BlockchainProof {
     blockchain: string;
     status: 'pending' | 'confirmed' | 'local_only';
     verification_url: string;
+    ots_proof_url?: string;
 }
 
 export function BlockchainStatus() {
@@ -79,6 +80,29 @@ export function BlockchainStatus() {
         navigator.clipboard.writeText(hash);
         setCopied(hash);
         setTimeout(() => setCopied(null), 2000);
+    };
+
+    const downloadOtsProof = async (proofId: string, assetName: string) => {
+        try {
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`${BASE_URL}/vault/proofs/${proofId}/ots-proof`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+            const blob = await response.blob();
+            const baseName = assetName.includes('.') ? assetName.split('.').slice(0, -1).join('.') : assetName;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${baseName}.ots`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error('OTS proof download failed:', e);
+            alert('Failed to download OTS proof. The proof file may not be available.');
+        }
     };
 
     const refreshStatus = async () => {
@@ -205,14 +229,27 @@ export function BlockchainStatus() {
                                                     }`}>
                                                     {getStatusLabel(proof.status)}
                                                 </span>
-                                                <a
-                                                    href={proof.verification_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-[10px] text-purple-400 hover:text-white flex items-center gap-1"
-                                                >
-                                                    Verify <ExternalLink className="h-3 w-3" />
-                                                </a>
+                                                <div className="flex items-center gap-2">
+                                                    {proof.status !== 'local_only' ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => downloadOtsProof(proof.proof_id, proof.asset_name)}
+                                                            className="text-[10px] text-purple-400 hover:text-white flex items-center gap-1"
+                                                        >
+                                                            <Download className="h-3 w-3" /> .ots
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-[10px] text-zinc-500 italic">No proof file</span>
+                                                    )}
+                                                    <a
+                                                        href="https://opentimestamps.org/"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-[10px] text-purple-400 hover:text-white flex items-center gap-1"
+                                                    >
+                                                        <ExternalLink className="h-3 w-3" /> Info
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

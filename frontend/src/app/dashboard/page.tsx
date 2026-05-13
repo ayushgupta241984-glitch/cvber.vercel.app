@@ -154,6 +154,29 @@ export default function DashboardPage() {
         localStorage.setItem('cvber_vault_memory', JSON.stringify(files));
     }, [files]);
 
+    const downloadOtsProof = async (proofId: string, assetName: string) => {
+        try {
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`${BASE_URL}/vault/proofs/${proofId}/ots-proof`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+            const blob = await response.blob();
+            const baseName = assetName.includes('.') ? assetName.split('.').slice(0, -1).join('.') : assetName;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${baseName}.ots`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error('OTS proof download failed:', e);
+            alert('Failed to download OTS proof.');
+        }
+    };
+
     const handleLogout = () => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('user_full_name');
@@ -202,8 +225,12 @@ export default function DashboardPage() {
             );
             console.log('Blockchain timestamp created:', timestampResult);
             window.dispatchEvent(new Event('blockchain-update'));
-        } catch (error) {
+        } catch (error: any) {
             console.error('Blockchain timestamp failed:', error);
+            // Alert user that timestamp failed - don't hide this!
+            if (error?.message) {
+                alert(`Blockchain timestamp failed: ${error.message}`);
+            }
         }
     };
 
@@ -574,7 +601,19 @@ export default function DashboardPage() {
                                                                     <p className="text-[10px] text-zinc-600 font-mono truncate mb-2">{proof.proof_id}</p>
                                                                     <div className="flex items-center justify-between">
                                                                         <span className="text-[10px] text-zinc-500">{new Date(proof.created_at).toLocaleString()}</span>
-                                                                        <a href={proof.verification_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-orange-400 hover:underline font-bold">Verify on OTS ↗</a>
+                                                                        <div className="flex items-center gap-2">
+                                                                            {proof.status !== 'local_only' ? (
+                                                                                <button
+                                                                                    onClick={() => downloadOtsProof(proof.proof_id, proof.asset_name)}
+                                                                                    className="text-[10px] text-orange-400 hover:underline font-bold"
+                                                                                >
+                                                                                    Download .ots
+                                                                                </button>
+                                                                            ) : (
+                                                                                <span className="text-[10px] text-zinc-500 italic">No proof file</span>
+                                                                            )}
+                                                                            <a href="https://opentimestamps.org/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-zinc-500 hover:text-white">Info</a>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             ))}

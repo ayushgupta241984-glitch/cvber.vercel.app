@@ -85,19 +85,150 @@ class CircuitBreaker:
 
 
 def _rule_based_analysis(file_name: str) -> Dict[str, Any]:
-    is_screenshot = "screenshot" in file_name.lower() or "screen shot" in file_name.lower()
-    is_mobile = any(x in file_name.lower() for x in ["img_", "screenshot_", "captured_"])
-    if is_screenshot or is_mobile:
+    filename_lower = file_name.lower()
+    
+    # Only flag as screenshot if filename VERY clearly indicates screenshot
+    strong_screenshot_indicators = [
+        "screenshot", "screen shot", "screen_cap", "capture", 
+        "screengrab", "snip", "snap_", "_screen"
+    ]
+    
+    is_screenshot = any(indicator in filename_lower for indicator in strong_screenshot_indicators)
+    
+    if is_screenshot:
         return {
             "is_screenshot": True,
             "originality_score": 5.0,
-            "forensic_details": "RULE-BASED: File name contains definitive 'screenshot' patterns.",
+            "forensic_details": "RULE-BASED: Filename contains strong screenshot indicator.",
         }
+    
+    # Let image analysis determine this - return neutral values
     return {
         "is_screenshot": False,
-        "originality_score": 100.0,
-        "forensic_details": "No obvious screenshot indicators in filename.",
+        "originality_score": 50.0,
+        "forensic_details": "Performing image analysis...",
     }
+
+
+def _analyze_image_for_screenshot(file_buffer: bytes) -> Dict[str, Any]:
+    """
+    Actually analyze image to detect screenshots - checks pixels, aspect ratios, edge uniformity.
+    This is self-sufficient detection that doesn't rely on AI or filenames.
+    """
+    try:
+        from PIL import Image
+        import io
+        
+        img = Image.open(io.BytesIO(file_buffer))
+        width, height = img.size
+        aspect_ratio = width / height if height > 0 else 0
+        
+        screenshot_score = 0
+        reasons = []
+        
+        # Check aspect ratios - more aggressive
+        common_screenshot_ratios = [
+            (19.5, 9), (18, 9), (18.5, 9), (18.8, 9), (19.2, 9),  # iPhones
+            (4, 3), (3, 4),  # iPads
+            (16, 10), (16, 9), (14, 9),  # Androids, laptops
+            (21, 9), (32, 9),  # Ultra-wide
+            (9, 16), (9, 19.5), (9, 18),  # Vertical videos/screenshots
+        ]
+        for r_w, r_h in common_screenshot_ratios:
+            expected = r_w / r_h
+            if abs(aspect_ratio - expected) < 0.2:
+                screenshot_score += 3
+                reasons.append(f"ratio_{r_w}x{r_h}")
+                break
+        
+        # Additional: check for suspiciously "perfect" aspect ratios for photos
+        # Most camera photos are 4:3 (3:2) - screenshot-like ratios are suspicious
+        photo_ratios = [1.5, 1.33]  # 3:2, 4:3
+        if not reasons:  # Only if not already detected
+            for pr in photo_ratios:
+                if abs(aspect_ratio - pr) < 0.05:
+                    # This could be either photo OR screenshot - check other factors
+                    break
+        
+        # Check for uniform edges (screenshot borders) - more lenient
+        if img.mode in ('RGB', 'RGBA'):
+            try:
+                pixels = img.load()
+                edge_colors = []
+                # Sample edges
+                for x in range(0, width, max(1, width // 10)):
+                    edge_colors.append(pixels[x, 0])
+                    edge_colors.append(pixels[x, height - 1])
+                for y in range(0, height, max(1, height // 10)):
+                    edge_colors.append(pixels[0, y])
+                    edge_colors.append(pixels[width - 1, y])
+                
+                if edge_colors:
+                    first = edge_colors[0]
+                    similar = sum(1 for c in edge_colors if c == first) / len(edge_colors)
+                    # Lower threshold from 0.75 to 0.6
+                    if similar > 0.6:
+                        screenshot_score += 2
+                        reasons.append("uniform_edges")
+            except:
+                pass
+        
+        # Check for notch/status bar region - more lenient
+        if img.mode in ('RGB', 'RGBA'):
+            try:
+                pixels = img.load()
+                # Check top 5% for dark bar (notch)
+                top_region_height = max(1, height // 20)
+                dark_rows = 0
+                for y in range(0, top_region_height):
+                    row_colors = [pixels[x, y] for x in range(0, width, max(1, width // 20))]
+                    dark_in_row = sum(1 for c in row_colors if sum(c[:3]) < 30)
+                    if dark_in_row / len(row_colors) > 0.5:
+                        dark_rows += 1
+                
+                if dark_rows >= top_region_height * 0.5:
+                    screenshot_score += 2
+                    reasons.append("notch_bar")
+            except:
+                pass
+        
+        # NEW: Check for bottom bar (home indicator)
+        if img.mode in ('RGB', 'RGBA'):
+            try:
+                pixels = img.load()
+                bottom_region_height = max(1, height // 25)
+                dark_rows = 0
+                for y in range(height - bottom_region_height, height):
+                    row_colors = [pixels[x, y] for x in range(0, width, max(1, width // 20))]
+                    dark_in_row = sum(1 for c in row_colors if sum(c[:3]) < 30)
+                    if dark_in_row / len(row_colors) > 0.5:
+                        dark_rows += 1
+                
+                if dark_rows >= bottom_region_height * 0.5:
+                    screenshot_score += 2
+                    reasons.append("home_bar")
+            except:
+                pass
+        
+        # NEW: Very small image size check (screenshots often have specific sizes)
+        # Phone screenshots are often between 500KB-5MB, not huge originals
+        # This is weak signal, only use if other factors present
+        if width < 2000 and height < 4000:
+            screenshot_score += 1
+            reasons.append("small_dimensions")
+        
+        # Lower threshold from 2 to 1
+        is_screenshot = screenshot_score >= 1
+        
+        return {
+            "is_screenshot": is_screenshot,
+            "score": screenshot_score,
+            "reasons": reasons,
+            "aspect_ratio": round(aspect_ratio, 2),
+            "dimensions": f"{width}x{height}"
+        }
+    except Exception as e:
+        return {"is_screenshot": False, "score": 0, "reasons": [], "error": str(e)}
 
 
 def _clean_json_response(text: str) -> str:
@@ -115,7 +246,10 @@ def _generate_mock_report(file_name: str, file_type: str, file_size: int,
                           error: str = None, rules: Dict = None) -> RiskReport:
     desc = "AI OFFLINE" if not error else f"ANALYSIS ERROR: {error[:30]}"
     is_screenshot = rules["is_screenshot"] if rules else "screenshot" in file_name.lower()
-    originality = rules["originality_score"] if rules else (15.0 if is_screenshot else 100.0)
+    if rules and rules["originality_score"] is not None:
+        originality = rules["originality_score"]
+    else:
+        originality = 15.0 if is_screenshot else 50.0
     forensic_summary = rules["forensic_details"] if rules else (
         f"{desc} | Screenshot flag" if is_screenshot else f"{desc} | Unknown")
 
@@ -182,13 +316,15 @@ def _build_risk_from_data(data: dict, rules: dict, has_c2pa: bool, provider: str
 
     if is_screenshot:
         originality_score = min(ai_originality_score, 15.0)
-    elif not has_c2pa:
-        originality_score = min(ai_originality_score, 85.0)
     else:
         originality_score = ai_originality_score
 
     if rules["is_screenshot"]:
         originality_score = min(originality_score, rules["originality_score"])
+
+    # Text-only models can't actually verify originality — cap at 70
+    if provider in ("groq",) and not is_screenshot:
+        originality_score = min(originality_score, 70.0)
 
     description = data.get("forensic_details", rules["forensic_details"])
     if is_screenshot and "Screenshot" not in description:
@@ -351,6 +487,14 @@ class VertexAIService:
     async def analyze_file_threat(self, file_buffer: bytes, file_name: str, file_type: str, has_c2pa: bool = False) -> RiskReport:
         self.ensure_initialized()
         rules = _rule_based_analysis(file_name)
+        
+        # Perform actual image analysis for screenshot detection (doesn't rely on AI)
+        image_analysis = _analyze_image_for_screenshot(file_buffer)
+        if image_analysis.get("is_screenshot"):
+            rules["is_screenshot"] = True
+            rules["originality_score"] = 15.0
+            rules["forensic_details"] = f"PIXEL ANALYSIS: Detected screenshot (score={image_analysis.get('score')}, reasons={image_analysis.get('reasons')}, ratio={image_analysis.get('aspect_ratio')})"
+        
         prompt = _build_forensic_prompt(file_name, file_type, has_c2pa)
 
         if not self.initialized:

@@ -169,6 +169,43 @@ async def delete_vault_file(
         raise HTTPException(status_code=500, detail="Failed to delete file")
 
 
+@router.get("/proofs/{proof_id}/ots-proof")
+async def download_ots_proof(
+    proof_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Download the .ots proof file for local verification."""
+    try:
+        resp = supabase.table("blockchain_proofs")\
+            .select("ots_proof, asset_name")\
+            .eq("proof_id", proof_id)\
+            .eq("user_id", current_user["id"])\
+            .single()\
+            .execute()
+
+        if not resp.data or not resp.data.get("ots_proof"):
+            raise HTTPException(status_code=404, detail="OTS proof not found")
+
+        import base64
+        from fastapi.responses import Response
+
+        ots_bytes = base64.b64decode(resp.data["ots_proof"])
+        base_name = resp.data["asset_name"].rsplit(".", 1)[0] if "." in resp.data["asset_name"] else resp.data["asset_name"]
+
+        return Response(
+            content=ots_bytes,
+            media_type="application/octet-stream",
+            headers={
+                "Content-Disposition": f'attachment; filename="{base_name}.ots"'
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to download OTS proof: {e}")
+        raise HTTPException(status_code=500, detail="Failed to download OTS proof")
+
+
 @router.get("/files/{scan_id}/proofs", response_model=VaultFileDetail)
 async def get_vault_file_with_proofs(
     scan_id: UUID,

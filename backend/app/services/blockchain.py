@@ -29,6 +29,7 @@ class TimestampProof(BaseModel):
     verification_url: str
     bitcoin_block: Optional[int]
     confirmed_at: Optional[datetime]
+    vault_file_id: Optional[str] = None
 
 
 class BlockchainTimestampService:
@@ -83,6 +84,35 @@ class BlockchainTimestampService:
             raise ValueError("User ID cannot be empty")
 
         content_hash = file_hash_hex.lower().strip()
+
+        # Check if a proof already exists for this hash
+        try:
+            existing = self.supabase.table('blockchain_proofs')\
+                .select('*')\
+                .eq('asset_hash', content_hash)\
+                .eq('user_id', user_id)\
+                .order('created_at', desc=True)\
+                .limit(1)\
+                .execute()
+            if existing.data:
+                existing_row = existing.data[0]
+                logger.info(f"Proof already exists for hash {content_hash[:16]}... returning existing")
+                return TimestampProof(
+                    proof_id=existing_row['proof_id'],
+                    asset_hash=existing_row['asset_hash'],
+                    asset_name=existing_row['asset_name'],
+                    timestamp=existing_row['created_at'],
+                    blockchain=existing_row['blockchain'],
+                    status=existing_row['status'],
+                    ots_proof=existing_row.get('ots_proof'),
+                    verification_url=existing_row['verification_url'],
+                    bitcoin_block=existing_row.get('bitcoin_block'),
+                    confirmed_at=existing_row.get('confirmed_at'),
+                    vault_file_id=existing_row.get('vault_file_id')
+                )
+        except Exception as check_err:
+            logger.warning(f"Failed to check for existing proof: {check_err}")
+
         proof_id = f"OTS-{content_hash[:12].upper()}-{int(time.time() * 1000)}"
 
         # Try to submit to OpenTimestamps calendar
@@ -120,7 +150,7 @@ class BlockchainTimestampService:
             blockchain="bitcoin",
             status=status,
             ots_proof=ots_proof,
-            verification_url=f"https://opentimestamps.org/verify?hash={content_hash}",
+            verification_url="https://opentimestamps.org/",
             bitcoin_block=None,
             confirmed_at=None
         )
@@ -291,7 +321,8 @@ class BlockchainTimestampService:
                     status=row['status'],
                     ots_proof=row.get('ots_proof'),
                     verification_url=row['verification_url'],
-                    bitcoin_block=row.get('bitcoin_block')
+                    bitcoin_block=row.get('bitcoin_block'),
+                    vault_file_id=row.get('vault_file_id')
                 ))
 
             logger.info(f"Retrieved {len(proofs)} proofs for user {user_id}")

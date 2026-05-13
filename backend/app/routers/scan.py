@@ -7,6 +7,7 @@ from app.services.vertex_ai import vertex_ai_service
 from app.services.c2pa_service import c2pa_service, embed_and_store_after_signing
 from app.services.storage import storage_service
 from app.services.metadata_engine import metadata_engine
+from app.services.web_search import web_search_service
 from supabase import create_client
 from app.config import settings
 from app.dependencies import get_current_user
@@ -16,6 +17,102 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/scan", tags=["scan"])
 
 supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
+
+
+def detect_screenshot_from_image(file_buffer: bytes, filename: str) -> dict:
+    """
+    Actually analyze image content to detect screenshots, not just filename.
+    Returns dict with 'is_screenshot' and 'detection_method'.
+    """
+    try:
+        from PIL import Image
+        import io
+        
+        img = Image.open(io.BytesIO(file_buffer))
+        width, height = img.size
+        aspect_ratio = width / height if height > 0 else 0
+        
+        detection_reasons = []
+        is_screenshot = False
+        
+        # Check 1: Known screenshot aspect ratios (iPhone, iPad, Android)
+        screenshot_ratios = [
+            (19.5, 9),   # iPhone (19.5:9)
+            (18, 9),     # iPhone older (18:9)  
+            (18.5, 9),   # Android
+            (4, 3),      # iPad portrait
+            (3, 4),      # iPad landscape
+            (16, 10),    # Android tablets
+            (16, 9),     # Old smartphones
+        ]
+        
+        for ratio in screenshot_ratios:
+            if 0.95 <= aspect_ratio <= 1.05:  # Exact ratio
+                if ratio[0] / ratio[1] - 0.1 <= aspect_ratio <= ratio[0] / ratio[1] + 0.1:
+                    detection_reasons.append(f"aspect_ratio_{ratio[0]}x{ratio[1]}")
+                    is_screenshot = True
+                    break
+        
+        # Check 2: Uniform colored edges (screenshot borders)
+        if not is_screenshot and img.mode in ('RGB', 'RGBA'):
+            try:
+                pixels = img.load()
+                edge_samples = []
+                
+                # Sample top 10 rows
+                for x in range(0, width, max(1, width // 20)):
+                    edge_samples.append(pixels[x, 0])
+                    edge_samples.append(pixels[x, height - 1])
+                
+                # Sample left 10 columns  
+                for y in range(0, height, max(1, height // 20)):
+                    edge_samples.append(pixels[0, y])
+                    edge_samples.append(pixels[width - 1, y])
+                
+                if edge_samples:
+                    # Check if edges are mostly the same color (common in screenshots)
+                    first_color = edge_samples[0]
+                    similar_count = sum(1 for c in edge_samples if c == first_color)
+                    if similar_count / len(edge_samples) > 0.7:
+                        detection_reasons.append("uniform_edges")
+                        is_screenshot = True
+            except Exception:
+                pass
+        
+        # Check 3: Look for notch/cutout areas (black bars at top)
+        if not is_screenshot and img.mode in ('RGB', 'RGBA'):
+            try:
+                pixels = img.load()
+                top_row_colors = [pixels[x, 0] for x in range(0, width, max(1, width // 10))]
+                black_top = sum(1 for c in top_row_colors if sum(c[:3]) < 30)
+                if black_top / len(top_row_colors) > 0.5:
+                    detection_reasons.append("notch_bar")
+                    is_screenshot = True
+            except Exception:
+                pass
+        
+        # Check 4: Very low detail images (often screenshots of text/documents)
+        if not is_screenshot and img.mode in ('RGB', 'RGBA'):
+            try:
+                # Resize to small to check entropy
+                small = img.resize((50, 50))
+                pixels = list(small.getdata())
+                unique_colors = len(set(pixels))
+                if unique_colors < 100:  # Very few colors = likely screenshot of simple content
+                    detection_reasons.append("low_detail")
+                    is_screenshot = True
+            except Exception:
+                pass
+        
+        return {
+            "is_screenshot": is_screenshot,
+            "detection_method": "pixel_analysis" if detection_reasons else "none",
+            "reasons": detection_reasons,
+            "aspect_ratio": round(aspect_ratio, 2)
+        }
+    except Exception as e:
+        logger.warning(f"Screenshot detection failed: {e}")
+        return {"is_screenshot": False, "detection_method": "error", "reasons": [], "aspect_ratio": 0}
 
 MAX_FILE_SIZE = 50 * 1024 * 1024
 ALLOWED_CONTENT_TYPES = {
@@ -83,12 +180,101 @@ async def scan_file(
         except Exception as v_err:
             logger.warning(f"C2PA verify failed: {v_err}")
 
+        # Calculate hash FIRST
+        original_hash = storage_service.calculate_hash(file_buffer)
+        
+        # START with search results - this is what determines originality
+        originality_score = 50.0  # Default: unknown
+        threat_reasons = []
+        finding_details = []
+        
+        try:
+            # Check if THIS USER has uploaded this exact image before
+            user_prior = await web_search_service.find_similar_uploads(
+                user_id=current_user["id"],
+                file_hash=original_hash
+            )
+            if user_prior and len(user_prior) > 0:
+                originality_score = 10.0
+                threat_reasons.append({
+                    "name": "Duplicate Upload",
+                    "severity": "medium",
+                    "confidence": 1.0,
+                    "description": f"You uploaded this exact image before ({len(user_prior)} times)"
+                })
+                finding_details.append({
+                    "category": "Your Uploads",
+                    "description": f"Found {len(user_prior)} previous uploads of same file",
+                    "evidence": f"scan_ids: {', '.join([p['scan_id'][:8] for p in user_prior[:3]])}"
+                })
+        except Exception as e:
+            logger.warning(f"User prior check failed: {e}")
+        
+        # Only check global if user didn't upload before
+        if originality_score > 20:
+            try:
+                web_results = await web_search_service.check_image_online(
+                    file_hash=original_hash,
+                    file_name=file.filename
+                )
+                
+                if web_results.get("matches_found", 0) > 0:
+                    originality_score = 5.0
+                    threat_reasons.append({
+                        "name": "Found Online",
+                        "severity": "high",
+                        "confidence": 0.9,
+                        "description": web_results.get("explanation", f"Found {web_results['matches_found']} matches")
+                    })
+                    finding_details.append({
+                        "category": "Web Search",
+                        "description": web_results.get("search_method", "unknown"),
+                        "evidence": f"{web_results['matches_found']} matches"
+                    })
+            except Exception as e:
+                logger.warning(f"Web search failed: {e}")
+        
+        # If still at default, do basic pixel analysis for screenshot detection
+        if originality_score == 50.0:
+            try:
+                from app.services.vertex_ai import _analyze_image_for_screenshot
+                img_analysis = _analyze_image_for_screenshot(file_buffer)
+                if img_analysis.get("is_screenshot"):
+                    originality_score = 15.0
+                    threat_reasons.append({
+                        "name": "Screenshot Detected",
+                        "severity": "medium",
+                        "confidence": 0.7,
+                        "description": f"Detected screenshot via pixel analysis"
+                    })
+                    finding_details.append({
+                        "category": "Image Analysis",
+                        "description": f"Screenshot indicators: {img_analysis.get('reasons', [])}",
+                        "evidence": f"score: {img_analysis.get('score')}"
+                    })
+            except Exception:
+                pass
+        
+        # Now get basic AI risk report (without originality - we've handled that)
         risk_report = await vertex_ai_service.analyze_file_threat(
             file_buffer=file_buffer,
             file_name=file.filename,
             file_type=file_type,
             has_c2pa=has_c2pa
         )
+        
+        # REPLACE originality score with our search-based result
+        risk_report.originality_score = originality_score
+        
+        # Add our threat reasons
+        for tr in threat_reasons:
+            risk_report.threat_categories.append(
+                type('ThreatCategory', (), tr)()
+            )
+        for fd in finding_details:
+            risk_report.detailed_findings.append(
+                type('DetailedFinding', (), fd)()
+            )
 
         try:
             audit_log = {
