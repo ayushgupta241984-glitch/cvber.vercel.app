@@ -55,7 +55,7 @@ async def list_vault_files(
                 risk_score=item.get("risk_score"),
                 originality_score=item.get("originality_score"),
                 is_screenshot=item.get("is_screenshot", False),
-                proof_required=item.get("proof_required", False),
+                proof_required=bool(item.get("proof_required")),
                 ownership_proof_status=item.get("ownership_proof_status"),
                 storage_url=signed_url,
                 created_at=item.get("created_at", datetime.utcnow())
@@ -185,20 +185,33 @@ async def download_ots_proof(
             .single()\
             .execute()
 
-        if not resp.data or not resp.data.get("ots_proof"):
-            raise HTTPException(status_code=404, detail="OTS proof not found")
+        if not resp.data:
+            raise HTTPException(status_code=404, detail="Proof not found")
+        
+        ots_proof = resp.data.get("ots_proof")
+        if not ots_proof:
+            raise HTTPException(status_code=404, detail="No OTS proof file available (timestamp may have failed)")
 
         import base64
         from fastapi.responses import Response
 
-        ots_bytes = base64.b64decode(resp.data["ots_proof"])
-        base_name = resp.data["asset_name"].rsplit(".", 1)[0] if "." in resp.data["asset_name"] else resp.data["asset_name"]
+        # Try to decode - if it's already raw bytes stored as base64, this should work
+        try:
+            ots_bytes = base64.b64decode(ots_proof)
+        except Exception:
+            # If decode fails, might be already binary - try as-is
+            ots_bytes = ots_proof.encode('latin1') if isinstance(ots_proof, str) else ots_proof
+        
+        base_name = resp.data.get("asset_name", "proof")
+        if "." in base_name:
+            base_name = base_name.rsplit(".", 1)[0]
 
         return Response(
             content=ots_bytes,
             media_type="application/octet-stream",
             headers={
-                "Content-Disposition": f'attachment; filename="{base_name}.ots"'
+                "Content-Disposition": f'attachment; filename="{base_name}.ots"',
+                "Content-Length": str(len(ots_bytes))
             }
         )
     except HTTPException:

@@ -187,9 +187,12 @@ export default function DashboardPage() {
     };
 
     const checkProofRequired = (file: FileData) => {
-        const needsProof = file.proofRequired === true && file.ownershipProofStatus !== 'verified';
-        if (needsProof) {
-            console.log('Proof required for file:', file.name, file.proofRequired, file.ownershipProofStatus);
+        // Check proof_required field OR check if screenshot with low originality
+        const screenshotWithLowScore = file.isScreenshot && (file.originalityScore === undefined || file.originalityScore < 50);
+        const hasProofRequired = file.proofRequired === true && file.ownershipProofStatus !== 'verified';
+        
+        if (hasProofRequired || screenshotWithLowScore) {
+            console.log('Blocking access for:', file.name, { proofRequired: file.proofRequired, isScreenshot: file.isScreenshot, originality: file.originalityScore });
             setProofModalFile(file);
             return true;
         }
