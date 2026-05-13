@@ -21,6 +21,8 @@ interface FileData {
     riskScore?: number;
     originalityScore?: number;
     isScreenshot?: boolean;
+    proofRequired?: boolean;
+    ownershipProofStatus?: 'pending' | 'verified' | 'rejected' | null;
     forensicSummary?: string;
     aiProvider?: string;
     aiModel?: string;
@@ -72,6 +74,11 @@ export default function DashboardPage() {
     const [selectedBlockchainFile, setSelectedBlockchainFile] = useState<FileData | null>(null);
     const [blockchainFileProofs, setBlockchainFileProofs] = useState<any[]>([]);
     const [proofsLoading, setProofsLoading] = useState(false);
+    const [proofModalFile, setProofModalFile] = useState<FileData | null>(null);
+    const [proofType, setProofType] = useState<'declaration' | 'source' | 'original'>('declaration');
+    const [proofText, setProofText] = useState('');
+    const [proofUrl, setProofUrl] = useState('');
+    const [submittingProof, setSubmittingProof] = useState(false);
 
     // Persistence: Load from Memory + Backend Vault
     useEffect(() => {
@@ -127,6 +134,8 @@ export default function DashboardPage() {
                         riskScore: f.risk_score,
                         originalityScore: f.originality_score,
                         isScreenshot: f.is_screenshot,
+                        proofRequired: f.proof_required,
+                        ownershipProofStatus: f.ownership_proof_status,
                         uploadedAt: f.created_at,
                         storageUrl: f.storage_url,
                         previewUrl: f.storage_url || undefined,
@@ -174,6 +183,57 @@ export default function DashboardPage() {
         } catch (e) {
             console.error('OTS proof download failed:', e);
             alert('Failed to download OTS proof.');
+        }
+    };
+
+    const checkProofRequired = (file: FileData) => {
+        if (file.proofRequired && file.ownershipProofStatus !== 'verified') {
+            setProofModalFile(file);
+            return true;
+        }
+        return false;
+    };
+
+    const submitOwnershipProof = async () => {
+        if (!proofModalFile) return;
+        setSubmittingProof(true);
+        try {
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`${BASE_URL}/vault/files/${proofModalFile.id}/ownership-proof`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    proof_type: proofType,
+                    proof_text: proofText,
+                    proof_url: proofUrl
+                })
+            });
+            if (response.ok) {
+                alert('Proof submitted! Your file will be reviewed.');
+                setProofModalFile(null);
+                setProofText('');
+                setProofUrl('');
+                // Refresh the vault to get updated status
+                const vault = await apiClient.listVaultFiles(100, 0);
+                if (vault.files) {
+                    const vaultFiles = vault.files.map((f: any) => ({
+                        ...f,
+                        proofRequired: f.proof_required,
+                        ownershipProofStatus: f.ownership_proof_status
+                    }));
+                    setFiles(prev => [...prev, ...vaultFiles.filter(vf => !prev.find(p => p.id === vf.id))]);
+                }
+            } else {
+                alert('Failed to submit proof. Please try again.');
+            }
+        } catch (e) {
+            console.error('Submit proof failed:', e);
+            alert('Error submitting proof.');
+        } finally {
+            setSubmittingProof(false);
         }
     };
 
@@ -235,12 +295,14 @@ export default function DashboardPage() {
     };
 
     const handleView = (file: FileData) => {
+        if (checkProofRequired(file)) return;
         setSelectedFile(file);
         setIsViewerOpen(true);
         if (window.innerWidth < 1024) setIsSidebarOpen(false);
     };
 
     const handleWatermark = (file: FileData) => {
+        if (checkProofRequired(file)) return;
         setSelectedFile(file);
         setIsWatermarkOpen(true);
         if (window.innerWidth < 1024) setIsSidebarOpen(false);
@@ -271,6 +333,7 @@ export default function DashboardPage() {
     };
 
     const handleTimestamp = async (file: FileData) => {
+        if (checkProofRequired(file)) return;
         const hash = file.hash;
         if (!hash) {
             alert("File hash not available. Cannot create blockchain timestamp.");
@@ -296,6 +359,104 @@ export default function DashboardPage() {
 
     return (
         <ScreenshotGuard>
+            {/* Proof Required Modal */}
+            {proofModalFile && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+                    <div className="bg-[#12121A] border border-red-500/50 rounded-3xl p-8 max-w-lg w-full shadow-2xl shadow-red-500/20">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-3 bg-red-500/20 rounded-xl">
+                                <Shield className="h-6 w-6 text-red-500" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-white">Ownership Verification Required</h2>
+                                <p className="text-red-400 text-sm">This file was flagged as not original</p>
+                            </div>
+                        </div>
+                        
+                        <p className="text-zinc-400 text-sm mb-6">
+                            This file appears to be a screenshot or was already found online. 
+                            To use any features, you must prove you're the original creator.
+                        </p>
+
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2 block">How can you prove ownership?</label>
+                                <select 
+                                    value={proofType}
+                                    onChange={(e) => setProofType(e.target.value as any)}
+                                    className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white"
+                                >
+                                    <option value="declaration">Legal Declaration (I'm the artist)</option>
+                                    <option value="source">Link to Original Work</option>
+                                    <option value="original">Upload Source/Original File</option>
+                                </select>
+                            </div>
+
+                            {proofType === 'declaration' && (
+                                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+                                    <p className="text-yellow-400 text-sm font-medium mb-2">Legal Declaration</p>
+                                    <p className="text-zinc-400 text-xs">
+                                        By submitting, you declare under legal penalty of perjury that you are the original creator of this work. False claims may result in account termination.
+                                    </p>
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest mt-4 mb-2 block">Your full legal name</label>
+                                    <input 
+                                        type="text" 
+                                        value={proofText}
+                                        onChange={(e) => setProofText(e.target.value)}
+                                        placeholder="Enter your full legal name"
+                                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
+                                    />
+                                </div>
+                            )}
+
+                            {proofType === 'source' && (
+                                <div>
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2 block">Link to original work</label>
+                                    <input 
+                                        type="url" 
+                                        value={proofUrl}
+                                        onChange={(e) => setProofUrl(e.target.value)}
+                                        placeholder="https://your-website.com/original"
+                                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
+                                    />
+                                    <p className="text-zinc-500 text-xs mt-2">Link to your portfolio, website, or original post</p>
+                                </div>
+                            )}
+
+                            {proofType === 'original' && (
+                                <div className="bg-zinc-800/50 border border-dashed border-zinc-700 rounded-xl p-6 text-center">
+                                    <p className="text-zinc-400 text-sm">Upload your original source file</p>
+                                    <p className="text-zinc-500 text-xs mt-1">Raw file (PSD, AI, original photo, etc.)</p>
+                                    <input type="file" className="mt-4 text-sm" />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={() => setProofModalFile(null)}
+                                className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={submitOwnershipProof}
+                                disabled={submittingProof || (proofType === 'declaration' && !proofText)}
+                                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors disabled:opacity-50"
+                            >
+                                {submittingProof ? 'Submitting...' : 'Submit Proof'}
+                            </button>
+                        </div>
+
+                        {proofModalFile.ownershipProofStatus === 'pending' && (
+                            <p className="text-yellow-500 text-xs text-center mt-4">
+                                Your previous proof is still under review
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <div className="min-h-screen bg-[#050505] text-white flex font-sans selection:bg-purple-500/30 overflow-x-hidden">
                 {/* Mobile Backdrop */}
                 {isSidebarOpen && (
