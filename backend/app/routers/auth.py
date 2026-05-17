@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from supabase import create_client
+from app.supabase_client import get_supabase
 from app.config import settings
 from app.models.schemas import LoginRequest, RegisterRequest, AuthTokens, UserProfile, RefreshRequest
 from app.dependencies import get_current_user
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
+supabase = get_supabase()
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None):

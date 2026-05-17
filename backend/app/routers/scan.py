@@ -8,7 +8,7 @@ from app.services.c2pa_service import c2pa_service, embed_and_store_after_signin
 from app.services.storage import storage_service
 from app.services.metadata_engine import metadata_engine
 from app.services.web_search import web_search_service
-from supabase import create_client
+from app.supabase_client import get_supabase
 from app.config import settings
 from app.dependencies import get_current_user
 import logging
@@ -16,7 +16,7 @@ import logging
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/scan", tags=["scan"])
 
-supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
+supabase = get_supabase()
 
 
 def detect_screenshot_from_image(file_buffer: bytes, filename: str) -> dict:
@@ -276,26 +276,6 @@ async def scan_file(
                 type('DetailedFinding', (), fd)()
             )
 
-        try:
-            audit_log = {
-                "id": str(uuid4()),
-                "user_id": current_user["id"],
-                "event_type": "scan",
-                "file_name": file.filename,
-                "risk_score": risk_report.overall_risk_score,
-                "metadata": {
-                    "scan_id": str(scan_id),
-                    "file_size": file_size,
-                    "file_type": file_type,
-                    "confidence_level": risk_report.confidence_level,
-                    "threat_count": len(risk_report.threat_categories)
-                },
-                "created_at": datetime.utcnow().isoformat()
-            }
-            supabase.table("audit_logs").insert(audit_log).execute()
-        except Exception as db_err:
-            logger.warning(f"Failed to log to Supabase: {db_err}")
-
         storage_path = None
         storage_url = None
         original_hash = storage_service.calculate_hash(file_buffer)
@@ -338,8 +318,43 @@ async def scan_file(
                 storage_url = await storage_service.get_file_url(storage_path)
             except Exception as url_err:
                 logger.debug(f"Failed to generate signed URL: {url_err}")
+
+            # C2PA auto-signing on upload
+            try:
+                if "image" in file_type or "video" in file_type:
+                    await c2pa_service.sign_file(
+                        file_buffer=file_buffer,
+                        file_name=file.filename,
+                        scan_results=risk_report,
+                        user_id=current_user["id"]
+                    )
+            except Exception as c2pa_err:
+                logger.warning(f"C2PA signing failed (non-critical): {c2pa_err}")
         except Exception as storage_err:
             logger.warning(f"Failed to upload to Storage: {storage_err}")
+
+        # Write audit log with storage path populated
+        try:
+            audit_log = {
+                "id": str(uuid4()),
+                "user_id": current_user["id"],
+                "event_type": "scan",
+                "file_name": file.filename,
+                "risk_score": risk_report.overall_risk_score,
+                "storage_path": storage_path,
+                "bucket": "safe-vault",
+                "metadata": {
+                    "scan_id": str(scan_id),
+                    "file_size": file_size,
+                    "file_type": file_type,
+                    "confidence_level": risk_report.confidence_level,
+                    "threat_count": len(risk_report.threat_categories)
+                },
+                "created_at": datetime.utcnow().isoformat()
+            }
+            supabase.table("audit_logs").insert(audit_log).execute()
+        except Exception as db_err:
+            logger.warning(f"Failed to log to Supabase: {db_err}")
 
         return ScanResponse(
             scan_id=scan_id,

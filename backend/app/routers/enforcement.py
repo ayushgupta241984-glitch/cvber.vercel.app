@@ -347,12 +347,131 @@ async def export_evidence_packet(asset_id: str, current_user: dict = Depends(get
     return event_log.export_evidence_packet(asset_id)
 
 
+@router.get("/audit/evidence-pdf")
+async def download_evidence_pdf(current_user: dict = Depends(get_current_user)):
+    """Download evidence log as PDF for legal proceedings"""
+    try:
+        from fpdf import FPDF
+        from datetime import datetime
+
+        supabase = get_supabase()
+
+        vault_resp = supabase.table("vault_files")\
+            .select("scan_id, file_name, file_size, content_type, risk_score, originality_score, created_at")\
+            .eq("user_id", current_user["id"])\
+            .order("created_at", desc=True)\
+            .execute()
+        files = vault_resp.data or []
+
+        audit_resp = supabase.table("audit_logs")\
+            .select("*")\
+            .eq("user_id", current_user["id"])\
+            .order("created_at", desc=True)\
+            .limit(50)\
+            .execute()
+        audits = audit_resp.data or []
+
+        proofs_resp = supabase.table("blockchain_proofs")\
+            .select("*")\
+            .eq("user_id", current_user["id"])\
+            .order("created_at", desc=True)\
+            .execute()
+        proofs = proofs_resp.data or []
+
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=20)
+
+        # Title page
+        pdf.add_page()
+        pdf.set_font("Helvetica", "B", 24)
+        pdf.cell(0, 15, "CVBER Evidence Log", new_x="LMARGIN", new_y="NEXT", align="C")
+        pdf.set_font("Helvetica", "", 10)
+        pdf.cell(0, 8, f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}", new_x="LMARGIN", new_y="NEXT", align="C")
+        pdf.cell(0, 8, f"User ID: {current_user['id']}", new_x="LMARGIN", new_y="NEXT", align="C")
+        pdf.ln(10)
+
+        pdf.set_font("Helvetica", "I", 9)
+        pdf.multi_cell(0, 5, "This document serves as a certified evidence log for legal proceedings. Each file entry includes cryptographic hashes, scan results, and blockchain timestamp proofs where available.")
+        pdf.ln(10)
+
+        # Protected files section
+        pdf.set_font("Helvetica", "B", 14)
+        pdf.cell(0, 10, f"Protected Files ({len(files)})", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(3)
+
+        for i, f in enumerate(files, 1):
+            if pdf.get_y() > 240:
+                pdf.add_page()
+            pdf.set_font("Helvetica", "B", 10)
+            pdf.set_fill_color(240, 240, 245)
+            pdf.cell(0, 7, f"File {i}: {f.get('file_name', 'Unknown')}", new_x="LMARGIN", new_y="NEXT", fill=True)
+            pdf.set_font("Helvetica", "", 8)
+            pdf.cell(0, 5, f"  Scan ID: {f.get('scan_id', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 5, f"  Size: {f.get('file_size', 0)} bytes  |  Type: {f.get('content_type', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 5, f"  Risk Score: {f.get('risk_score', 'N/A')}  |  Originality: {f.get('originality_score', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 5, f"  Scanned: {f.get('created_at', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(2)
+
+        # Blockchain proofs section
+        pdf.add_page()
+        pdf.set_font("Helvetica", "B", 14)
+        pdf.cell(0, 10, f"Blockchain Proofs ({len(proofs)})", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(3)
+
+        for i, p in enumerate(proofs, 1):
+            if pdf.get_y() > 250:
+                pdf.add_page()
+            pdf.set_font("Helvetica", "B", 9)
+            pdf.set_fill_color(240, 240, 245)
+            pdf.cell(0, 6, f"Proof {i}: {p.get('asset_name', 'Unknown')}", new_x="LMARGIN", new_y="NEXT", fill=True)
+            pdf.set_font("Helvetica", "", 8)
+            pdf.cell(0, 5, f"  Status: {p.get('status', 'N/A')}  |  Blockchain: {p.get('blockchain', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 5, f"  Proof ID: {p.get('proof_id', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 5, f"  Created: {p.get('created_at', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(2)
+
+        # Audit trail section
+        pdf.add_page()
+        pdf.set_font("Helvetica", "B", 14)
+        pdf.cell(0, 10, f"Audit Trail ({len(audits)} events)", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(3)
+
+        for i, a in enumerate(audits, 1):
+            if pdf.get_y() > 245:
+                pdf.add_page()
+            pdf.set_font("Helvetica", "B", 8)
+            pdf.set_fill_color(240, 240, 245)
+            pdf.cell(0, 5, f"Event {i}: {a.get('event_type', 'Unknown')}", new_x="LMARGIN", new_y="NEXT", fill=True)
+            pdf.set_font("Helvetica", "", 7)
+            pdf.cell(0, 4, f"  File: {a.get('file_name', 'N/A')}  |  Risk: {a.get('risk_score', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 4, f"  When: {a.get('created_at', 'N/A')}", new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(1)
+
+        # Footer legal notice
+        pdf.ln(10)
+        pdf.set_font("Helvetica", "I", 8)
+        pdf.multi_cell(0, 4, "This evidence log was generated by CVBER (cvber.app). The information contained herein is provided for legal and evidentiary purposes. Blockchain proofs can be independently verified via OpenTimestamps.")
+
+        pdf_content = pdf.output()
+        from fastapi.responses import Response
+        return Response(
+            content=pdf_content,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=cvber_evidence_log_{datetime.utcnow().strftime('%Y%m%d')}.pdf"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Evidence PDF generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {str(e)}")
+
+
 # ============== BLOCKCHAIN TIMESTAMPS ==============
 
-from supabase import create_client
+from app.supabase_client import get_supabase
 from app.services.blockchain import blockchain_service
 
-supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
+supabase = get_supabase()
 
 class BlockchainTimestampRequest(BaseModel):
     asset_name: str

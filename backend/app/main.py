@@ -12,7 +12,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
-from app.routers import scan, auth, mentor, enforcement, diagnostics, vault
+from app.routers import scan, auth, mentor, enforcement, diagnostics, vault, agent
 from app.services.vertex_ai import vertex_ai_service
 from app.services.storage import storage_service
 
@@ -125,6 +125,7 @@ app.include_router(mentor.router)
 app.include_router(enforcement.router)
 app.include_router(diagnostics.router)
 app.include_router(vault.router)
+app.include_router(agent.router)
 
 
 @app.get("/")
@@ -138,7 +139,7 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "uptime_seconds": time.time() - app.state.get("start_time", time.time()),
+        "uptime_seconds": time.time() - getattr(app.state, "start_time", time.time()),
         "services": {
             "api": "operational",
             "vertex_ai": ai_status,

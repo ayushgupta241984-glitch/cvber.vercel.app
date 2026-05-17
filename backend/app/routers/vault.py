@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from uuid import UUID
 from datetime import datetime
 from typing import Optional
-from supabase import create_client
+from app.supabase_client import get_supabase
 from app.config import settings
 from app.dependencies import get_current_user
 from app.services.storage import storage_service
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/vault", tags=["vault"])
 
-supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
+supabase = get_supabase()
 
 
 @router.get("/files", response_model=VaultFileList)
