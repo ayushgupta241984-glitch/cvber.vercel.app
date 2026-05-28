@@ -32,6 +32,10 @@ services:
         value: "https://cvber-backend.onrender.com"
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "30"
+      - key: CLIP_ENABLED
+        value: "false"
+      - key: REVERSE_SEARCH_ENABLED
+        value: "false"
 
   - type: web
     name: cvber-c2pa

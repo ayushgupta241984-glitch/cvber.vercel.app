@@ -7,6 +7,8 @@ from typing import List, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
+_REVERSE_SEARCH_ENABLED = os.getenv("REVERSE_SEARCH_ENABLED", "true").lower() in ("1", "true", "yes")
+
 
 class ReverseImageSearchService:
 
@@ -32,6 +34,10 @@ class ReverseImageSearchService:
         return self._browser
 
     async def search_all(self, image_url: str = "", image_bytes: bytes = None, text_query: str = "") -> Dict[str, list]:
+        if not _REVERSE_SEARCH_ENABLED:
+            logger.info("Reverse search disabled via REVERSE_SEARCH_ENABLED env var")
+            return {"bing": [], "google": [], "total_matches": 0, "all_results": []}
+
         results = {"bing": [], "google": [], "total_matches": 0}
 
         if image_bytes:

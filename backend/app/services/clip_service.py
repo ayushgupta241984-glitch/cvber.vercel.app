@@ -1,8 +1,16 @@
+import os
+
+_CLIP_ENABLED = os.getenv("CLIP_ENABLED", "true").lower() in ("1", "true", "yes")
+
 try:
-    import torch
-    import numpy as np
-    from sentence_transformers import SentenceTransformer
-    _CLIP_AVAILABLE = True
+    if _CLIP_ENABLED:
+        import torch
+        import numpy as np
+        from sentence_transformers import SentenceTransformer
+        _CLIP_AVAILABLE = True
+    else:
+        torch = None; np = None; SentenceTransformer = None
+        _CLIP_AVAILABLE = False
 except ImportError:
     torch = None
     np = None

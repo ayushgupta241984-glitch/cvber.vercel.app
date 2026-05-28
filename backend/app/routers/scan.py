@@ -232,7 +232,7 @@ async def scan_file(
                 })
 
             # Run reverse search in background for full originality (non-blocking)
-            if orig_result.get("reverse_search_needed"):
+            if orig_result.get("reverse_search_needed") and os.getenv("REVERSE_SEARCH_ENABLED", "true").lower() in ("1", "true", "yes"):
                 asyncio.create_task(
                     originality_engine.compute_full_originality_with_search(
                         file_bytes=file_buffer,

@@ -1,3 +1,7 @@
+# Base deps (always installed) are in requirements-base.txt
+# Heavy deps below (torch, sentence-transformers, opencv, scikit-image, playwright)
+# are optional — install only on dev/paid-tier. On Render free (512MB) set
+# CLIP_ENABLED=false and REVERSE_SEARCH_ENABLED=false.
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
 python-multipart

@@ -14,6 +14,7 @@ Combines 7+ signals to produce a 99% accurate originality score:
 import logging
 import io
 import asyncio
+import os
 from typing import Optional, Dict, Any, List
 from PIL import Image
 
@@ -27,6 +28,8 @@ class OriginalityEngine:
         self._comparison = None
 
     async def _get_reverse_search(self):
+        if os.getenv("REVERSE_SEARCH_ENABLED", "true").lower() not in ("1", "true", "yes"):
+            return None
         if self._reverse_search is None:
             from app.services.enhanced_reverse_search import enhanced_reverse_search
             self._reverse_search = enhanced_reverse_search
@@ -210,6 +213,12 @@ class OriginalityEngine:
         if is_image:
             try:
                 reverse_search = await self._get_reverse_search()
+                if reverse_search is None:
+                    logger.info("Reverse search: skipped (disabled via env var)")
+                    result["reverse_search_needed"] = False
+                    result["preliminary"] = False
+                    return result
+
                 text_query = self._extract_search_query(file_name)
 
                 search_results = await reverse_search.search_all_engines(
