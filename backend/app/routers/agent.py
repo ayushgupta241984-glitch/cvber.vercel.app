@@ -38,7 +38,11 @@ try:
 except ImportError:
     GROQ_AVAILABLE = False
 
-from openai import AsyncOpenAI
+try:
+    from openai import AsyncOpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
 
 TOOLS = [
     {

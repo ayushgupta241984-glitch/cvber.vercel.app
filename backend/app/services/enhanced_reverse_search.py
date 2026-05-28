@@ -31,7 +31,6 @@ class EnhancedReverseSearch:
                 "total_matches": 0, "engines_used": [],
             }
 
-        """Run all reverse image search engines in parallel."""
         results = {
             "google_lens": [],
             "bing": [],
@@ -105,51 +104,6 @@ class EnhancedReverseSearch:
             Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
         """)
         return context
-
-    async def search_all_engines(self, image_bytes: bytes, text_query: str = "") -> Dict[str, list]:
-        """Run all reverse image search engines in parallel."""
-        results = {
-            "google_lens": [],
-            "bing": [],
-            "yandex": [],
-            "tineye": [],
-            "baidu": [],
-            "duckduckgo": [],
-            "all_results": [],
-            "total_matches": 0,
-            "engines_used": [],
-        }
-
-        tasks = {}
-        tasks["google_lens"] = asyncio.create_task(self._search_google_lens(image_bytes))
-        tasks["bing"] = asyncio.create_task(self._search_bing(image_bytes))
-        tasks["yandex"] = asyncio.create_task(self._search_yandex(image_bytes))
-        tasks["tineye"] = asyncio.create_task(self._search_tineye(image_bytes))
-        tasks["baidu"] = asyncio.create_task(self._search_baidu(image_bytes))
-        if text_query:
-            tasks["duckduckgo"] = asyncio.create_task(self._search_duckduckgo(text_query))
-
-        for name, task in tasks.items():
-            try:
-                result = await task
-                if result:
-                    results[name] = result
-                    results["engines_used"].append(name)
-            except Exception as e:
-                logger.warning(f"{name} search failed: {e}")
-
-        seen = set()
-        all_unique = []
-        for engine in results["engines_used"]:
-            for m in results[engine]:
-                url = m.get("url", "") or m.get("image_url", "")
-                if url and url not in seen:
-                    seen.add(url)
-                    all_unique.append(m)
-
-        results["all_results"] = all_unique
-        results["total_matches"] = len(all_unique)
-        return results
 
     async def _save_temp_image(self, image_bytes: bytes) -> str:
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")

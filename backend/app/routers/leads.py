@@ -53,10 +53,13 @@ async def linkedin_discover(
     if not api_key:
         raise HTTPException(400, "LINKDAPI_KEY not configured")
 
-    sys.path.insert(0, str(TOOLS_DIR / "linkedin-leads-discover"))
-    from src.api.client import LeadsAPIClient
-    from src.discovery.tree_discovery import ProfileTreeDiscovery
-    from linkdapi import AsyncLinkdAPI
+    try:
+        sys.path.insert(0, str(TOOLS_DIR / "linkedin-leads-discover"))
+        from src.api.client import LeadsAPIClient
+        from src.discovery.tree_discovery import ProfileTreeDiscovery
+        from linkdapi import AsyncLinkdAPI
+    except ImportError:
+        raise HTTPException(501, "LinkedIn discovery requires linkdapi package — not installed on this deployment")
 
     api_client = LeadsAPIClient(api_key=api_key, max_concurrent=req.concurrent)
     discovery = ProfileTreeDiscovery(api_client=api_client, max_concurrent=req.concurrent)
@@ -82,7 +85,10 @@ async def twitter_search(
     if not auth_token:
         raise HTTPException(400, "TWITTER_AUTH_TOKEN not configured")
 
-    from Scweet import Scweet
+    try:
+        from Scweet import Scweet
+    except ImportError:
+        raise HTTPException(501, "Twitter search requires Scweet package — not installed on this deployment")
 
     s = Scweet(auth_token=auth_token)
     try:
@@ -102,7 +108,10 @@ async def twitter_followers(
     if not auth_token:
         raise HTTPException(400, "TWITTER_AUTH_TOKEN not configured")
 
-    from Scweet import Scweet
+    try:
+        from Scweet import Scweet
+    except ImportError:
+        raise HTTPException(501, "Twitter search requires Scweet package — not installed on this deployment")
 
     s = Scweet(auth_token=auth_token)
     try:
@@ -125,7 +134,10 @@ async def twitter_artists(
     if not auth_token:
         raise HTTPException(400, "TWITTER_AUTH_TOKEN not configured")
 
-    from Scweet import Scweet
+    try:
+        from Scweet import Scweet
+    except ImportError:
+        raise HTTPException(501, "Twitter search requires Scweet package — not installed on this deployment")
     import time
 
     queries = [
