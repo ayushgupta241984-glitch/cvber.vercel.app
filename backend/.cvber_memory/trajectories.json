@@ -1,0 +1,1067 @@
+[
+  {
+    "scan_id": "0e78507b-4da3-4a0c-b187-c301b2e055ff",
+    "file_name": "dry.png",
+    "image_type": "screenshot",
+    "vision_description": "SCENE: The image is a screenshot from the video game Minecraft. The scene depicts a vast, arid desert landscape under a clear, light blue sky with a few scattered white clouds. The ground is primarily",
+    "keywords_used": "minecraft screenshot video game Minecraft. vast, arid desert landscape under clear, light blue sky few scattered white clouds. ground primarily compos",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 0,
+    "match_count": 0,
+    "similar_count": 0,
+    "top_scores": [],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T03:32:08.415654+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "screenshot",
+    "vision_description": "SCENE: The image is a smooth, vertical gradient transitioning through a spectrum of vibrant colors. Starting from the top left, it begins with a deep blue that gradually shifts to a lighter cyan, then",
+    "keywords_used": "smooth, vertical gradient transitioning through spectrum vibrant colors. Starting top left, begins deep blue gradually shifts lighter cyan, then soft ",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 6,
+    "match_count": 0,
+    "similar_count": 6,
+    "top_scores": [
+      0.5,
+      0.5,
+      0.4,
+      0.4,
+      0.4,
+      0.4
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T02:14:52.831201+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image is an abstract digital illustration featuring a smooth, vertical gradient of colors. It transitions from a deep purple and vibrant pink at the bottom left, through shades of blue and ",
+    "keywords_used": "abstract digital featuring smooth, vertical gradient colors. transitions deep purple vibrant pink bottom left, through shades blue turquoise center th",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 5,
+    "match_count": 0,
+    "similar_count": 5,
+    "top_scores": [
+      0.4,
+      0.4,
+      0.4,
+      0.4,
+      0.326
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T02:13:21.211025+00:00"
+  },
+  {
+    "scan_id": "0e78507b-4da3-4a0c-b187-c301b2e055ff",
+    "file_name": "dry.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image depicts a landscape within the video game Minecraft. It's a wide, open area characterized by arid, desert-like terrain. The ground is primarily a reddish-brown sand or dirt, with nume",
+    "keywords_used": "landscape within video game Minecraft. It's wide, open area characterized arid, desert-like terrain. ground primarily reddish-brown sand dirt, numerou",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 5,
+    "match_count": 2,
+    "similar_count": 3,
+    "top_scores": [
+      0.625,
+      0.609,
+      0.589,
+      0.562,
+      0.4
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T02:10:38.024257+00:00"
+  },
+  {
+    "scan_id": "test-ris",
+    "file_name": "googlelogo_color_272x92dp.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image shows the Google logo in a horizontal arrangement. The word \"Google\" is written in a sans-serif typeface, with each letter colored differently: G is blue, o is red, o is yellow, g is ",
+    "keywords_used": "Google logo horizontal arrangement. word \"Google\" written sans-serif typeface, each letter colored differently: blue, red, yellow, blue. centered whit",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 10,
+    "match_count": 0,
+    "similar_count": 10,
+    "top_scores": [
+      0.436,
+      0.412,
+      0.41,
+      0.394,
+      0.361,
+      0.36,
+      0.357,
+      0.34,
+      0.335,
+      0.319
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T02:03:00.451854+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image is a smooth gradient transitioning through a spectrum of vibrant colors. Starting from the bottom left, it begins with a bright pink, gradually blending into a rich purple, then a sof",
+    "keywords_used": "smooth gradient transitioning through spectrum vibrant colors. Starting bottom left, begins bright pink, gradually blending into rich purple, then sof",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 5,
+    "match_count": 0,
+    "similar_count": 5,
+    "top_scores": [
+      0.4,
+      0.4,
+      0.4,
+      0.4,
+      0.4
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T02:01:51.863283+00:00"
+  },
+  {
+    "scan_id": "0e78507b-4da3-4a0c-b187-c301b2e055ff",
+    "file_name": "dry.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image shows a landscape in the style of the video game Minecraft. It depicts a vast, arid, desert-like environment. The ground is primarily a reddish-brown sand or dirt, with numerous small",
+    "keywords_used": "landscape video game Minecraft. vast, arid, desert-like environment. ground primarily reddish-brown sand dirt, numerous small, uneven hills low ridges",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 5,
+    "match_count": 0,
+    "similar_count": 5,
+    "top_scores": [
+      0.562,
+      0.4,
+      0.4,
+      0.4,
+      0.4
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:58:43.450053+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image shows a smooth gradient background. It transitions from a deep, vibrant purple on the left side, through shades of blue and cyan, to a bright lime green on the right. The gradient is ",
+    "keywords_used": "smooth gradient background. transitions deep, vibrant purple left side, through shades blue cyan, bright lime green right. seamless, distinct lines ch",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 4,
+    "match_count": 0,
+    "similar_count": 4,
+    "top_scores": [
+      0.4,
+      0.4,
+      0.4,
+      0.4
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:54:44.067417+00:00"
+  },
+  {
+    "scan_id": "test-ris",
+    "file_name": "googlelogo_color_272x92dp.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image shows the word \"Google\" in its colorful logo. The letters are rendered in different colors: blue, red, yellow, blue, red, and blue. The text is centrally positioned against a plain wh",
+    "keywords_used": "word \"Google\" colorful logo. letters rendered different colors: blue, red, yellow, blue. text centrally positioned against plain white background. Goo",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 10,
+    "match_count": 0,
+    "similar_count": 10,
+    "top_scores": [
+      0.463,
+      0.436,
+      0.436,
+      0.423,
+      0.397,
+      0.375,
+      0.373,
+      0.36,
+      0.357,
+      0.311
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:54:19.542348+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image displays a smooth gradient of colors. The color scheme transitions from a deep purple on the left, through various shades of blue and cyan in the upper left quadrant, then to a bright",
+    "keywords_used": "displays smooth gradient colors. color scheme transitions deep purple left, through various shades blue cyan upper left quadrant, then bright pink mag",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 6,
+    "match_count": 0,
+    "similar_count": 6,
+    "top_scores": [
+      0.5,
+      0.5,
+      0.4,
+      0.4,
+      0.4,
+      0.4
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:53:37.631925+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "screenshot",
+    "vision_description": "SCENE: The image displays a smooth, seamless color gradient. The gradient transitions from a deep purple on the left side to a vibrant pink, then to a light blue, followed by a soft green, and finally",
+    "keywords_used": "displays smooth, seamless color gradient. gradient transitions deep purple left side vibrant pink, then light blue, followed soft green, finally brigh",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 5,
+    "match_count": 0,
+    "similar_count": 5,
+    "top_scores": [
+      0.4,
+      0.4,
+      0.4,
+      0.4,
+      0.4
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:51:52.213445+00:00"
+  },
+  {
+    "scan_id": "test-ris",
+    "file_name": "googlelogo_color_272x92dp.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image shows the Google logo. The logo is composed of the word \"Google\" written in a sans-serif font with each letter in a different color: blue, red, yellow, blue, red, and blue. The letter",
+    "keywords_used": "Google logo. logo composed word \"Google\" written sans-serif font each letter different color: blue, red, yellow, blue. letters horizontally aligned wh",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 10,
+    "match_count": 0,
+    "similar_count": 10,
+    "top_scores": [
+      0.483,
+      0.451,
+      0.45,
+      0.436,
+      0.412,
+      0.41,
+      0.361,
+      0.36,
+      0.357,
+      0.319
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:51:07.847789+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image is a digital illustration displaying a smooth gradient transition of colors. The gradient starts with a vibrant magenta at the bottom left and gradually shifts through various shades ",
+    "keywords_used": "digital displaying smooth gradient transition colors. starts vibrant magenta bottom left gradually shifts through various shades pink, purple, blue, t",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 4,
+    "match_count": 0,
+    "similar_count": 4,
+    "top_scores": [
+      0.4,
+      0.4,
+      0.4,
+      0.4
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:50:02.356207+00:00"
+  },
+  {
+    "scan_id": "0e78507b-4da3-4a0c-b187-c301b2e055ff",
+    "file_name": "dry.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image depicts a landscape from the video game Minecraft. The setting is a desert biome with rolling hills and canyons. The style is blocky and pixelated, characteristic of the game. The dom",
+    "keywords_used": "landscape video game Minecraft. setting desert biome rolling hills canyons. blocky pixelated, characteristic game. dominant various shades brown, tan,",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 10,
+    "match_count": 0,
+    "similar_count": 10,
+    "top_scores": [
+      0.568,
+      0.521,
+      0.516,
+      0.479,
+      0.417,
+      0.4,
+      0.387,
+      0.387,
+      0.338,
+      0.326
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:47:03.234223+00:00"
+  },
+  {
+    "scan_id": "test-ris",
+    "file_name": "googlelogo_color_272x92dp.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image shows the Google logo in a sans-serif typeface. The logo is composed of the word \"Google\" with each letter in a different primary color: blue, red, yellow, blue, red, and blue. The le",
+    "keywords_used": "Google logo sans-serif typeface. composed word \"Google\" each letter different primary color: blue, red, yellow, blue. letters large centrally position",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 16,
+    "match_count": 0,
+    "similar_count": 16,
+    "top_scores": [
+      0.46,
+      0.444,
+      0.44,
+      0.436,
+      0.412,
+      0.41,
+      0.403,
+      0.398,
+      0.389,
+      0.375
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:45:46.209463+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image displays a smooth, gradient color transition. It starts with a deep violet/purple hue on the left side, gradually blending into a bright magenta, then a soft pink, light blue, turquoi",
+    "keywords_used": "displays smooth, gradient color transition. starts deep violet/purple hue left side, gradually blending into bright magenta, then soft pink, light blu",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 5,
+    "match_count": 0,
+    "similar_count": 5,
+    "top_scores": [
+      0.5,
+      0.4,
+      0.4,
+      0.4,
+      0.4
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:44:52.223252+00:00"
+  },
+  {
+    "scan_id": "test-ris",
+    "file_name": "googlelogo_color_272x92dp.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image shows the Google logo. The word \"Google\" is displayed in its standard colorful font on a white background. The letters are composed of blue, red, yellow, green, and blue again. The co",
+    "keywords_used": "Google logo. word \"Google\" displayed standard colorful font white background. letters composed blue, red, yellow, green, blue again. centered, focusin",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 16,
+    "match_count": 0,
+    "similar_count": 16,
+    "top_scores": [
+      0.583,
+      0.557,
+      0.516,
+      0.5,
+      0.484,
+      0.469,
+      0.45,
+      0.447,
+      0.445,
+      0.436
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:43:17.577702+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image shows a smooth gradient color background. The colors transition from a deep violet/purple on the left to a vibrant pink, then to a light blue, a pale teal, a bright lime green, and fi",
+    "keywords_used": "smooth gradient color background. transition deep violet/purple left vibrant pink, then light blue, pale teal, bright lime green, finally yellow-green",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 15,
+    "match_count": 15,
+    "similar_count": 0,
+    "top_scores": [
+      0.86,
+      0.846,
+      0.844,
+      0.842,
+      0.823,
+      0.796,
+      0.786,
+      0.763,
+      0.76,
+      0.735
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:41:26.934072+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image is an abstract digital gradient. It features a smooth transition of colors across the frame, starting with a deep magenta/pink at the bottom left, blending into a vibrant purple, then",
+    "keywords_used": "abstract digital gradient. features smooth transition across frame, starting deep magenta/pink bottom left, blending into vibrant purple, then light b",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 5,
+    "match_count": 5,
+    "similar_count": 0,
+    "top_scores": [
+      0.922,
+      0.852,
+      0.84,
+      0.68,
+      0.66
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:39:25.414545+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image is a solid color gradient. It transitions smoothly through a spectrum of colors. Starting from the top left and moving towards the bottom right, the colors progress from a deep violet",
+    "keywords_used": "solid color gradient. transitions smoothly through spectrum colors. Starting top left moving towards bottom right, progress deep violet, purple pink, ",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 9,
+    "match_count": 4,
+    "similar_count": 5,
+    "top_scores": [
+      0.799,
+      0.761,
+      0.75,
+      0.677,
+      0.568,
+      0.531,
+      0.516,
+      0.503,
+      0.501
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:38:08.683217+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image displays a gradient background transitioning through a spectrum of vibrant colors. Starting from the left, it begins with deep purple, smoothly blending into magenta, then pink, follo",
+    "keywords_used": "displays gradient transitioning through spectrum vibrant colors. Starting left, begins deep purple, smoothly blending into magenta, then pink, followe",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 5,
+    "match_count": 4,
+    "similar_count": 1,
+    "top_scores": [
+      0.922,
+      0.854,
+      0.799,
+      0.648,
+      0.312
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:35:50.406093+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image is a solid color gradient. It transitions smoothly from a deep blue at the top left, through purple, pink, and then orange and yellow towards the bottom right. The gradient creates a ",
+    "keywords_used": "solid color gradient. transitions smoothly deep blue top left, through purple, pink, then orange yellow towards bottom right. gradient creates vibrant",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 7,
+    "match_count": 5,
+    "similar_count": 2,
+    "top_scores": [
+      0.906,
+      0.903,
+      0.866,
+      0.844,
+      0.754,
+      0.503,
+      0.501
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:33:38.515889+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image is a gradient background transitioning smoothly through a spectrum of colors. Starting from the top left, it begins with a deep blue, then fades into a vibrant purple, followed by a b",
+    "keywords_used": "gradient transitioning smoothly through spectrum colors. Starting top left, begins deep blue, then fades into vibrant purple, followed bright magenta.",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 9,
+    "match_count": 2,
+    "similar_count": 7,
+    "top_scores": [
+      0.799,
+      0.75,
+      0.599,
+      0.573,
+      0.505,
+      0.503,
+      0.502,
+      0.501,
+      0.416
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:32:38.092286+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image is a gradient background, transitioning smoothly through a spectrum of colors. The left side begins with deep purple, which gradually shifts into vibrant pink, then a lighter magenta.",
+    "keywords_used": "gradient background, transitioning smoothly through spectrum colors. left side begins deep purple, which gradually shifts into vibrant pink, then ligh",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 12,
+    "match_count": 3,
+    "similar_count": 9,
+    "top_scores": [
+      0.922,
+      0.854,
+      0.713,
+      0.599,
+      0.577,
+      0.568,
+      0.526,
+      0.505,
+      0.503,
+      0.502
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:31:01.947883+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image displays a smooth, seamless gradient of colors. It transitions from a deep, vibrant purple and blue on the left side to a bright, vivid magenta and pink in the center-left, then to a ",
+    "keywords_used": "displays smooth, seamless gradient colors. transitions deep, vibrant purple blue left side bright, vivid magenta pink center-left, then light turquois",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 15,
+    "match_count": 4,
+    "similar_count": 11,
+    "top_scores": [
+      0.754,
+      0.747,
+      0.69,
+      0.629,
+      0.546,
+      0.542,
+      0.531,
+      0.526,
+      0.514,
+      0.453
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:29:08.584884+00:00"
+  },
+  {
+    "scan_id": "0e78507b-4da3-4a0c-b187-c301b2e055ff",
+    "file_name": "dry.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image depicts a landscape in the video game Minecraft. It's a vast, arid desert environment with rolling hills and canyons rendered in the game's distinct blocky style. The ground is primar",
+    "keywords_used": "landscape video game Minecraft. It's vast, arid desert environment rolling hills canyons rendered game's distinct blocky style. ground primarily reddi",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 19,
+    "match_count": 1,
+    "similar_count": 18,
+    "top_scores": [
+      0.609,
+      0.562,
+      0.562,
+      0.526,
+      0.49,
+      0.474,
+      0.469,
+      0.464,
+      0.464,
+      0.458
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:26:10.219491+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image is a seamless gradient fill. It transitions smoothly through a spectrum of colors, starting with a deep purple/blue on the left, moving through shades of turquoise and light blue, the",
+    "keywords_used": "seamless gradient fill. transitions smoothly through spectrum colors, starting deep purple/blue left, moving shades turquoise light blue, then into vi",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 15,
+    "match_count": 5,
+    "similar_count": 10,
+    "top_scores": [
+      0.827,
+      0.743,
+      0.726,
+      0.724,
+      0.682,
+      0.562,
+      0.562,
+      0.531,
+      0.526,
+      0.453
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:18:31.937047+00:00"
+  },
+  {
+    "scan_id": "dccb69be-708b-45c9-8ddf-0ce5ba691201",
+    "file_name": "test_artwork.png",
+    "image_type": "artwork",
+    "vision_description": "SCENE: The image displays a smooth color gradient transitioning from a deep purple on the left to a vibrant pink, then to a light blue, followed by a mint green, and finally to a bright lime green on ",
+    "keywords_used": "displays smooth color gradient transitioning deep purple left vibrant pink, then light blue, followed mint green, finally bright lime green right. ble",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 5,
+    "match_count": 2,
+    "similar_count": 3,
+    "top_scores": [
+      0.872,
+      0.836,
+      0.558,
+      0.554,
+      0.525
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:12:43.851128+00:00"
+  },
+  {
+    "scan_id": "test-ris",
+    "file_name": "googlelogo_color_272x92dp.png",
+    "image_type": "artwork",
+    "vision_description": "Google",
+    "keywords_used": "Google",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 23,
+    "match_count": 0,
+    "similar_count": 23,
+    "top_scores": [
+      0.599,
+      0.583,
+      0.495,
+      0.489,
+      0.476,
+      0.475,
+      0.457,
+      0.454,
+      0.437,
+      0.436
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:04:07.091752+00:00"
+  },
+  {
+    "scan_id": "test-ris",
+    "file_name": "googlelogo_color_272x92dp.png",
+    "image_type": "artwork",
+    "vision_description": "Google",
+    "keywords_used": "Google",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 15,
+    "match_count": 0,
+    "similar_count": 15,
+    "top_scores": [
+      0.568,
+      0.51,
+      0.51,
+      0.51,
+      0.495,
+      0.476,
+      0.475,
+      0.458,
+      0.457,
+      0.453
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:01:54.508347+00:00"
+  },
+  {
+    "scan_id": "test-ris",
+    "file_name": "googlelogo_color_272x92dp.png",
+    "image_type": "artwork",
+    "vision_description": "Google",
+    "keywords_used": "Google",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 15,
+    "match_count": 0,
+    "similar_count": 15,
+    "top_scores": [
+      0.568,
+      0.51,
+      0.51,
+      0.51,
+      0.495,
+      0.476,
+      0.475,
+      0.473,
+      0.458,
+      0.457
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T01:00:28.499162+00:00"
+  },
+  {
+    "scan_id": "test-ris",
+    "file_name": "googlelogo_color_272x92dp.png",
+    "image_type": "artwork",
+    "vision_description": "Google",
+    "keywords_used": "Google",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 14,
+    "match_count": 0,
+    "similar_count": 14,
+    "top_scores": [
+      0.568,
+      0.51,
+      0.51,
+      0.51,
+      0.5,
+      0.495,
+      0.494,
+      0.475,
+      0.473,
+      0.458
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T00:57:15.323410+00:00"
+  },
+  {
+    "scan_id": "0e78507b-4da3-4a0c-b187-c301b2e055ff",
+    "file_name": "dry.png",
+    "image_type": "artwork",
+    "vision_description": "NO_TEXT",
+    "keywords_used": "",
+    "engines_used": [
+      "reverse_image"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 27,
+    "match_count": 0,
+    "similar_count": 27,
+    "top_scores": [
+      0.568,
+      0.568,
+      0.536,
+      0.516,
+      0.51,
+      0.51,
+      0.51,
+      0.495,
+      0.495,
+      0.49
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T00:50:47.116319+00:00"
+  },
+  {
+    "scan_id": "0e78507b-4da3-4a0c-b187-c301b2e055ff",
+    "file_name": "dry.png",
+    "image_type": "artwork",
+    "vision_description": "NO_TEXT",
+    "keywords_used": "",
+    "engines_used": [
+      "reverse_image"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 28,
+    "match_count": 0,
+    "similar_count": 28,
+    "top_scores": [
+      0.568,
+      0.552,
+      0.536,
+      0.516,
+      0.516,
+      0.51,
+      0.51,
+      0.495,
+      0.495,
+      0.49
+    ],
+    "was_successful": false,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T00:42:20.673623+00:00"
+  },
+  {
+    "scan_id": "test-ris",
+    "file_name": "googlelogo_color_272x92dp.png",
+    "image_type": "artwork",
+    "vision_description": "Google",
+    "keywords_used": "Google",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.6,
+    "result_count": 32,
+    "match_count": 1,
+    "similar_count": 31,
+    "top_scores": [
+      0.604,
+      0.589,
+      0.562,
+      0.557,
+      0.557,
+      0.547,
+      0.547,
+      0.531,
+      0.521,
+      0.521
+    ],
+    "was_successful": true,
+    "strategy_name": "search_googlelogo_color_272_artwork",
+    "created_at": "2026-05-22T00:41:01.160545+00:00"
+  },
+  {
+    "scan_id": "test-ris",
+    "file_name": "googlelogo_color_272x92dp.png",
+    "image_type": "artwork",
+    "vision_description": "Google",
+    "keywords_used": "Google",
+    "engines_used": [
+      "reverse_image",
+      "web",
+      "image",
+      "social_platforms"
+    ],
+    "threshold_used": 0.75,
+    "result_count": 27,
+    "match_count": 0,
+    "similar_count": 27,
+    "top_scores": [
+      0.604,
+      0.562,
+      0.557,
+      0.542,
+      0.536,
+      0.536,
+      0.521,
+      0.521,
+      0.51,
+      0.495
+    ],
+    "was_successful": false,
+    "strategy_name": null,
+    "created_at": "2026-05-22T00:40:18.669019+00:00"
+  }
+]

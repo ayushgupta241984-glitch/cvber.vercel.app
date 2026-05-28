@@ -4,8 +4,16 @@ import { X, Shield, Download, ExternalLink, Scale, FileText } from 'lucide-react
 import { useEffect, useRef, useState } from 'react';
 import { generateLegalAffidavit } from './CertificateGenerator';
 
+const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
+
+function isVideoFile(fileName: string): boolean {
+    const ext = '.' + fileName.split('.').pop()?.toLowerCase();
+    return VIDEO_EXTENSIONS.includes(ext);
+}
+
 interface FileViewerProps {
     file: {
+        id?: string;
         name: string;
         previewUrl?: string;
         riskScore?: number;
@@ -89,11 +97,20 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                         {/* Preview Area */}
                         <div className="flex-1 min-h-[400px] bg-black rounded-3xl border border-zinc-900 shadow-inner flex items-center justify-center overflow-hidden relative group">
                             {file.previewUrl ? (
-                                <img
-                                    src={file.previewUrl}
-                                    alt={file.name}
-                                    className="max-w-full max-h-[600px] object-contain select-none"
-                                />
+                                isVideoFile(file.name) ? (
+                                    <video
+                                        src={file.previewUrl}
+                                        controls
+                                        className="max-w-full max-h-[600px] object-contain select-none"
+                                        controlsList="nodownload"
+                                    />
+                                ) : (
+                                    <img
+                                        src={file.previewUrl}
+                                        alt={file.name}
+                                        className="max-w-full max-h-[600px] object-contain select-none"
+                                    />
+                                )
                             ) : (
                                 <div className="text-center p-12">
                                     <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-700">

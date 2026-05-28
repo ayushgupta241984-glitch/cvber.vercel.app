@@ -110,11 +110,17 @@ def _rule_based_analysis(file_name: str) -> Dict[str, Any]:
     }
 
 
-def _analyze_image_for_screenshot(file_buffer: bytes) -> Dict[str, Any]:
+def _analyze_image_for_screenshot(file_buffer: bytes, file_name: str = "") -> Dict[str, Any]:
     """
     Actually analyze image to detect screenshots - checks pixels, aspect ratios, edge uniformity.
     This is self-sufficient detection that doesn't rely on AI or filenames.
+    Skips analysis for video files.
     """
+    video_extensions = {'.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'}
+    ext = '.' + file_name.split('.')[-1].lower() if file_name else ''
+    if ext in video_extensions:
+        return {"is_screenshot": False, "score": 0, "reasons": ["video_file"], "aspect_ratio": 0, "dimensions": "0x0"}
+
     try:
         from PIL import Image
         import io
@@ -217,8 +223,8 @@ def _analyze_image_for_screenshot(file_buffer: bytes) -> Dict[str, Any]:
             screenshot_score += 1
             reasons.append("small_dimensions")
         
-        # Lower threshold from 2 to 1
-        is_screenshot = screenshot_score >= 1
+        # Threshold: require at least 4 points to reduce false positives on simple/solid-color images
+        is_screenshot = screenshot_score >= 4
         
         return {
             "is_screenshot": is_screenshot,
@@ -244,7 +250,7 @@ def _clean_json_response(text: str) -> str:
 
 def _generate_mock_report(file_name: str, file_type: str, file_size: int,
                           error: str = None, rules: Dict = None) -> RiskReport:
-    desc = "AI OFFLINE" if not error else f"ANALYSIS ERROR: {error[:30]}"
+    desc = "AI OFFLINE" if not error else "ANALYSIS UNAVAILABLE"
     is_screenshot = rules["is_screenshot"] if rules else "screenshot" in file_name.lower()
     if rules and rules["originality_score"] is not None:
         originality = rules["originality_score"]
@@ -554,38 +560,53 @@ class VertexAIService:
             err_str = str(e)
             logger.error(f"Analysis failed for provider={self.provider}: {err_str}")
 
-            if "does not support image" in err_str or "image input" in err_str:
+            image_errors = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model"]
+            if any(e in err_str.lower() for e in image_errors):
                 logger.warning("Model does not support image input. Falling back to rule-based analysis.")
                 return await self._fallback_image_analysis(file_name, file_type, file_buffer, rules, has_c2pa)
 
             return _generate_mock_report(file_name, file_type, len(file_buffer), error=err_str, rules=rules)
+
+    @staticmethod
+    def _strip_image_errors(text: str) -> str:
+        lines = text.split("\n")
+        patterns = ["does not support image", "cannot read", "vision model", "image_url"]
+        cleaned = [l for l in lines if not any(p in l.lower() for p in patterns)]
+        result = "\n".join(cleaned).strip()
+        if not result:
+            result = "I cannot view or analyze images directly. Could you describe what you need help with? I can search the web or check your vault files."
+        return result
 
     async def get_mentor_response(self, message: str, history: list = None) -> str:
         if history is None:
             history = []
         self.ensure_initialized()
 
-        system_prompt = """You are the CVBER Hub Security & Intelligence Mentor. 
-You have access to the user's specific "Work" (images they have protected).
+        system_prompt = """You are the CVBER Hub Security & Intelligence Mentor.
 
-KNOWLEDGE CAPABILITIES:
+IMPORTANT LIMITATION: You CANNOT read, view, or analyze images. You are a text-only AI model. If a user asks you to look at an image, tell them you cannot process images and ask them to describe what they need.
+
+CAPABILITIES:
 1. INFRASTRUCTURE: Explain C2PA signing and Bitcoin blockchain anchoring.
 2. THREATS: Identify risks in the user's files based on the scan history.
-3. TRACKING: When asked "Where was this used?" or "Who used it last?", simulate a real-time web-tracking scan.
+3. TRACKING: When asked "Where was this used?" or "Who used it last?", direct them to the Agent Hub which has web search tools for finding artwork online.
    - If the user asks about a specific file, look at the Context provided.
    - Mention specific platforms (Instagram, Pinterest, AI training models like LAION).
-   - Provide "Last Seen" timestamps and "Usernames/Handles".
    - Be authoritative and technical.
+
+RULES:
+- Never claim you can read or analyze images. You cannot.
+- Never return error messages about image processing. Instead, redirect to the Agent Hub.
 """
 
         if not self.initialized:
-            return "Intelligence Offline. Connect Google AI Studio to enable global image tracking."
+            return "AI is in offline mode. To enable AI features, add your Groq API key in the backend .env file (GROQ_API_KEY=your_key). Get a free key at https://console.groq.com/keys"
 
         try:
             if self.provider in ["google", "vertex"]:
                 full_prompt = f"{system_prompt}\n\nSearch Request: {message}\n\nRecent History: {history}"
                 response = await self.model.generate_content_async(full_prompt)
-                return response.text.strip()
+                return self._strip_image_errors(response.text.strip())
             elif self.provider == "groq":
                 messages = [{"role": "system", "content": system_prompt}]
                 for h in history:
@@ -594,7 +615,7 @@ KNOWLEDGE CAPABILITIES:
                 completion = await self.groq_client.chat.completions.create(
                     messages=messages, model=self.groq_model_name,
                 )
-                return completion.choices[0].message.content
+                return self._strip_image_errors(completion.choices[0].message.content)
         except Exception as e:
             err_str = str(e)
             logger.error(f"Mentor AI Error (provider={self.provider}): {err_str}")

@@ -50,6 +50,13 @@ function getAuthHeaders(): Record<string, string> {
 
 async function handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
+        if (response.status === 401 && typeof window !== 'undefined') {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_full_name');
+            window.location.href = '/login';
+            throw new ApiError('Session expired. Please log in again.', 401);
+        }
         let detail: string | undefined;
         try {
             const body = await response.json();
@@ -207,6 +214,14 @@ export const apiClient = {
 
     async getVaultFileWithProofs(scanId: string): Promise<{ file: any; blockchain_proofs: any[] }> {
         return fetchJson(`${BASE_URL}/vault/files/${scanId}/proofs`);
+    },
+
+    async agentChat(message: string, history: any[] = []): Promise<{ response: string; tool_calls: any[]; thinking?: string }> {
+        return fetchJson(`${BASE_URL}/agent/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message, history }),
+        });
     },
 
 };

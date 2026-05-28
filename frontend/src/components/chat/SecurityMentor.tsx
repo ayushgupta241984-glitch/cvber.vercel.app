@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, Bot, AlertCircle } from 'lucide-react';
+import { Send, Bot } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Message {
     id: string;
@@ -15,15 +16,34 @@ interface SecurityMentorProps {
     context?: any;
 }
 
+const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
+
 export function SecurityMentor({ context }: SecurityMentorProps) {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
             role: 'assistant',
-            content: "Hello! I'm your AI Security Assistant. I've analyzed your dashboard—you currently have " + (context?.files?.length || 0) + " files protected. I can help you understand your security scores or explaining C2PA verification. How can I help?",
+            content: "I am the custodian of your collection. I count " + (context?.files?.length || 0) + " pieces under my watch. I can decode your security scores, demystify C2PA provenance, or advise on fortifying your portfolio. How may I assist?",
             timestamp: new Date(),
         },
     ]);
+    const messagesInitialized = useRef(false);
+
+    useEffect(() => {
+        if (!messagesInitialized.current) {
+            messagesInitialized.current = true;
+            return;
+        }
+        const fileCount = context?.files?.length || 0;
+        setMessages([
+            {
+                id: '1',
+                role: 'assistant',
+                content: "I am the custodian of your collection. I count " + fileCount + " pieces under my watch. I can decode your security scores, demystify C2PA provenance, or advise on fortifying your portfolio. How may I assist?",
+                timestamp: new Date(),
+            },
+        ]);
+    }, [context?.files?.length]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -53,13 +73,11 @@ export function SecurityMentor({ context }: SecurityMentorProps) {
         setError(null);
 
         try {
-            // Prepare history for AI context (ChatGPT style)
             const history = messages.map(msg => ({
                 role: msg.role === 'assistant' ? 'assistant' : 'user',
                 content: msg.content
             }));
 
-            // Enrich the prompt with dashboard context if available
             const enrichedInput = context
                 ? `[Context: User has files ${JSON.stringify(context.files.slice(0, 3))}] User Query: ${input}`
                 : input;
@@ -82,67 +100,108 @@ export function SecurityMentor({ context }: SecurityMentorProps) {
     };
 
     return (
-        <div className="card h-[680px] flex flex-col bg-[#0F0F16] overflow-hidden border border-zinc-800 ring-1 ring-white/[0.02] rounded-[32px]">
-            {/* Header */}
-            <div className="flex items-center gap-3 p-6 border-b border-zinc-800 bg-zinc-900/20">
-                <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-purple-900/40">
-                    <Bot className="h-6 w-6" />
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, ease: easeLuxury }}
+            className="card-luxury h-[680px] flex flex-col overflow-hidden"
+        >
+            <div className="flex items-center gap-4 px-8 py-6 border-b border-luxury-steel/30">
+                <div className="w-10 h-10 border border-luxury-gold/50 flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-luxury-gold" />
                 </div>
                 <div>
-                    <h3 className="text-sm font-black text-white uppercase tracking-wider">AI Intelligence Desk</h3>
-                    <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Tracking Bot Live</p>
+                    <h3 className="text-sm font-display text-luxury-cream uppercase tracking-wide">The Custodian</h3>
+                    <div className="flex items-center gap-3 mt-1">
+                        <div className="w-1 h-1 bg-luxury-gold/60" />
+                        <p className="text-[10px] uppercase tracking-ultra-wide text-luxury-muted/60 font-semibold">At Your Service</p>
                     </div>
                 </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-transparent">
-                {messages.map((message) => (
-                    <div
-                        key={message.id}
-                        className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                        <div
-                            className={`
-                max-w-[90%] rounded-2xl px-5 py-4 shadow-sm
-                ${message.role === 'user'
-                                    ? 'bg-purple-600 text-white rounded-tr-none'
-                                    : 'bg-zinc-900 text-zinc-300 border border-zinc-800 rounded-tl-none'
-                                }
-              `}
+            <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8">
+                <AnimatePresence>
+                    {messages.map((message) => (
+                        <motion.div
+                            key={message.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, ease: easeLuxury }}
+                            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
-                            <p className="text-sm leading-relaxed font-medium whitespace-pre-wrap">{message.content}</p>
-                            <div className={`text-[9px] mt-2 font-bold uppercase tracking-widest ${message.role === 'user' ? 'text-purple-200' : 'text-zinc-600'}`}>
-                                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            <div
+                                className={`max-w-[85%] ${
+                                    message.role === 'user'
+                                        ? 'bg-luxury-gold/90 text-black px-6 py-4'
+                                        : 'text-luxury-cream/80 px-0 py-0'
+                                }`}
+                            >
+                                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                                <div className={`text-[9px] mt-3 uppercase tracking-ultra-wide font-semibold ${message.role === 'user' ? 'text-black/40' : 'text-luxury-muted/30'}`}>
+                                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                ))}
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                    {isTyping && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3, ease: easeLuxury }}
+                            className="flex justify-start"
+                        >
+                            <div className="px-0 py-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-4 h-4 border border-luxury-gold/30 border-t-luxury-gold/60 animate-spin" />
+                                    <span className="text-xs text-luxury-muted/60 uppercase tracking-wider">Processing</span>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3, ease: easeLuxury }}
+                            className="flex justify-center"
+                        >
+                            <div className="flex items-center gap-3 px-4 py-3 border border-luxury-gold/20">
+                                <span className="text-xs text-luxury-gold/60 uppercase tracking-wider">{error}</span>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
-            <div className="p-4 bg-zinc-900/40 border-t border-zinc-800">
-                <div className="flex gap-2 p-1 bg-black/40 border border-zinc-800 rounded-2xl shadow-sm focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500/50 transition-all">
+            <div className="px-8 py-6 border-t border-luxury-steel/30">
+                <div className="flex gap-0 border border-luxury-steel/40 focus-within:border-luxury-gold/40 transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]">
                     <input
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder="Ask to track your work..."
-                        className="flex-1 bg-transparent px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none"
+                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                        placeholder="Ask about your collection's security..."
+                        className="flex-1 bg-transparent px-6 py-4 text-sm text-luxury-cream placeholder-luxury-muted/30 focus:outline-none"
                     />
                     <button
                         onClick={handleSend}
                         disabled={!input.trim()}
-                        className="bg-purple-600 rounded-xl p-3 text-white hover:bg-purple-700 transition-all disabled:opacity-50 disabled:grayscale shadow-md shadow-purple-900/40 active:scale-95"
+                        className="px-6 text-luxury-gold/60 hover:text-luxury-gold transition-colors duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                         <Send className="h-4 w-4" />
                     </button>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 }
-

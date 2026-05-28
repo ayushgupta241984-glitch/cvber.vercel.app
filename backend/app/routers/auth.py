@@ -47,13 +47,13 @@ def get_password_hash(password: str) -> str:
 
 @router.post("/register", response_model=AuthTokens)
 @limiter.limit("5/minute")
-async def register(_req: Request, request: RegisterRequest):
+async def register(request: Request, body: RegisterRequest):
     try:
         user_attributes = {
-            "email": request.email,
-            "password": request.password,
+            "email": body.email,
+            "password": body.password,
             "email_confirm": True,
-            "user_metadata": {"full_name": request.full_name or ""}
+            "user_metadata": {"full_name": body.full_name or ""}
         }
 
         try:
@@ -76,8 +76,8 @@ async def register(_req: Request, request: RegisterRequest):
 
         try:
             auth_response = supabase.auth.sign_in_with_password({
-                "email": request.email,
-                "password": request.password
+                "email": body.email,
+                "password": body.password
             })
         except Exception as login_err:
             logger.warning(f"Auto-login after registration failed: {login_err}")
@@ -86,8 +86,8 @@ async def register(_req: Request, request: RegisterRequest):
         try:
             profile = {
                 "id": user_id,
-                "email": request.email,
-                "full_name": request.full_name or "",
+                "email": body.email,
+                "full_name": body.full_name or "",
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
@@ -99,8 +99,8 @@ async def register(_req: Request, request: RegisterRequest):
             else:
                 logger.warning(f"Profile creation warning: {err}")
 
-        access_token = create_access_token(data={"sub": user_id, "email": request.email})
-        refresh_token = create_refresh_token(data={"sub": user_id, "email": request.email})
+        access_token = create_access_token(data={"sub": user_id, "email": body.email})
+        refresh_token = create_refresh_token(data={"sub": user_id, "email": body.email})
 
         return AuthTokens(
             access_token=access_token,
@@ -117,11 +117,11 @@ async def register(_req: Request, request: RegisterRequest):
 
 @router.post("/login", response_model=AuthTokens)
 @limiter.limit("10/minute")
-async def login(_req: Request, request: LoginRequest):
+async def login(request: Request, body: LoginRequest):
     try:
         auth_response = supabase.auth.sign_in_with_password({
-            "email": request.email,
-            "password": request.password
+            "email": body.email,
+            "password": body.password
         })
 
         if not auth_response or not auth_response.user:
@@ -129,8 +129,8 @@ async def login(_req: Request, request: LoginRequest):
 
         user_id = auth_response.user.id
 
-        access_token = create_access_token(data={"sub": user_id, "email": request.email})
-        refresh_token = create_refresh_token(data={"sub": user_id, "email": request.email})
+        access_token = create_access_token(data={"sub": user_id, "email": body.email})
+        refresh_token = create_refresh_token(data={"sub": user_id, "email": body.email})
 
         return AuthTokens(
             access_token=access_token,

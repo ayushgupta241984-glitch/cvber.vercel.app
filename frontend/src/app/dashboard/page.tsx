@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { FileUploader } from '@/components/dashboard/FileUploader';
 import { SafeVault } from '@/components/dashboard/SafeVault';
 import { SecurityMentor } from '@/components/chat/SecurityMentor';
@@ -8,8 +8,13 @@ import { ScreenshotGuard } from '@/components/security/ScreenshotGuard';
 import { FileViewer } from '@/components/dashboard/FileViewer';
 import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
 import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
+import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import { AIAgentChat } from '@/components/agent/AIAgentChat';
+import { ToastProvider, useToast } from '@/components/common/Toast';
 import { apiClient, BASE_URL } from '@/lib/api-client';
-import { LayoutGrid, Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, Settings, LogOut, ChevronRight, ArrowUpRight, Sparkles, Anchor } from 'lucide-react';
+import { FeedbackWidget } from '@/components/common/FeedbackWidget';
+import { ReferralBanner } from '@/components/common/ReferralBanner';
+import { Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, Eye, ScanLine, Anchor, Globe, ChevronDown, ArrowUpRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FileData {
@@ -28,7 +33,7 @@ interface FileData {
     aiModel?: string;
     uploadedAt: string;
     previewUrl?: string;
-    storageUrl?: string;  // Signed URL from backend storage
+    storageUrl?: string;
 }
 
 interface UploadResult {
@@ -43,33 +48,72 @@ interface UploadResult {
             ai_model: string;
         };
     };
-    storage_url?: string;  // Signed URL for the stored file
-    original_hash?: string;  // SHA-256 hash from backend
+    storage_url?: string;
+    original_hash?: string;
 }
+
+const easeLuxury = [0.16, 1, 0.3, 1] as const;
 
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.1
+            staggerChildren: 0.04,
+            delayChildren: 0.05,
+            duration: 0.2,
+            ease: easeLuxury,
         }
     }
 };
 
 const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.2,
+            ease: easeLuxury,
+        }
+    }
 };
 
-export default function DashboardPage() {
-    const [activeTab, setActiveTab] = useState<'ai' | 'blockchain'>('ai');
+const heroVariants = {
+    hidden: { opacity: 0, y: 40 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.25,
+            ease: easeLuxury,
+        }
+    }
+};
+
+const lineVariants = {
+    hidden: { scaleX: 0, opacity: 0 },
+    visible: {
+        scaleX: 1,
+        opacity: 1,
+        transition: {
+            duration: 0.25,
+            ease: easeLuxury,
+            delay: 0.08,
+        }
+    }
+};
+
+function DashboardInner() {
+    const { toast } = useToast();
+    const [activeTab, setActiveTab] = useState<'monitor' | 'provenance' | 'investigator'>('investigator');
     const [files, setFiles] = useState<FileData[]>([]);
     const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [isWatermarkOpen, setIsWatermarkOpen] = useState(false);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [vaultLoading, setVaultLoading] = useState(true);
     const [user, setUser] = useState<{ full_name: string } | null>(null);
     const [selectedBlockchainFile, setSelectedBlockchainFile] = useState<FileData | null>(null);
     const [blockchainFileProofs, setBlockchainFileProofs] = useState<any[]>([]);
@@ -80,7 +124,6 @@ export default function DashboardPage() {
     const [proofUrl, setProofUrl] = useState('');
     const [submittingProof, setSubmittingProof] = useState(false);
 
-    // Persistence: Load from Memory + Backend Vault
     useEffect(() => {
         const saved = localStorage.getItem('cvber_vault_memory');
         if (saved) {
@@ -91,7 +134,6 @@ export default function DashboardPage() {
             }
         }
 
-        // Load user profile
         const cachedName = localStorage.getItem('user_full_name');
         if (cachedName) {
             setUser({ full_name: cachedName });
@@ -118,7 +160,6 @@ export default function DashboardPage() {
         };
         fetchProfile();
 
-        // Fetch vault files from backend
         const fetchVault = async () => {
             try {
                 const vault = await apiClient.listVaultFiles(100, 0);
@@ -153,12 +194,13 @@ export default function DashboardPage() {
                 }
             } catch (err) {
                 console.error("Failed to fetch vault files:", err);
+            } finally {
+                setVaultLoading(false);
             }
         };
         fetchVault();
     }, []);
 
-    // Persistence: Save to Memory
     useEffect(() => {
         localStorage.setItem('cvber_vault_memory', JSON.stringify(files));
     }, [files]);
@@ -182,15 +224,36 @@ export default function DashboardPage() {
             URL.revokeObjectURL(url);
         } catch (e) {
             console.error('OTS proof download failed:', e);
-            alert('Failed to download OTS proof.');
+            toast('Failed to download OTS proof.', 'error');
+        }
+    };
+
+    const downloadEvidencePdf = async () => {
+        try {
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`${BASE_URL}/api/enforcement/audit/evidence-pdf`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cvber_evidence_log_${new Date().toISOString().slice(0, 10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error('Evidence PDF download failed:', e);
+            toast('Failed to download evidence log.', 'error');
         }
     };
 
     const checkProofRequired = (file: FileData) => {
-        // Check proof_required field OR check if screenshot with low originality
         const screenshotWithLowScore = file.isScreenshot && (file.originalityScore === undefined || file.originalityScore < 50);
         const hasProofRequired = file.proofRequired === true && file.ownershipProofStatus !== 'verified';
-        
+
         if (hasProofRequired || screenshotWithLowScore) {
             console.log('Blocking access for:', file.name, { proofRequired: file.proofRequired, isScreenshot: file.isScreenshot, originality: file.originalityScore });
             setProofModalFile(file);
@@ -217,11 +280,10 @@ export default function DashboardPage() {
                 })
             });
             if (response.ok) {
-                alert('Proof submitted! Your file will be reviewed.');
+                toast('Proof submitted! Your file will be reviewed.', 'success');
                 setProofModalFile(null);
                 setProofText('');
                 setProofUrl('');
-                // Refresh the vault to get updated status
                 const vault = await apiClient.listVaultFiles(100, 0);
                 if (vault.files) {
                     const vaultFiles = vault.files.map((f: any) => ({
@@ -232,15 +294,27 @@ export default function DashboardPage() {
                     setFiles(prev => [...prev, ...vaultFiles.filter(vf => !prev.find(p => p.id === vf.id))]);
                 }
             } else {
-                alert('Failed to submit proof. Please try again.');
+                toast('Failed to submit proof. Please try again.', 'error');
             }
         } catch (e) {
             console.error('Submit proof failed:', e);
-            alert('Error submitting proof.');
+            toast('Error submitting proof.', 'error');
         } finally {
             setSubmittingProof(false);
         }
     };
+
+    const stats = useMemo(() => {
+        const total = files.length;
+        const threats = files.filter(f => f.status === 'danger' || (f.riskScore ?? 0) >= 70).length;
+        const successRate = total > 0
+            ? ((total - threats) / total * 100).toFixed(1) + '%'
+            : '100%';
+        const successWidth = total > 0
+            ? ((total - threats) / total * 100).toFixed(1)
+            : '100';
+        return { total, threats, successRate, successWidth };
+    }, [files]);
 
     const handleLogout = () => {
         localStorage.removeItem('access_token');
@@ -251,7 +325,6 @@ export default function DashboardPage() {
     const handleUploadComplete = async (result: UploadResult, rawFile: File) => {
         const previewUrl = result.storage_url || URL.createObjectURL(rawFile);
 
-        // Compute SHA-256 hash of the file
         const arrayBuffer = await rawFile.arrayBuffer();
         const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -281,7 +354,6 @@ export default function DashboardPage() {
 
         setFiles(prev => [newFile, ...prev]);
 
-        // Create blockchain timestamp
         try {
             const timestampResult = await apiClient.createBlockchainTimestamp(
                 rawFile.name,
@@ -292,15 +364,22 @@ export default function DashboardPage() {
             window.dispatchEvent(new Event('blockchain-update'));
         } catch (error: any) {
             console.error('Blockchain timestamp failed:', error);
-            // Alert user that timestamp failed - don't hide this!
             if (error?.message) {
-                alert(`Blockchain timestamp failed: ${error.message}`);
+                toast(`Blockchain timestamp failed: ${error.message}`, 'error');
             }
         }
     };
 
-    const handleView = (file: FileData) => {
+    const handleView = async (file: FileData) => {
         if (checkProofRequired(file)) return;
+        if (!file.previewUrl) {
+            try {
+                const urlResp = await apiClient.getVaultFileUrl(file.id);
+                file.previewUrl = urlResp.url;
+            } catch (err) {
+                console.error("Failed to get vault URL:", err);
+            }
+        }
         setSelectedFile(file);
         setIsViewerOpen(true);
         if (window.innerWidth < 1024) setIsSidebarOpen(false);
@@ -314,7 +393,7 @@ export default function DashboardPage() {
     };
 
     const handleDelete = async (file: FileData) => {
-        if (!confirm(`Delete "${file.name}" from vault?`)) return;
+        if (!confirm(`Remove "${file.name}" from your collection?`)) return;
         try {
             await apiClient.deleteVaultFile(file.id);
         } catch (err) {
@@ -341,469 +420,463 @@ export default function DashboardPage() {
         if (checkProofRequired(file)) return;
         const hash = file.hash;
         if (!hash) {
-            alert("File hash not available. Cannot create blockchain timestamp.");
+            toast("File hash not available.", 'error');
             return;
         }
         try {
             const result = await apiClient.createBlockchainTimestamp(file.name, hash, file.id);
             console.log('Blockchain timestamp created:', result);
             window.dispatchEvent(new Event('blockchain-update'));
-            // Refresh proofs if this file is currently selected
             if (selectedBlockchainFile?.id === file.id) {
                 await loadBlockchainProofs(file);
             }
         } catch (err: any) {
-            alert(err?.message || 'Failed to create blockchain timestamp');
+            toast(err?.message || 'Failed to create blockchain timestamp', 'error');
         }
     };
 
-    const navItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: Layout },
-        { id: 'settings', label: 'Settings', icon: Settings },
-    ];
-
     return (
         <ScreenshotGuard>
-            {/* Proof Required Modal */}
             {proofModalFile && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-                    <div className="bg-[#12121A] border border-red-500/50 rounded-3xl p-8 max-w-lg w-full shadow-2xl shadow-red-500/20">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="p-3 bg-red-500/20 rounded-xl">
-                                <Shield className="h-6 w-6 text-red-500" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-bold text-white">Ownership Verification Required</h2>
-                                <p className="text-red-400 text-sm">This file was flagged as not original</p>
-                            </div>
-                        </div>
-                        
-                        <p className="text-zinc-400 text-sm mb-6">
-                            This file appears to be a screenshot or was already found online. 
-                            To use any features, you must prove you're the original creator.
-                        </p>
-
-                        <div className="space-y-4 mb-6">
-                            <div>
-                                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2 block">How can you prove ownership?</label>
-                                <select 
-                                    value={proofType}
-                                    onChange={(e) => setProofType(e.target.value as any)}
-                                    className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white"
-                                >
-                                    <option value="declaration">Legal Declaration (I'm the artist)</option>
-                                    <option value="source">Link to Original Work</option>
-                                    <option value="original">Upload Source/Original File</option>
-                                </select>
-                            </div>
-
-                            {proofType === 'declaration' && (
-                                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
-                                    <p className="text-yellow-400 text-sm font-medium mb-2">Legal Declaration</p>
-                                    <p className="text-zinc-400 text-xs">
-                                        By submitting, you declare under legal penalty of perjury that you are the original creator of this work. False claims may result in account termination.
-                                    </p>
-                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest mt-4 mb-2 block">Your full legal name</label>
-                                    <input 
-                                        type="text" 
-                                        value={proofText}
-                                        onChange={(e) => setProofText(e.target.value)}
-                                        placeholder="Enter your full legal name"
-                                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
-                                    />
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15, ease: easeLuxury }}
+                    className="fixed inset-0 bg-black/90 backdrop-blur-xl z-50 flex items-center justify-center p-4"
+                >
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.15, ease: easeLuxury, delay: 0.02 }}
+                        className="bg-black border border-luxury-gold/30 max-w-lg w-full"
+                    >
+                        <div className="px-8 pt-10 pb-6">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-10 h-10 border border-luxury-gold/50 flex items-center justify-center">
+                                    <Shield className="h-4 w-4 text-luxury-gold" />
                                 </div>
-                            )}
-
-                            {proofType === 'source' && (
                                 <div>
-                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2 block">Link to original work</label>
-                                    <input 
-                                        type="url" 
-                                        value={proofUrl}
-                                        onChange={(e) => setProofUrl(e.target.value)}
-                                        placeholder="https://your-website.com/original"
-                                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
-                                    />
-                                    <p className="text-zinc-500 text-xs mt-2">Link to your portfolio, website, or original post</p>
+                                    <h2 className="text-lg font-display text-luxury-cream">Ownership Verification</h2>
+                                    <p className="text-xs text-luxury-gold/60 uppercase tracking-wider mt-1">Proof of authorship required</p>
                                 </div>
-                            )}
+                            </div>
 
-                            {proofType === 'original' && (
-                                <div className="bg-zinc-800/50 border border-dashed border-zinc-700 rounded-xl p-6 text-center">
-                                    <p className="text-zinc-400 text-sm">Upload your original source file</p>
-                                    <p className="text-zinc-500 text-xs mt-1">Raw file (PSD, AI, original photo, etc.)</p>
-                                    <input type="file" className="mt-4 text-sm" />
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button 
-                                onClick={() => setProofModalFile(null)}
-                                className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                onClick={submitOwnershipProof}
-                                disabled={submittingProof || (proofType === 'declaration' && !proofText)}
-                                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors disabled:opacity-50"
-                            >
-                                {submittingProof ? 'Submitting...' : 'Submit Proof'}
-                            </button>
-                        </div>
-
-                        {proofModalFile.ownershipProofStatus === 'pending' && (
-                            <p className="text-yellow-500 text-xs text-center mt-4">
-                                Your previous proof is still under review
+                            <p className="text-sm text-luxury-muted/70 mb-8 leading-relaxed">
+                                This file appears to be a screenshot or was already found online.
+                                To use any features, you must prove you&apos;re the original creator.
                             </p>
-                        )}
-                    </div>
-                </div>
+
+                            <div className="space-y-6 mb-8">
+                                <div>
+                                    <label className="text-[10px] text-luxury-muted/50 uppercase tracking-ultra-wide font-semibold mb-3 block">Method of verification</label>
+                                    <select
+                                        value={proofType}
+                                        onChange={(e) => setProofType(e.target.value as any)}
+                                        className="w-full bg-luxury-deep border border-luxury-steel/40 text-luxury-cream px-4 py-3 text-sm focus:border-luxury-gold/40 outline-none                                                     transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] appearance-none"
+                                    >
+                                        <option value="declaration">Legal Declaration</option>
+                                        <option value="source">Link to Original Work</option>
+                                        <option value="original">Upload Source File</option>
+                                    </select>
+                                </div>
+
+                                {proofType === 'declaration' && (
+                                    <div className="border border-luxury-steel/30 p-6">
+                                        <p className="text-luxury-gold/70 text-xs uppercase tracking-wider mb-4">Legal Declaration</p>
+                                        <p className="text-luxury-muted/50 text-xs leading-relaxed mb-4">
+                                            By submitting, you declare under legal penalty of perjury that you are the original creator of this work.
+                                        </p>
+                                        <label className="text-[10px] text-luxury-muted/50 uppercase tracking-ultra-wide font-semibold mb-3 block">Full legal name</label>
+                                        <input
+                                            type="text"
+                                            value={proofText}
+                                            onChange={(e) => setProofText(e.target.value)}
+                                            placeholder="Enter your full legal name"
+                                            className="w-full bg-luxury-deep border border-luxury-steel/40 text-luxury-cream px-4 py-3 text-sm focus:border-luxury-gold/40 outline-none transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] placeholder-luxury-muted/30"
+                                        />
+                                    </div>
+                                )}
+
+                                {proofType === 'source' && (
+                                    <div>
+                                        <label className="text-[10px] text-luxury-muted/50 uppercase tracking-ultra-wide font-semibold mb-3 block">Link to original work</label>
+                                        <input
+                                            type="url"
+                                            value={proofUrl}
+                                            onChange={(e) => setProofUrl(e.target.value)}
+                                            placeholder="https://your-portfolio.com/original"
+                                            className="w-full bg-luxury-deep border border-luxury-steel/40 text-luxury-cream px-4 py-3 text-sm focus:border-luxury-gold/40 outline-none transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] placeholder-luxury-muted/30"
+                                        />
+                                    </div>
+                                )}
+
+                                {proofType === 'original' && (
+                                    <div className="border border-dashed border-luxury-steel/30 p-8 text-center">
+                                        <p className="text-luxury-muted/50 text-xs mb-1">Upload your original source file</p>
+                                        <p className="text-luxury-muted/30 text-[10px] uppercase tracking-wider">Raw file (PSD, AI, original photo)</p>
+                                        <input type="file" className="mt-4 text-xs text-luxury-muted/50" />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex gap-0 border-t border-luxury-steel/30">
+                                <button
+                                    onClick={() => setProofModalFile(null)}
+                                    className="flex-1 py-4 text-xs uppercase tracking-ultra-wide font-semibold text-luxury-muted/60 hover:text-luxury-cream transition-colors duration-200"
+                                >
+                                    Cancel
+                                </button>
+                                <div className="w-px bg-luxury-steel/30" />
+                                <button
+                                    onClick={submitOwnershipProof}
+                                    disabled={submittingProof || (proofType === 'declaration' && !proofText)}
+                                    className="flex-1 py-4 text-xs uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold transition-colors duration-500 disabled:opacity-30"
+                                >
+                                    {submittingProof ? 'Submitting...' : 'Submit Proof'}
+                                </button>
+                            </div>
+
+                            {proofModalFile.ownershipProofStatus === 'pending' && (
+                                <p className="text-luxury-gold/50 text-[10px] uppercase tracking-wider text-center mt-4">
+                                    Previous proof under review
+                                </p>
+                            )}
+                        </div>
+                    </motion.div>
+                </motion.div>
             )}
 
-            <div className="min-h-screen bg-[#050505] text-white flex font-sans selection:bg-purple-500/30 overflow-x-hidden">
-                {/* Mobile Backdrop */}
-                {isSidebarOpen && (
-                    <div
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-all duration-300"
-                        onClick={() => setIsSidebarOpen(false)}
-                    />
-                )}
+            <div className="min-h-screen bg-gallery-black text-luxury-cream flex overflow-x-hidden">
+                <DashboardSidebar
+                    userName={user?.full_name || ''}
+                    userInitials={user?.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                    onLogout={handleLogout}
+                />
 
-                {/* Sidebar */}
-                <aside className={`w-72 border-r border-zinc-900 flex flex-col fixed inset-y-0 left-0 bg-[#070707] z-50 transition-transform duration-300 ease-in-out lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                    <div className="p-8">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-                                    <Shield className="h-5 w-5 text-black" />
-                                </div>
-                                <span className="text-xl font-black tracking-tighter">ANTIGRAVITY</span>
-                            </div>
-                            <button 
-                                type="button"
-                                onClick={() => setIsSidebarOpen(false)}
-                                className="lg:hidden p-2 text-zinc-500 hover:text-white transition-colors"
-                                title="Close sidebar"
-                            >
-                                <ChevronRight className="w-5 h-5 rotate-180" />
-                            </button>
-                        </div>
-                    </div>
+                <main className="flex-1 lg:ml-72 relative flex flex-col min-h-screen">
+                    {/* Film grain + vignette applied to full app */}
+                    <div className="grain-overlay" />
+                    <div className="vignette-overlay" />
 
-                    <nav className="flex-1 px-4 space-y-1">
-                        {navItems.map((item) => (
-                            <button
-                                key={item.id}
-                                onClick={() => {
-                                    if (window.innerWidth < 1024) setIsSidebarOpen(false);
-                                }}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold text-sm ${item.id === 'dashboard' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-                            >
-                                <item.icon className="w-4 h-4" />
-                                {item.label}
-                            </button>
-                        ))}
-                    </nav>
-
-                    <div className="p-4 border-t border-zinc-900 space-y-4">
-                        {user && (
-                            <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
-                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-purple-500/20 border border-white/10">
-                                    {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
-                                </div>
-                                <div className="flex flex-col overflow-hidden">
-                                    <span className="text-sm font-bold text-white truncate tracking-tight">{user.full_name || 'User'}</span>
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-purple-500/80 leading-none mt-0.5">Verified Artist</span>
-                                </div>
-                            </div>
-                        )}
-                        <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/5 font-semibold text-sm transition-all"
-                        >
-                            <LogOut className="w-4 h-4" />
-                            Log Out
-                        </button>
-                    </div>
-                </aside>
-
-                <main className="flex-1 lg:ml-72 p-6 md:p-10 max-w-7xl mx-auto space-y-12 transition-all duration-700">
-                    {/* Header Strip */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 md:mb-16">
-                        <div className="flex items-center justify-between">
+                    {/* Slim Top Bar */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.15, ease: easeLuxury }}
+                        className="border-b border-luxury-steel/30"
+                    >
+                        <div className="px-8 md:px-16 lg:px-24 flex items-center justify-between h-16">
                             <div className="flex items-center gap-4 lg:hidden">
                                 <button
                                     onClick={() => setIsSidebarOpen(true)}
-                                    className="p-2 -ml-2 rounded-xl bg-zinc-900/50 border border-zinc-800 text-white"
+                                    suppressHydrationWarning
+                                    className="p-2 border border-luxury-steel/40 text-luxury-cream transition-all duration-200"
                                 >
-                                    <Layout className="w-5 h-5" />
+                                    <Layout className="w-4 h-4" />
                                 </button>
-                                <div className="flex items-center gap-2">
-                                    <Shield className="h-5 w-5 text-white" />
-                                    <span className="text-sm font-black tracking-tighter">ANTIGRAVITY</span>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-6 h-6 border border-luxury-gold/60 flex items-center justify-center">
+                                        <Shield className="h-3 w-3 text-luxury-gold" />
+                                    </div>
+                                    <span className="text-sm font-display tracking-wide">CVBER</span>
                                 </div>
                             </div>
-                        </div>
 
-                        <motion.div variants={itemVariants}>
-                            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-zinc-800 bg-zinc-900/50 text-[10px] uppercase tracking-widest text-zinc-400 mb-4 transition-all hover:border-zinc-700">
-                                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                                <span>System Live: 24.8M Assets Protected</span>
+                            <div className="hidden lg:flex items-center gap-12">
+                                {(['monitor', 'provenance', 'investigator'] as const).map((tab) => {
+                                    const labels = { monitor: 'Collection', provenance: 'Ledger', investigator: 'Enquiry' };
+                                    return (
+                                        <button
+                                            key={tab}
+                                            onClick={() => setActiveTab(tab)}
+                                            suppressHydrationWarning
+                                            className={`text-[10px] uppercase tracking-ultra-wide font-semibold pb-1 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${
+                                                activeTab === tab
+                                                    ? 'text-luxury-gold border-b border-luxury-gold'
+                                                    : 'text-luxury-muted/40 hover:text-luxury-muted/70 border-b border-transparent'
+                                            }`}
+                                        >
+                                            {labels[tab]}
+                                        </button>
+                                    );
+                                })}
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
-                                Asset Protection <span className="text-zinc-500">Dashboard.</span>
-                            </h1>
-                        </motion.div>
 
-                        {/* Hub Switcher */}
-                        <div className="flex p-1.5 bg-zinc-900/50 border border-zinc-800 rounded-2xl backdrop-blur-xl self-start md:self-auto">
-                            <button
-                                onClick={() => setActiveTab('ai')}
-                                className={`flex items-center gap-2.5 px-4 md:px-6 py-2 rounded-xl transition-all font-bold text-[10px] md:text-xs uppercase tracking-widest ${activeTab === 'ai' ? 'bg-white text-black shadow-xl shadow-white/5' : 'text-zinc-500 hover:text-white'}`}
-                            >
-                                <Bot className="w-3.5 h-3.5" />
-                                AI Hub
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('blockchain')}
-                                className={`flex items-center gap-2.5 px-4 md:px-6 py-2 rounded-xl transition-all font-bold text-[10px] md:text-xs uppercase tracking-widest ${activeTab === 'blockchain' ? 'bg-white text-black shadow-xl shadow-white/5' : 'text-zinc-500 hover:text-white'}`}
-                            >
-                                <Hash className="w-3.5 h-3.5" />
-                                Blockchain Hub
-                            </button>
+                            <div className="flex items-center gap-6">
+                                <p className="text-[10px] text-luxury-muted/50 uppercase tracking-ultra-wide font-semibold hidden sm:block">
+                                    {stats.total} {stats.total === 1 ? 'piece' : 'pieces'}
+                                </p>
+                                <div className="w-px h-4 bg-luxury-steel/30 hidden sm:block" />
+                                <p className="text-[10px] text-luxury-gold/60 uppercase tracking-ultra-wide font-semibold hidden sm:block">
+                                    {stats.successRate} authentic
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Mobile Tab Switcher */}
+                    <div className="lg:hidden border-b border-luxury-steel/30 px-8 md:px-16">
+                        <div className="flex gap-6">
+                            {(['monitor', 'provenance', 'investigator'] as const).map((tab) => {
+                                const labels = { monitor: 'Collection', provenance: 'Ledger', investigator: 'Enquiry' };
+                                return (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        suppressHydrationWarning
+                                        className={`text-[10px] uppercase tracking-ultra-wide font-semibold py-4 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] border-b-2 ${
+                                            activeTab === tab
+                                                ? 'text-luxury-gold border-luxury-gold'
+                                                : 'text-luxury-muted/40 hover:text-luxury-muted/70 border-transparent'
+                                        }`}
+                                    >
+                                        {labels[tab]}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
-
-                    {/* Stats Grid - Stitch Style */}
-                    <motion.div
-                        variants={containerVariants}
-                        initial="hidden"
-                        animate="visible"
-                        className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-20"
-                    >
-                        {[
-                            { label: 'Protected Assets', val: '1,248', icon: HardDrive, trend: '5.2% VS LAST MO', trendColor: 'text-emerald-500', iconColor: 'text-purple-400' },
-                            { label: 'Active Threats', val: '12', icon: Activity, trend: '3 HIGH PRIORITY', trendColor: 'text-red-500', iconColor: 'text-red-400' },
-                            { label: 'Success Rate', val: '99.4%', icon: Award, trend: 'UP 0.2%', trendColor: 'text-emerald-500', iconColor: 'text-emerald-400' },
-                            { label: 'Response Time', val: '4.2m', icon: Zap, trend: 'FASTEST IN SECTOR', trendColor: 'text-purple-400', iconColor: 'text-purple-400' }
-                        ].map((stat, i) => (
-                            <motion.div
-                                key={i}
-                                variants={itemVariants}
-                                whileHover={{ y: -5 }}
-                                className="metric-card bg-[#09090b]/50 border border-zinc-900/50 p-8 rounded-3xl hover-glow-purple group backdrop-blur-md transition-all duration-300"
-                            >
-                                <div className="flex justify-between items-start mb-4">
-                                    <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">{stat.label}</p>
-                                    <div className={`p-2 rounded-lg bg-zinc-900 group-hover:bg-opacity-20 flex items-center justify-center`}>
-                                        <stat.icon className={`w-3.5 h-3.5 ${stat.iconColor}`} />
-                                    </div>
-                                </div>
-                                <h3 className="text-4xl font-bold tracking-tighter">{stat.val}</h3>
-                                {stat.label === 'Success Rate' ? (
-                                    <div className="mt-4 h-1 bg-zinc-900 rounded-full overflow-hidden">
-                                        <div className="h-full bg-white w-[99.4%] shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
-                                    </div>
-                                ) : (
-                                    <div className={`mt-4 flex items-center ${stat.trendColor} text-[10px] font-black tracking-widest`}>
-                                        <ArrowUpRight className="w-3 h-3 mr-1" />
-                                        {stat.trend}
-                                    </div>
-                                )}
-                            </motion.div>
-                        ))}
-                    </motion.div>
-
+                    {/* Content Area */}
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
-                            initial={{ opacity: 0, y: 10 }}
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.2 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.15, ease: easeLuxury }}
+                            className="flex-1 flex flex-col"
                         >
+                            {activeTab === 'monitor' ? (
+                                <motion.div
+                                    initial="hidden"
+                                    animate="visible"
+                                    variants={containerVariants}
+                                    className="flex-1 px-8 md:px-16 lg:px-24 py-10 overflow-y-auto"
+                                >
+                                    <div className="grid lg:grid-cols-[1fr_420px] gap-12">
+                                        {/* Main Column */}
+                                        <div className="space-y-12">
+                                            <ReferralBanner />
 
-                            {activeTab === 'ai' ? (
-                                <div className="grid lg:grid-cols-[1fr_400px] gap-8">
-                                    {/* AI Protection & Tracking Center */}
-                                    <div className="space-y-6">
-                                        <div className="p-8 rounded-[32px] glass-dark border border-zinc-800/50 backdrop-blur-3xl animate-scan">
-                                            <div className="flex items-center justify-between mb-8">
-                                                <div>
-                                                    <h2 className="text-2xl font-bold mb-1">AI Intelligence Desk</h2>
-                                                    <p className="text-zinc-500 text-sm">Real-time threat monitoring and image tracking</p>
+                                            {/* Upload Section — The Atelier */}
+                                            <motion.section variants={itemVariants}>
+                                                <div className="mb-6">
+                                                    <p className="text-luxury-subheading mb-2">The Atelier</p>
+                                                    <h2 className="text-xl font-display text-luxury-cream">Present Your Work</h2>
                                                 </div>
-                                                <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
-                                                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                                                    <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Tracking Active</span>
-                                                </div>
-                                            </div>
+                                                <FileUploader onUploadComplete={handleUploadComplete} />
+                                            </motion.section>
 
-                                            <FileUploader onUploadComplete={handleUploadComplete} />
-
-                                            <div className="mt-8 border-t border-zinc-800 pt-8">
+                                            {/* Collection Section */}
+                                            <motion.section variants={itemVariants}>
                                                 <SafeVault
                                                     files={files}
+                                                    loading={vaultLoading}
                                                     onView={handleView}
                                                     onWatermark={handleWatermark}
                                                     onDelete={handleDelete}
                                                     onTimestamp={handleTimestamp}
                                                 />
-                                            </div>
+                                            </motion.section>
                                         </div>
-                                    </div>
 
-                                    {/* Sidebar - Dedicated AI Mentor */}
-                                    <div className="space-y-6">
-                                        <SecurityMentor context={{ files }} />
-
-                                        <div className="p-6 rounded-3xl bg-gradient-to-br from-purple-600/10 to-transparent border border-purple-500/20">
-                                            <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
-                                                <Search className="w-4 h-4 text-purple-400" />
-                                                Advanced Tracking
-                                            </h3>
-                                            <p className="text-zinc-400 text-xs leading-relaxed">
-                                                Ask the mentor to "Search for unauthorized use" of your protected work. Our AI scans millions of auction sites, portfolios, and AI training sets.
-                                            </p>
-                                        </div>
+                                        {/* Sidebar Column */}
+                                        <motion.div variants={itemVariants} className="space-y-8">
+                                            <SecurityMentor context={{ files }} />
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.15, ease: easeLuxury, delay: 0.05 }}
+                                                className="border border-luxury-steel/30 p-6"
+                                            >
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <Globe className="w-4 h-4 text-luxury-gold/60" />
+                                                    <h3 className="text-xs font-display text-luxury-cream uppercase tracking-wide">Search the World</h3>
+                                                </div>
+                                                <p className="text-xs text-luxury-muted/50 leading-relaxed mb-6">
+                                                    Our agent scours the open web for unauthorized reproductions of your work&mdash;social platforms, marketplaces, and beyond.
+                                                </p>
+                                                <button
+                                                    onClick={() => setActiveTab('investigator')}
+                                                    suppressHydrationWarning
+                                                    className="w-full py-3 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
+                                                >
+                                                    Open Enquiry
+                                                </button>
+                                            </motion.div>
+                                        </motion.div>
                                     </div>
-                                </div>
+                                </motion.div>
+                            ) : activeTab === 'investigator' ? (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.15, ease: easeLuxury }}
+                                    className="flex-1 flex flex-col px-8 md:px-16 lg:px-24 py-6"
+                                >
+                                    <div className="flex-1 min-h-0">
+                                        <AIAgentChat />
+                                    </div>
+                                </motion.div>
                             ) : (
-                                <div className="grid lg:grid-cols-[1fr_400px] gap-8">
-                                    {/* Blockchain Ledger Area */}
-                                    <div className="space-y-6">
-                                        <div className="p-8 rounded-[32px] bg-zinc-900/30 border border-zinc-800/50 backdrop-blur-xl">
-                                            <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                                                <Lock className="w-6 h-6 text-orange-500" />
-                                                Immutable Ownership Ledger
-                                            </h2>
-                                            <p className="text-zinc-400 mb-8 max-w-2xl">
-                                                Your work is cryptographically anchored to the Bitcoin blockchain via OP_RETURN. This creates a permanent, legally recognizable proof of existence timestamp.
-                                            </p>
+                                <motion.div
+                                    initial="hidden"
+                                    animate="visible"
+                                    variants={containerVariants}
+                                    className="flex-1 px-8 md:px-16 lg:px-24 py-10 overflow-y-auto"
+                                >
+                                    <div className="grid lg:grid-cols-[1fr_420px] gap-12">
+                                        {/* Main Column */}
+                                        <div className="space-y-12">
+                                            <motion.div variants={itemVariants}>
+                                                <p className="text-luxury-subheading mb-2">The Ledger</p>
+                                                <h2 className="text-xl font-display text-luxury-cream">Provenance, Immutable</h2>
+                                            </motion.div>
 
-                                            <div className="grid md:grid-cols-2 gap-4 mb-8">
-                                                <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800">
-                                                    <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-2">Network Status</p>
-                                                    <p className="text-xl font-bold">Mainnet Connected</p>
-                                                </div>
-                                                <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800">
-                                                    <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-2">Total Proofs</p>
-                                                    <p className="text-xl font-bold">{files.length} Anchors</p>
-                                                </div>
-                                            </div>
+                                            <motion.p variants={itemVariants} className="text-sm text-luxury-muted/50 leading-relaxed max-w-2xl">
+                                                Every stroke, every pixel, every note&mdash;immortalised on the Bitcoin blockchain. Through OP_RETURN, your creation receives a permanent, legally-recognisable timestamp of existence, independent of any intermediary.
+                                            </motion.p>
 
-                                            {/* Vault Files + Blockchain Proofs */}
-                                            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                                            <motion.div variants={itemVariants} className="grid md:grid-cols-2 gap-0 border border-luxury-steel/30">
+                                                <div className="p-6 border-r border-b md:border-b-0 border-luxury-steel/30">
+                                                    <p className="text-[10px] text-luxury-gold/60 uppercase tracking-ultra-wide font-semibold mb-3">Network</p>
+                                                    <p className="text-lg font-display text-luxury-cream">Mainnet Connected</p>
+                                                </div>
+                                                <div className="p-6">
+                                                    <p className="text-[10px] text-luxury-gold/60 uppercase tracking-ultra-wide font-semibold mb-3">Total Proofs</p>
+                                                    <p className="text-lg font-display text-luxury-cream">{files.length} Anchors</p>
+                                                </div>
+                                            </motion.div>
+
+                                            {/* Vault Files */}
+                                            <motion.div variants={itemVariants} className="space-y-0 border border-luxury-steel/30 max-h-[500px] overflow-y-auto">
                                                 {files.length === 0 ? (
-                                                    <div className="p-12 border-2 border-dashed border-zinc-800 rounded-3xl text-center">
-                                                        <Hash className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-                                                        <p className="text-zinc-500 font-medium">Scan a file first to see it here</p>
+                                                    <div className="p-12 text-center border-b border-luxury-steel/30">
+                                                        <p className="text-xs text-luxury-muted/50 uppercase tracking-wider">Upload a work first to see it here</p>
                                                     </div>
-                                                ) : files.map((f) => (
-                                                    <div
+                                                ) : files.map((f, idx) => (
+                                                    <motion.div
                                                         key={f.id}
+                                                        initial={{ opacity: 0, x: -10 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ duration: 0.2, ease: easeLuxury, delay: idx * 0.02 }}
                                                         onClick={() => loadBlockchainProofs(f)}
-                                                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                                                        className={`p-5 cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] border-b border-luxury-steel/30 last:border-b-0 ${
                                                             selectedBlockchainFile?.id === f.id
-                                                                ? 'border-orange-500/40 bg-orange-500/5'
-                                                                : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-700'
+                                                                ? 'bg-luxury-gold/5'
+                                                                : 'hover:bg-luxury-deep'
                                                         }`}
                                                     >
                                                         <div className="flex items-center justify-between">
-                                                            <div className="flex items-center gap-3 min-w-0">
-                                                                <FileText className="w-5 h-5 text-zinc-500 shrink-0" />
-                                                                <span className="text-sm font-bold text-white truncate">{f.name}</span>
+                                                            <div className="flex items-center gap-4 min-w-0">
+                                                                <FileText className="w-4 h-4 text-luxury-muted/40 shrink-0" />
+                                                                <span className="text-sm font-display text-luxury-cream truncate">{f.name}</span>
                                                             </div>
-                                                            <div className="flex items-center gap-2 shrink-0">
+                                                            <div className="flex items-center gap-4 shrink-0">
                                                                 {f.hash && (
                                                                     <button
                                                                         onClick={(e) => { e.stopPropagation(); handleTimestamp(f); }}
-                                                                        className="px-2 py-1 bg-orange-500/10 text-orange-500 text-[10px] font-bold rounded-lg hover:bg-orange-500/20 border border-orange-500/20"
+                                                                        className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-gold/30 text-luxury-gold hover:bg-luxury-gold/10 transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
                                                                     >
                                                                         Anchor
                                                                     </button>
                                                                 )}
-                                                                <span className="text-[10px] text-zinc-500 font-bold uppercase">
+                                                                <span className="text-[10px] text-luxury-muted/40 uppercase tracking-widest">
                                                                     {(f.size / 1024).toFixed(0)}KB
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </motion.div>
                                                 ))}
-                                            </div>
+                                            </motion.div>
 
                                             {/* Selected file proofs */}
                                             {selectedBlockchainFile && (
-                                                <div className="border-t border-zinc-800 pt-4 mt-4">
-                                                    <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                                                        <Anchor className="w-4 h-4 text-orange-400" />
-                                                        Proofs for {selectedBlockchainFile.name}
-                                                    </h3>
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ duration: 0.15, ease: easeLuxury }}
+                                                >
+                                                    <div className="flex items-center gap-3 mb-6">
+                                                        <Anchor className="w-4 h-4 text-luxury-gold/60" />
+                                                        <h3 className="text-sm font-display text-luxury-cream">
+                                                            Proofs for {selectedBlockchainFile.name}
+                                                        </h3>
+                                                    </div>
                                                     {proofsLoading ? (
-                                                        <div className="flex items-center justify-center py-8">
-                                                            <div className="w-6 h-6 border-2 border-zinc-600 border-t-orange-500 rounded-full animate-spin" />
+                                                        <div className="flex items-center justify-center py-12">
+                                                            <div className="w-5 h-5 border border-luxury-gold/30 border-t-luxury-gold/60 animate-spin" />
                                                         </div>
                                                     ) : blockchainFileProofs.length === 0 ? (
-                                                        <div className="p-6 border border-dashed border-zinc-800 rounded-2xl text-center">
-                                                            <p className="text-zinc-500 text-sm">No blockchain proofs yet. Click Anchor to create one.</p>
+                                                        <div className="p-8 border border-luxury-steel/30 text-center">
+                                                            <p className="text-xs text-luxury-muted/50 uppercase tracking-wider">No blockchain proofs yet. Click Anchor to create one.</p>
                                                         </div>
                                                     ) : (
-                                                        <div className="space-y-3">
+                                                        <div className="space-y-0 border border-luxury-steel/30">
                                                             {blockchainFileProofs.map((proof: any) => (
-                                                                <div key={proof.proof_id} className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800">
-                                                                    <div className="flex items-center justify-between mb-2">
-                                                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{proof.status === 'confirmed' ? 'Anchored' : proof.status === 'pending' ? 'Pending (~2h)' : 'Local'}</span>
-                                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                                                            proof.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                                                            proof.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
-                                                                            'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'
+                                                                <div key={proof.proof_id} className="p-5 border-b border-luxury-steel/30 last:border-b-0">
+                                                                    <div className="flex items-center justify-between mb-3">
+                                                                        <span className="text-[10px] text-luxury-muted/50 uppercase tracking-ultra-wide font-semibold">{proof.status === 'confirmed' ? 'Anchored' : proof.status === 'pending' ? 'Pending (~2h)' : 'Local'}</span>
+                                                                        <span className={`text-[10px] uppercase tracking-ultra-wide font-semibold ${
+                                                                            proof.status === 'confirmed' ? 'text-luxury-gold/80' :
+                                                                            proof.status === 'pending' ? 'text-luxury-gold/60' :
+                                                                            'text-luxury-muted/40'
                                                                         }`}>
                                                                             {proof.status}
                                                                         </span>
                                                                     </div>
-                                                                    <p className="text-[10px] text-zinc-600 font-mono truncate mb-2">{proof.proof_id}</p>
+                                                                    <p className="text-[10px] text-luxury-muted/30 font-mono truncate mb-4">{proof.proof_id}</p>
                                                                     <div className="flex items-center justify-between">
-                                                                        <span className="text-[10px] text-zinc-500">{new Date(proof.created_at).toLocaleString()}</span>
-                                                                        <div className="flex items-center gap-2">
+                                                                        <span className="text-[10px] text-luxury-muted/30">{new Date(proof.created_at).toLocaleString()}</span>
+                                                                        <div className="flex items-center gap-4">
                                                                             {proof.status !== 'local_only' ? (
                                                                                 <button
                                                                                     onClick={() => downloadOtsProof(proof.proof_id, proof.asset_name)}
-                                                                                    className="text-[10px] text-orange-400 hover:underline font-bold"
+                                                                                    className="text-[10px] text-luxury-gold/60 hover:text-luxury-gold uppercase tracking-wider font-semibold transition-colors duration-150"
                                                                                 >
                                                                                     Download .ots
                                                                                 </button>
                                                                             ) : (
-                                                                                <span className="text-[10px] text-zinc-500 italic">No proof file</span>
+                                                                                <span className="text-[10px] text-luxury-muted/30 italic">No proof file</span>
                                                                             )}
-                                                                            <a href="https://opentimestamps.org/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-zinc-500 hover:text-white">Info</a>
+                                                                            <a href="https://opentimestamps.org/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-luxury-muted/30 hover:text-luxury-cream uppercase tracking-wider transition-colors duration-150">Info</a>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                             ))}
                                                         </div>
                                                     )}
-                                                </div>
+                                                </motion.div>
                                             )}
                                         </div>
-                                    </div>
 
-                                    {/* Sidebar - Blockchain Info */}
-                                    <div className="space-y-6">
-                                        <BlockchainStatus />
-                                        <div className="p-8 rounded-3xl bg-orange-600 shadow-xl shadow-orange-900/20 text-white">
-                                            <h3 className="text-xl font-bold mb-2">Legal Admissibility</h3>
-                                            <p className="text-orange-100 text-sm leading-relaxed mb-6">
-                                                Download certified legal logs that combine your C2PA manifest with blockchain transaction hashes for court-ready evidence.
-                                            </p>
-                                            <button className="w-full py-3 bg-white text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-colors text-sm">
-                                                Download Log Template
-                                            </button>
-                                        </div>
+                                        {/* Sidebar Column */}
+                                        <motion.div variants={itemVariants} className="space-y-8">
+                                            <BlockchainStatus />
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.15, ease: easeLuxury, delay: 0.04 }}
+                                                className="border border-luxury-gold/30 p-8"
+                                            >
+                                                <h3 className="text-lg font-display text-luxury-cream mb-3">Court-Ready Evidence</h3>
+                                                <p className="text-xs text-luxury-muted/50 leading-relaxed mb-8">
+                                                    A comprehensive dossier combining your C2PA provenance manifests with on-chain transaction hashes&mdash;certified for submission in any legal proceeding.
+                                                </p>
+                                                <button
+                                                    onClick={downloadEvidencePdf}
+                                                    className="w-full py-4 text-[10px] uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold transition-colors duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
+                                                >
+                                                    Download Evidence Dossier
+                                                </button>
+                                            </motion.div>
+                                        </motion.div>
                                     </div>
-                                </div>
+                                </motion.div>
                             )}
                         </motion.div>
                     </AnimatePresence>
@@ -824,7 +897,17 @@ export default function DashboardPage() {
                     isOpen={isWatermarkOpen}
                     onClose={() => setIsWatermarkOpen(false)}
                 />
+
+                <FeedbackWidget />
             </div>
         </ScreenshotGuard>
+    );
+}
+
+export default function DashboardPage() {
+    return (
+        <ToastProvider>
+            <DashboardInner />
+        </ToastProvider>
     );
 }

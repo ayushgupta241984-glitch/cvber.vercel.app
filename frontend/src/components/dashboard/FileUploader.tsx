@@ -3,10 +3,13 @@
 import { useState, useCallback } from 'react';
 import { Upload, FileCheck, AlertCircle } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface FileUploaderProps {
     onUploadComplete?: (result: any, file: File) => void;
 }
+
+const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
 
 export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     const [uploading, setUploading] = useState(false);
@@ -17,7 +20,6 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     const handleDrop = useCallback(async (e: React.DragEvent) => {
         e.preventDefault();
         setDragActive(false);
-
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
             await uploadAndScan(files[0]);
@@ -35,27 +37,20 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
         setUploading(true);
         setError(null);
         setProgress(0);
-
         try {
-            // Simulate progress
             const progressInterval = setInterval(() => {
                 setProgress(prev => Math.min(prev + 10, 90));
             }, 200);
-
             const result = await apiClient.scanFile(file);
-
             clearInterval(progressInterval);
             setProgress(100);
-
             if (onUploadComplete) {
                 onUploadComplete(result, file);
             }
-
             setTimeout(() => {
                 setUploading(false);
                 setProgress(0);
             }, 1000);
-
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Upload failed');
             setUploading(false);
@@ -64,76 +59,114 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     };
 
     return (
-        <div className="w-full">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: easeLuxury }}
+            className="w-full"
+        >
             <div
                 onDrop={handleDrop}
-                onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragActive(true);
-                }}
+                onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
                 onDragLeave={() => setDragActive(false)}
                 className={`
-          relative border-2 border-dashed rounded-3xl p-16 transition-all duration-300
-          ${dragActive
-                        ? 'border-blue-600 bg-blue-50 scale-[1.01]'
-                        : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-gray-50/50'
+                    relative border transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]
+                    ${dragActive
+                        ? 'border-luxury-gold/60 bg-luxury-gold/5'
+                        : 'border-luxury-steel/40 hover:border-luxury-gold/40 bg-luxury-deep'
                     }
-          ${uploading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-        `}
+                    ${uploading ? 'pointer-events-none' : 'cursor-pointer'}
+                `}
             >
                 <input
                     type="file"
                     onChange={handleFileInput}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     disabled={uploading}
+                    aria-label="Upload artwork to scan"
                 />
 
-                <div className="flex flex-col items-center justify-center space-y-6">
-                    {uploading ? (
-                        <>
-                            <div className="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 relative overflow-hidden">
-                                <FileCheck className="h-10 w-10 relative z-10" />
-                                <div className="absolute inset-0 bg-blue-600/10 animate-pulse" />
-                            </div>
-                            <div className="text-center">
-                                <p className="text-xl font-bold text-gray-900 mb-2">Analyzing your file...</p>
-                                <p className="text-sm text-gray-500">Checking for threats and origin data</p>
-                            </div>
-                            <div className="w-full max-w-xs">
-                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-blue-600 transition-all duration-300 shadow-sm shadow-blue-200"
-                                        style={{ width: `${progress}%` }}
-                                    />
+                <div className="flex flex-col items-center justify-center py-20 md:py-24 space-y-8">
+                    <AnimatePresence mode="wait">
+                        {uploading ? (
+                            <motion.div
+                                key="uploading"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.4, ease: easeLuxury }}
+                                className="flex flex-col items-center space-y-8"
+                            >
+                                <motion.div
+                                    animate={{ opacity: [0.5, 1, 0.5] }}
+                                    transition={{ duration: 2, repeat: Infinity, ease: easeLuxury }}
+                                    className="w-16 h-16 border border-luxury-gold/40 flex items-center justify-center text-luxury-gold"
+                                >
+                                    <FileCheck className="h-6 w-6" />
+                                </motion.div>
+                                <div className="text-center space-y-3">
+                                    <p className="text-lg font-display text-luxury-cream">Examining Your Work</p>
+                                    <p className="text-xs text-luxury-muted uppercase tracking-ultra-wide">Analysing digital provenance and authenticity markers</p>
                                 </div>
-                                <p className="text-xs font-bold text-blue-600 mt-3 text-center tracking-widest">{progress}% COMPLETE</p>
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-colors">
-                                <Upload className="h-10 w-10" />
-                            </div>
-                            <div className="text-center">
-                                <p className="text-xl font-bold text-gray-900 mb-2">
-                                    Drop your file here
-                                </p>
-                                <p className="text-sm text-gray-500 font-medium max-w-xs mx-auto">
-                                    or click to browse your computer. Maximum file size: 50MB.
-                                </p>
-                            </div>
-                        </>
-                    )}
+                                <div className="w-full max-w-sm px-8">
+                                    <div className="h-px bg-luxury-steel/50 relative overflow-hidden">
+                                        <motion.div
+                                            className="h-full bg-luxury-gold"
+                                            initial={{ width: '0%' }}
+                                            animate={{ width: `${progress}%` }}
+                                            transition={{ duration: 0.3, ease: easeLuxury }}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] font-semibold text-luxury-gold/80 mt-4 text-center tracking-ultra-wide">{progress}% COMPLETE</p>
+                                </div>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="idle"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.4, ease: easeLuxury }}
+                                className="flex flex-col items-center space-y-8"
+                            >
+                                <div className="w-16 h-16 border border-luxury-steel/40 flex items-center justify-center text-luxury-muted/40 transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] hover:border-luxury-gold/40 hover:text-luxury-gold/60">
+                                    <Upload className="h-6 w-6" />
+                                </div>
+                                <div className="text-center space-y-3">
+                                    <p className="text-lg font-display text-luxury-cream">
+                                        Submit Your Creation
+                                    </p>
+                                    <p className="text-xs text-luxury-muted uppercase tracking-ultra-wide max-w-xs mx-auto leading-relaxed">
+                                        Present your work for analysis and permanent safeguarding
+                                    </p>
+                                    <p className="text-[10px] text-luxury-muted/50 uppercase tracking-widest">
+                                        Originals up to 50MB
+                                    </p>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
-                {error && (
-                    <div className="mt-8 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 animate-shake">
-                        <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
-                        <p className="text-red-600 text-sm font-semibold">{error}</p>
-                    </div>
-                )}
+                <AnimatePresence>
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.4, ease: easeLuxury }}
+                            className="overflow-hidden"
+                        >
+                            <div className="px-8 pb-8">
+                                <div className="flex items-center gap-3 py-4 border-t border-luxury-steel/30" role="alert">
+                                    <AlertCircle className="h-4 w-4 text-luxury-gold/80 shrink-0" />
+                                    <p className="text-luxury-gold/80 text-xs uppercase tracking-wider">{error}</p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
-        </div>
+        </motion.div>
     );
 }
-

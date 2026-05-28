@@ -1,0 +1,23 @@
+[
+  {
+    "name": "search_googlelogo_color_272_artwork",
+    "image_type_hint": "artwork",
+    "trigger_keywords": [
+      "Google"
+    ],
+    "strategy": {
+      "engines": [
+        "reverse_image",
+        "web",
+        "image",
+        "social_platforms"
+      ],
+      "threshold": 0.6,
+      "keyword_enabled": true
+    },
+    "success_count": 1,
+    "failure_count": 0,
+    "last_used": "2026-05-22T00:41:01.158519+00:00",
+    "created_at": "2026-05-22T00:41:01.158519+00:00"
+  }
+]

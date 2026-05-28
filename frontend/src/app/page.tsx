@@ -1,353 +1,328 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Shield, Zap, Globe, Lock, Play, Search, BookOpen } from "lucide-react";
-import Logo from "@/components/common/Logo";
+import Image from "next/image";
+import { ArrowRight, Shield, Eye, Gavel, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { ScrollReveal, TextReveal, SpotlightCard } from "@/components/animation";
+import FadeEffect from "@/components/animation/FadeEffect";
+import SlideEffect from "@/components/animation/SlideEffect";
+import Badge from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import StructuredData from "@/components/seo/StructuredData";
-import { useState, useEffect } from "react";
-import { apiClient } from "@/lib/api-client";
-import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
-    const [isScrolled, setIsScrolled] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [user, setUser] = useState<{ full_name: string } | null>(null);
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-        const token = localStorage.getItem("access_token");
-        const cachedName = localStorage.getItem("user_full_name");
-
-        setIsLoggedIn(!!token);
-        if (cachedName) {
-            setUser({ full_name: cachedName });
-        }
-
-        if (token) {
-            apiClient.getUserProfile()
-                .then(profile => {
-                    setUser(profile);
-                    if (profile.full_name) {
-                        localStorage.setItem("user_full_name", profile.full_name);
-                    }
-                })
-                .catch(err => console.error("Failed to load user profile", err));
-        }
-
-        const handleScroll = () => setIsScrolled(window.scrollY > 50);
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
-
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1,
-                delayChildren: 0.3,
-            },
-        },
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.6 }
-        },
-    };
-
     return (
-        <div className="relative min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 overflow-x-hidden font-sans">
+        <>
             <StructuredData />
 
-            {/* Persistent Grid Background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
-                <div className="absolute inset-0 bg-[#050505] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,transparent_20%,black)]" />
-                <div className="absolute inset-x-0 top-0 h-[800px] bg-gradient-to-b from-purple-500/10 via-transparent to-transparent opacity-60" />
+            {/* ===== HERO ===== */}
+            <section className="relative h-screen w-full overflow-hidden bg-[#080808]">
+                <div className="absolute inset-0">
+                    <Image
+                        src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1920&q=85"
+                        alt=""
+                        fill
+                        sizes="100vw"
+                        priority
+                        className="object-cover"
+                    />
+                    <div className="absolute inset-0 mesh-gradient" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-black/60 to-black/40" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/50" />
+                    <div className="absolute inset-0 opacity-[0.015] noise-overlay" />
+                </div>
 
-                {/* Animated Glow Spot */}
-                <motion.div
-                    animate={{
-                        scale: [1, 1.2, 1],
-                        opacity: [0.3, 0.5, 0.3],
-                    }}
-                    transition={{
-                        duration: 8,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                    }}
-                    className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-500/20 blur-[120px] rounded-full"
-                />
-            </div>
+                <div className="relative z-10 h-full flex flex-col justify-center px-8 md:px-20">
+                    <div className="max-w-4xl">
+                        <SlideEffect delay={0.05}>
+                            <Badge text="Digital Content Protection" className="mb-8" />
+                        </SlideEffect>
 
-            {/* Top Navigation */}
-            <nav
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "py-4 bg-black/60 backdrop-blur-xl border-b border-white/5" : "py-8 bg-transparent"
-                    }`}
-            >
-                <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2.5 group">
-                        <Logo className="w-9 h-9 group-hover:scale-105 transition-transform" />
-                        <span className="text-2xl font-black tracking-tighter uppercase italic">CVBER</span>
-                    </Link>
+                        <h1 className="font-display text-6xl md:text-8xl lg:text-9xl font-bold text-white leading-[0.85] mb-6 tracking-tight">
+                            <TextReveal per="word" stagger={0.01} delay={0.1} variant="slide">
+                                Protect Your Art.
+                            </TextReveal>
+                            <br />
+                            <span className="bg-gradient-to-r from-[#C9A962] via-[#D4B97A] to-[#C9A962] bg-clip-text text-transparent">
+                                <TextReveal per="word" stagger={0.01} delay={0.2} variant="blur">
+                                    Own Your Future.
+                                </TextReveal>
+                            </span>
+                        </h1>
 
-                    <div className="hidden md:flex items-center gap-10 text-[13px] font-bold uppercase tracking-widest text-zinc-500">
+                        <ScrollReveal variant="fade-up" delay={0.08} amount={0.05}>
+                            <p className="text-base md:text-lg text-[#F5F0EB]/40 font-sans font-light max-w-xl mb-10">
+                                Provenance certificates, real-time theft monitoring, and automated DMCA enforcement — all in one platform.
+                            </p>
+                        </ScrollReveal>
+
+                        <div className="flex flex-wrap items-center gap-4">
+                            <ScrollReveal variant="fade-up" delay={0.1} amount={0.05}>
+                                <Link href="/register">
+                                    <Button variant="primary" size="lg" className="gap-3 group">
+                                        Begin Protection <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                                </Link>
+                            </ScrollReveal>
+                            <ScrollReveal variant="fade-up" delay={0.12} amount={0.05}>
+                                <Link href="/features">
+                                    <Button variant="secondary" size="lg">
+                                        Explore Features
+                                    </Button>
+                                </Link>
+                            </ScrollReveal>
+                        </div>
+                        </div>
+
+                    <SlideEffect delay={0.15} className="absolute bottom-12 left-8 md:left-20">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-px bg-[#C9A962]/40" />
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-white/30">Scroll</span>
+                        </div>
+                    </SlideEffect>
+                </div>
+            </section>
+
+            {/* ===== WHAT WE DO ===== */}
+            <section className="py-28 md:py-36 px-8 md:px-20 bg-[#080808] relative">
+                <div className="absolute inset-0 bg-gradient-to-b from-[#C9A962]/[0.02] to-transparent pointer-events-none" />
+                <div className="max-w-7xl mx-auto relative z-10">
+                    <ScrollReveal variant="blur-in" className="text-center mb-20">
+                        <Badge number={1} text="What We Do" className="mb-6" />
+                        <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
+                            Three pillars of{" "}
+                            <span className="text-gradient-gold">digital protection</span>
+                        </h2>
+                    </ScrollReveal>
+
+                    <div className="grid md:grid-cols-3 gap-6 md:gap-8">
                         {[
-                            { name: "Features", href: "/features" },
-                            { name: "How It Works", href: "/how-it-works" },
-                            { name: "Art Hub", href: "/art-hub" },
-                            { name: "Verify", href: "/verify" }
-                        ].map((item) => (
-                            <Link key={item.name} href={item.href} className="hover:text-white transition-colors">
-                                {item.name}
-                            </Link>
+                            {
+                                icon: Shield, title: "Provenance",
+                                desc: "Cryptographic proof of ownership embedded into your files. C2PA-compliant, tamper-proof, verifiable across any platform.",
+                                image: "https://images.unsplash.com/photo-1501088430049-ac71c51e8f07?auto=format&fit=crop&w=800&q=80"
+                            },
+                            {
+                                icon: Eye, title: "Monitoring",
+                                desc: "Continuous web surveillance detects your work across marketplaces, social media, and AI training datasets. 24/7 real-time coverage.",
+                                image: "https://images.unsplash.com/photo-1596541223130-5d31a73a6b8c?auto=format&fit=crop&w=800&q=80"
+                            },
+                            {
+                                icon: Gavel, title: "Enforcement",
+                                desc: "Automated DMCA takedowns to 12,000+ platforms. Legal-grade notices generated in seconds. From detection to resolution.",
+                                image: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=800&q=80"
+                            },
+                        ].map((item, i) => (
+                            <ScrollReveal key={i} variant="flip-up" delay={i * 0.03} amount={0.05}>
+                                <SpotlightCard
+                                    spotlightColor="rgba(201, 169, 98, 0.1)"
+                                    className="group bg-[#111111] border border-white/[0.06] hover:border-[#C9A962]/20 transition-all duration-300 h-full"
+                                >
+                                    <div className="h-52 overflow-hidden relative">
+                                        <img
+                                            src={item.image}
+                                            alt=""
+                                            loading="lazy"
+                                            decoding="async"
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-transparent to-transparent" />
+                                        <div className="absolute inset-0 frame-gold" />
+                                    </div>
+                                    <div className="p-8 md:p-10">
+                                        <div className="w-12 h-12 rounded-full border border-[#C9A962]/25 flex items-center justify-center mb-6 group-hover:border-[#C9A962]/50 group-hover:bg-[#C9A962]/5 transition-all duration-200">
+                                            <item.icon className="w-5 h-5 text-[#C9A962]" />
+                                        </div>
+                                        <h3 className="font-display text-2xl font-bold text-white mb-3">{item.title}</h3>
+                                        <p className="text-[#F5F0EB]/40 font-sans text-sm leading-relaxed">{item.desc}</p>
+                                    </div>
+                                </SpotlightCard>
+                            </ScrollReveal>
                         ))}
                     </div>
-
-                    <div className="flex items-center gap-2">
-                        {isLoggedIn ? (
-                            <div className="flex items-center gap-3 pl-4 border-l border-white/10">
-                                <div className="flex flex-col items-end hidden sm:flex">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500/80 leading-none mb-1">Active Session</span>
-                                    <span className="text-sm font-bold text-white tracking-tight">{user?.full_name || "User"}</span>
-                                </div>
-                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-purple-500/20 border border-white/10 hover:scale-105 transition-transform cursor-pointer">
-                                    {(user?.full_name || "U").split(' ').map(n => n[0]).join('').toUpperCase()}
-                                </div>
-                            </div>
-                        ) : (
-                            <>
-                                <Link
-                                    href="/login"
-                                    className="hidden sm:block px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors"
-                                >
-                                    Log in
-                                </Link>
-                                <Link
-                                    href="/register"
-                                    className="px-8 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition-all active:scale-95 shadow-[0_4px_20px_rgba(255,255,255,0.2)]"
-                                >
-                                    Get Started
-                                </Link>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </nav>
-
-            {/* Hero Section */}
-            <section className="relative pt-[20vh] pb-32 px-6 z-10 flex flex-col items-center text-center">
-                <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="flex flex-col items-center"
-                >
-                    <motion.div
-                        variants={itemVariants}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-10"
-                    >
-                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
-                        Absolute Digital Identity Defense
-                    </motion.div>
-
-                    <motion.h1
-                        variants={itemVariants}
-                        className="text-6xl md:text-[100px] lg:text-[120px] font-black tracking-tighter leading-[0.9] mb-12 max-w-5xl bg-gradient-to-b from-white via-white to-white/40 bg-clip-text text-transparent italic"
-                    >
-                        OWN YOUR<br />CREATIVE SOUL.
-                    </motion.h1>
-
-                    <motion.p
-                        variants={itemVariants}
-                        className="text-lg md:text-xl text-zinc-500 max-w-2xl mb-14 leading-relaxed font-medium"
-                    >
-                        The world's first automated neural defense engine.
-                        Protect your art from AI scraping, fraud, and unauthorized
-                        ingestion with enterprise-grade provenance.
-                    </motion.p>
-
-                    <motion.div
-                        variants={itemVariants}
-                        className="flex flex-col sm:flex-row items-center gap-6"
-                    >
-                        <Link
-                            href="/register"
-                            className="group px-10 py-5 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all flex items-center gap-3 active:scale-95 shadow-[0_20px_40px_rgba(255,255,255,0.1)]"
-                        >
-                            Protect My Assets
-                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                    </motion.div>
-                </motion.div>
-            </section>
-
-            {/* Social Proof Bar */}
-            <section className="relative z-10 py-24 border-y border-white/5 bg-white/[0.01]">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-12 opacity-40 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-1000 cursor-default">
-                        <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                            <span className="text-4xl font-black tracking-tighter mb-1">10,000+</span>
-                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest block">Global Assets</span>
-                        </div>
-                        <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                            <span className="text-4xl font-black tracking-tighter mb-1">24%</span>
-                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest block">Theft Reduction</span>
-                        </div>
-                        <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                            <span className="text-4xl font-black tracking-tighter mb-1">99.9%</span>
-                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest block">Neural Accuracy</span>
-                        </div>
-                        <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                            <span className="text-4xl font-black tracking-tighter mb-1">PROVEN</span>
-                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest block">C2PA Protocol</span>
-                        </div>
-                    </div>
                 </div>
             </section>
 
-            {/* Feature Bento Grid */}
-            <section id="features" className="relative z-10 py-40 px-6">
-                <div className="max-w-7xl mx-auto">
-                    <div className="mb-24">
-                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase italic">The Anatomy of<br />True Provenance</h2>
-                        <p className="text-zinc-500 max-w-md font-medium text-lg">Sophisticated art security, simplified for the next generation of creators.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                        {/* 1. Neural Monitoring - Large Card */}
-                        <motion.div
-                            whileHover={{ y: -8 }}
-                            className="md:col-span-8 group relative bg-[#0D0D10] border border-white/5 rounded-[3rem] p-12 overflow-hidden flex flex-col justify-between min-h-[500px]"
-                        >
-                            <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-30 transition-opacity">
-                                <img src="/assets/neural-defense.png" alt="Neural Defense Visualization" className="w-full h-full object-cover grayscale" />
-                            </div>
-                            <div className="relative z-10">
-                                <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-10">
-                                    <Zap className="w-8 h-8 text-purple-500" />
-                                </div>
-                                <h3 className="text-4xl font-black tracking-tight mb-6 uppercase">Neural-Net Monitoring</h3>
-                                <p className="text-xl text-zinc-400 max-w-sm font-medium leading-relaxed">Continuous deep-web scanning detects unauthorized usage of your digital fingerprints across social platforms and marketplaces.</p>
-                            </div>
-                            <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_100%_0%,rgba(168,85,247,0.1),transparent_60%)] pointer-events-none" />
-                        </motion.div>
-
-                        {/* 2. Verify Card */}
-                        <motion.div
-                            whileHover={{ y: -8 }}
-                            className="md:col-span-4 group relative bg-[#0D0D10] border border-white/5 rounded-[3rem] p-12 flex flex-col justify-between overflow-hidden min-h-[500px]"
-                        >
-                            <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity">
-                                <img src="/assets/verify.png" alt="Verify Assets Visual" className="w-full h-full object-cover" />
-                            </div>
-                            <div className="relative z-10">
-                                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-10">
-                                    <Search className="w-6 h-6 text-zinc-400" />
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-black tracking-tight mb-4 uppercase">Asset Verification</h3>
-                                    <p className="text-zinc-500 font-medium leading-relaxed">Instantly verify the origin of any file using our decentralized C2PA validator. Proof in seconds.</p>
-                                </div>
-                            </div>
-                            <Link href="/verify" className="relative z-10 mt-8 text-xs font-bold uppercase tracking-widest text-purple-500 flex items-center gap-2 group/link">
-                                Launch Validator <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
+            {/* ===== SHOWCASE 1 — Provenance ===== */}
+            <section className="bg-[#080808] border-t border-white/[0.04]">
+                <div className="grid md:grid-cols-2 min-h-[600px]">
+                    <ScrollReveal variant="fade-right" className="relative overflow-hidden order-2 md:order-1 flex items-center p-10 md:p-16 lg:p-20">
+                        <div className="max-w-lg">
+                            <Badge number={2} text="Provenance" className="mb-6" />
+                            <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                                Every creation<br />
+                                <span className="text-gradient-gold">has a signature</span>
+                            </h2>
+                            <p className="text-[#F5F0EB]/40 font-sans text-base leading-relaxed mb-8">
+                                C2PA-compliant cryptographic certificates embedded directly into your digital files. Verifiable authorship, cross-platform, forever.
+                            </p>
+                            <div className="h-px w-full bg-gradient-to-r from-[#C9A962]/20 to-transparent mb-8" />
+                            <Link href="/how-it-works">
+                                <Button variant="gold" className="gap-2 group">
+                                    Learn the protocol <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                                </Button>
                             </Link>
-                        </motion.div>
+                        </div>
+                    </ScrollReveal>
 
-                        {/* 3. Art Hub Card */}
-                        <motion.div
-                            whileHover={{ y: -8 }}
-                            className="md:col-span-4 group relative bg-[#0D0D10] border border-white/5 rounded-[3rem] p-12 flex flex-col justify-between overflow-hidden min-h-[500px]"
-                        >
-                            <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity">
-                                <img src="/assets/art-hub.png" alt="Art Hub Visual" className="w-full h-full object-cover" />
-                            </div>
-                            <div className="relative z-10">
-                                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-10">
-                                    <BookOpen className="w-6 h-6 text-zinc-400" />
-                                </div>
-                                <h3 className="text-2xl font-black tracking-tight mb-4 uppercase">The Art Hub</h3>
-                                <p className="text-zinc-500 font-medium leading-relaxed">Your mission control for art protection. Access DMCA templates, scraping defense guides, and legal toolkits.</p>
-                            </div>
-                            <Link href="/art-hub" className="relative z-10 mt-8 text-xs font-bold uppercase tracking-widest text-purple-500 flex items-center gap-2 group/link">
-                                Enter Hub <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
+                    <ScrollReveal variant="fade-left" className="relative overflow-hidden order-1 md:order-2 min-h-[400px] md:min-h-full frame-gold">
+                        <img
+                            src="https://images.unsplash.com/photo-1501088430049-ac71c51e8f07?auto=format&fit=crop&w=1100&q=85"
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover absolute inset-0"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-l from-black/60 via-black/20 to-transparent md:bg-gradient-to-r" />
+                        <FadeEffect position="bottom" />
+                    </ScrollReveal>
+                </div>
+            </section>
+
+            {/* ===== SHOWCASE 2 — Monitoring ===== */}
+            <section className="bg-[#080808] border-t border-white/[0.04]">
+                <div className="grid md:grid-cols-2 min-h-[600px]">
+                    <ScrollReveal variant="fade-right" className="relative overflow-hidden min-h-[400px] md:min-h-full frame-gold">
+                        <img
+                            src="https://images.unsplash.com/photo-1596541223130-5d31a73a6b8c?auto=format&fit=crop&w=1100&q=85"
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover absolute inset-0"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+                        <FadeEffect position="bottom" />
+                    </ScrollReveal>
+
+                    <ScrollReveal variant="fade-left" className="flex items-center p-10 md:p-16 lg:p-20">
+                        <div className="max-w-lg">
+                            <Badge number={3} text="Monitoring" className="mb-6" />
+                            <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                                We scan the web<br />
+                                <span className="text-gradient-gold">so you don&apos;t have to</span>
+                            </h2>
+                            <p className="text-[#F5F0EB]/40 font-sans text-base leading-relaxed mb-8">
+                                Neural monitoring detects your work across marketplaces, social platforms, and AI training datasets in real-time.
+                            </p>
+                            <div className="h-px w-full bg-gradient-to-r from-[#C9A962]/20 to-transparent mb-8" />
+                            <Link href="/features">
+                                <Button variant="gold" className="gap-2 group">
+                                    View features <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                                </Button>
                             </Link>
-                        </motion.div>
+                        </div>
+                    </ScrollReveal>
+                </div>
+            </section>
 
-                        {/* 4. Universal SDK - Large Card */}
-                        <motion.div
-                            whileHover={{ y: -8 }}
-                            className="md:col-span-8 group relative bg-[#0D0D10] border border-white/5 rounded-[3rem] p-12 flex flex-col md:flex-row items-start md:items-center justify-between overflow-hidden relative min-h-[500px]"
-                        >
-                            <div className="relative z-10 max-w-sm">
-                                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-10">
-                                    <Shield className="w-6 h-6 text-zinc-400" />
+            {/* ===== SHOWCASE 3 — Enforcement ===== */}
+            <section className="bg-[#080808] border-t border-white/[0.04]">
+                <div className="grid md:grid-cols-2 min-h-[600px]">
+                    <ScrollReveal variant="fade-right" className="order-2 md:order-1 flex items-center p-10 md:p-16 lg:p-20">
+                        <div className="max-w-lg">
+                            <Badge number={4} text="Enforcement" className="mb-6" />
+                            <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                                Take action<br />
+                                <span className="text-gradient-gold">at scale</span>
+                            </h2>
+                            <p className="text-[#F5F0EB]/40 font-sans text-base leading-relaxed mb-8">
+                                Generate legally-compliant DMCA takedown notices for 12,000+ platforms in minutes. From detection to resolution, fully automated.
+                            </p>
+                            <div className="h-px w-full bg-gradient-to-r from-[#C9A962]/20 to-transparent mb-8" />
+                            <Link href="/register">
+                                <Button variant="gold" className="gap-2 group">
+                                    Start protecting <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                                </Button>
+                            </Link>
+                        </div>
+                    </ScrollReveal>
+
+                    <ScrollReveal variant="fade-left" className="relative overflow-hidden order-1 md:order-2 min-h-[400px] md:min-h-full frame-gold">
+                        <img
+                            src="https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=1100&q=85"
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover absolute inset-0"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-l from-black/60 via-black/20 to-transparent md:bg-gradient-to-r" />
+                        <FadeEffect position="bottom" />
+                    </ScrollReveal>
+                </div>
+            </section>
+
+            {/* ===== STANDARDS & COMPLIANCE ===== */}
+            <section className="py-24 md:py-32 px-8 md:px-20 bg-[#080808] border-t border-white/[0.04] relative">
+                <div className="absolute inset-0 mesh-gradient" />
+                <div className="max-w-7xl mx-auto relative z-10">
+                    <ScrollReveal variant="blur-in" className="text-center mb-16">
+                        <h2 className="font-display text-4xl md:text-5xl font-bold text-white">
+                            Built on <span className="text-gradient-gold">industry standards</span>
+                        </h2>
+                    </ScrollReveal>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+                        {[
+                            { icon: "C2PA", title: "C2PA Compliant", desc: "Content credentials and provenance signing per Coalition for Content Provenance and Authenticity specifications." },
+                            { icon: "SHA-256", title: "Blockchain Anchored", desc: "Cryptographic hashes timestamped on the Bitcoin blockchain via OpenTimestamps protocol." },
+                            { icon: "DMCA", title: "Legal Enforcement", desc: "Automated DMCA takedown generation for 12,000+ platforms with full legal compliance." },
+                            { icon: "ISO", title: "Audit Trail", desc: "Append-only hash-chained audit records admissible as evidence in legal proceedings." },
+                        ].map((item, i) => (
+                            <ScrollReveal key={i} variant="zoom-in" delay={i * 0.02} amount={0.05}>
+                                <div className="border border-white/[0.06] hover:border-[#C9A962]/20 transition-all duration-300 p-8 flex flex-col items-start">
+                                    <div className="text-[11px] font-bold tracking-[0.2em] text-[#C9A962] mb-4 font-sans">{item.icon}</div>
+                                    <h3 className="font-display text-base font-bold text-white mb-2">{item.title}</h3>
+                                    <p className="text-[#F5F0EB]/35 font-sans text-xs leading-relaxed">{item.desc}</p>
                                 </div>
-                                <h3 className="text-4xl font-black tracking-tight mb-6 uppercase">Universal Defense SDK</h3>
-                                <p className="text-lg text-zinc-500 font-medium leading-relaxed">Protect your entire portfolio workflow with two lines of code. Automated reporting and provenance injection built-in.</p>
-                            </div>
-                            <div className="mt-8 md:mt-0 relative z-10 p-8 rounded-3xl bg-black/80 border border-white/5 font-mono text-xs text-purple-400/60 leading-relaxed backdrop-blur-md">
-                                <pre className="whitespace-pre-wrap">
-                                    {`const defense = await Cvber.init({
-  vault: "./assets/*",
-  autoReport: true,
-  monitor: true
-});`}
-                                </pre>
-                            </div>
-                            <div className="absolute inset-0 bg-gradient-to-t from-purple-500/5 to-transparent pointer-events-none" />
-                        </motion.div>
+                            </ScrollReveal>
+                        ))}
                     </div>
                 </div>
             </section>
 
-            {/* Final CTA */}
-            <section className="relative z-10 py-40 px-6">
-                <div className="max-w-5xl mx-auto rounded-[4rem] bg-gradient-to-br from-purple-600 to-purple-800 p-16 md:p-24 text-center overflow-hidden relative shadow-[0_40px_100px_rgba(168,85,247,0.3)]">
-                    <div className="relative z-10 flex flex-col items-center">
-                        <h2 className="text-5xl md:text-7xl font-black tracking-tighter mb-8 uppercase italic leading-none">Join the Resistance.</h2>
-                        <p className="text-lg text-purple-100/70 max-w-xl mb-12 font-medium">The era of unchecked art theft is over. Reclaim your digital sovereignty today with CVBER.</p>
-                        <Link
-                            href="/register"
-                            className="px-12 py-6 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all flex items-center gap-3 active:scale-95 shadow-xl shadow-black/20"
-                        >
-                            Secure Your Creative Soul
-                            <ArrowRight className="w-5 h-5" />
+            {/* ===== FOUNDER STORY (hidden, crawlable by search engines) ===== */}
+            <section aria-label="Founder Story" className="sr-only" role="region">
+                <h2>Our Story</h2>
+                <p>CVBER was founded by Ayush, a creator who refused to lose. After discovering their work scraped into AI training datasets without consent, credit, or compensation, they built the platform they wished existed: one automated shield for every creator who refuses to be erased by the machine.</p>
+            </section>
+
+            {/* ===== FINAL CTA ===== */}
+            <section className="relative py-32 md:py-44 px-8 md:px-20 bg-[#080808] text-center overflow-hidden">
+                <div className="absolute inset-0 mesh-gradient" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#C9A962]/[0.04] rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#C9A962]/[0.03] rounded-full blur-2xl pointer-events-none" />
+
+                <div className="max-w-3xl mx-auto relative z-10">
+                    <ScrollReveal variant="blur-in">
+                        <Badge text="Get Started" className="mb-8" />
+                    </ScrollReveal>
+
+                    <ScrollReveal variant="slide-up-spring">
+                        <h2 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
+                            <span className="text-gradient-cream">Ready to protect</span>
+                            <br />
+                            <span className="text-gradient-gold">your creative work?</span>
+                        </h2>
+                    </ScrollReveal>
+
+                    <ScrollReveal variant="fade-up" delay={0.02}>
+                        <p className="text-[#F5F0EB]/35 font-sans text-lg mb-12 max-w-lg mx-auto">
+                            Join thousands of artists who trust CVBER for digital provenance and enforcement.
+                        </p>
+                    </ScrollReveal>
+
+                    <ScrollReveal variant="zoom-in" delay={0.05}>
+                        <Link href="/register">
+                            <Button variant="primary" size="lg" className="gap-3 px-14 py-5 group">
+                                <Sparkles className="w-4 h-4" />
+                                Get Started Free
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </Button>
                         </Link>
-                    </div>
-                    {/* Decorative background logo */}
-                    <div className="absolute bottom-0 right-0 p-12 opacity-5 pointer-events-none">
-                        <Logo size="xl" className="w-[400px] h-[400px] -mr-20 -mb-20" />
-                    </div>
+                    </ScrollReveal>
                 </div>
             </section>
-
-            {/* Footer */}
-            <footer className="relative z-10 py-24 border-t border-white/5 px-6">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12 text-zinc-600 font-bold text-[10px] uppercase tracking-[0.3em]">
-                    <div className="flex items-center gap-3 opacity-30 grayscale brightness-200">
-                        <Logo className="w-6 h-6" />
-                        <span className="text-sm font-black tracking-tighter uppercase italic">CVBER</span>
-                    </div>
-
-                    <div className="flex flex-wrap justify-center gap-10">
-                        <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-                        <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-                        <Link href="/contact" className="hover:text-white transition-colors">Support</Link>
-                        <Link href="/art-hub" className="hover:text-white transition-colors">Help</Link>
-                    </div>
-
-                    <div className="opacity-40">
-                        &copy; 2026 CVBER System Inc.
-                    </div>
-                </div>
-            </footer>
-        </div>
+        </>
     );
 }
