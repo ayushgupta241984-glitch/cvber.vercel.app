@@ -39,7 +39,6 @@ except ImportError:
     GROQ_AVAILABLE = False
 
 from openai import AsyncOpenAI
-from app.services.agent_reach_service import fetch_webpage as _fetch_webpage_impl
 
 TOOLS = [
     {
@@ -349,23 +348,6 @@ TOOLS = [
                 "required": ["scan_id"]
             }
         }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "fetch_webpage",
-            "description": "Fetch the content of a public URL as readable Markdown text. Supports any web page. Use this to research links, read articles, check art platforms, or investigate suspicious URLs.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string",
-                        "description": "The public URL to fetch (http/https only)"
-                    }
-                },
-                "required": ["url"]
-            }
-        }
     }
 ]
 
@@ -398,7 +380,6 @@ Available tools (call them when the user's request matches):
 11. get_copy_history — shows all previous copy detections for your files.
 12. register_asset — sets up ongoing automated monitoring for a file.
 13. list_vault_files — shows files in your vault.
-14. fetch_webpage — reads any public URL and returns it as clean Markdown text. Use this to research links, check art platforms, or investigate suspected copies.
 
 Routing guide (call the best tool):
 - "find copies", "find my art", "stolen", "where is my art" → find_image_copies
@@ -410,7 +391,6 @@ Routing guide (call the best tool):
 - "monitor", "watch", "track", "auto scan" → register_asset
 - "history", "past matches", "my copies" → get_copy_history
 - "my files", "list files", "vault" → list_vault_files
-- "fetch", "read link", "check URL", "research this link", "open url" → fetch_webpage
 
 Workflows:
 1. Infringement action: describe_vault_image → find_image_copies → generate_evidence_report → legal_guide → outreach_template
@@ -491,8 +471,6 @@ async def execute_tool(name: str, arguments: dict, user_id: str) -> str:
         return await _get_copy_history(user_id, arguments.get("scan_id", ""), arguments.get("limit", 50))
     elif name == "register_asset":
         return await _register_asset(user_id, arguments.get("scan_id", ""), arguments.get("scan_frequency_hours", 72), arguments.get("priority", "medium"))
-    elif name == "fetch_webpage":
-        return await _fetch_webpage_handler(arguments.get("url", ""))
     return json.dumps({"error": f"Unknown tool: {name}"})
 
 async def _code_interpreter(code: str) -> str:
@@ -632,13 +610,6 @@ async def _register_asset(user_id: str, scan_id: str, scan_frequency_hours: int 
     except Exception as e:
         logger.error(f"register_asset error: {e}")
         return json.dumps({"error": f"Failed to register asset: {str(e)}"})
-
-
-async def _fetch_webpage_handler(url: str) -> str:
-    if not url:
-        return json.dumps({"error": "No URL provided."})
-    content = await _fetch_webpage_impl(url)
-    return json.dumps({"url": url, "content": content})
 
 
 async def _download_image_bytes(image_url: str) -> bytes | None:
