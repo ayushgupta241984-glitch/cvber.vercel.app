@@ -1,11 +1,13 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from datetime import datetime, timedelta
-from jose import JWTError, jwt
+import jwt
+from jwt import InvalidTokenError
 from passlib.context import CryptContext
 from app.supabase_client import get_supabase
 from app.config import settings
 from app.models.schemas import LoginRequest, RegisterRequest, AuthTokens, UserProfile, RefreshRequest
 from app.dependencies import get_current_user
+from app.rate_limiter import limiter
 from uuid import uuid4
 import logging
 
@@ -17,17 +19,22 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 supabase = get_supabase()
 
 
+def _encode_jwt(payload: dict) -> str:
+    token = jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    return token if isinstance(token, str) else token.decode("utf-8")
+
+
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
-    to_encode.update({"exp": expire, "type": "access"})
-    return jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    to_encode.update({"exp": expire, "type": "access", "iss": "cvber-auth", "aud": "cvber-api"})
+    return _encode_jwt(to_encode)
 
 
 def create_refresh_token(data: dict):
     to_encode = data.copy()
-    to_encode.update({"exp": datetime.utcnow() + timedelta(days=30), "type": "refresh"})
-    return jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    to_encode.update({"exp": datetime.utcnow() + timedelta(days=30), "type": "refresh", "iss": "cvber-auth", "aud": "cvber-api"})
+    return _encode_jwt(to_encode)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -39,7 +46,8 @@ def get_password_hash(password: str) -> str:
 
 
 @router.post("/register", response_model=AuthTokens)
-async def register(request: RegisterRequest):
+@limiter.limit("5/minute")
+async def register(_req: Request, request: RegisterRequest):
     try:
         user_attributes = {
             "email": request.email,
@@ -56,6 +64,8 @@ async def register(request: RegisterRequest):
                 raise HTTPException(status_code=409, detail="User already registered")
             if "weak password" in err_msg.lower():
                 raise HTTPException(status_code=400, detail="Password is too weak. Use at least 6 characters.")
+            if "not allowed" in err_msg.lower():
+                raise HTTPException(status_code=400, detail="Registration is disabled. Please enable 'User Signups' in your Supabase dashboard (Authentication > Settings).")
             logger.error(f"Admin create_user failed: {err_msg}")
             raise HTTPException(status_code=400, detail=f"Registration failed: {err_msg}")
 
@@ -106,7 +116,8 @@ async def register(request: RegisterRequest):
 
 
 @router.post("/login", response_model=AuthTokens)
-async def login(request: LoginRequest):
+@limiter.limit("10/minute")
+async def login(_req: Request, request: LoginRequest):
     try:
         auth_response = supabase.auth.sign_in_with_password({
             "email": request.email,
@@ -137,10 +148,14 @@ async def login(request: LoginRequest):
         raise HTTPException(status_code=401, detail="Login failed")
 
 
+# DEV LOGIN REMOVED - Security: using a hardcoded backdoor user with no authentication
+# was a critical vulnerability. Use /auth/login with valid credentials instead.
+
+
 @router.post("/refresh")
 async def refresh_token(request: RefreshRequest):
     try:
-        payload = jwt.decode(request.refresh_token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+        payload = jwt.decode(request.refresh_token, settings.jwt_secret, algorithms=[settings.jwt_algorithm], audience="cvber-api", issuer="cvber-auth", options={"require": ["exp", "aud", "iss"]})
         if payload.get("type") != "refresh":
             raise HTTPException(status_code=401, detail="Invalid refresh token")
 
@@ -158,7 +173,7 @@ async def refresh_token(request: RefreshRequest):
             "token_type": "bearer",
             "expires_in": settings.access_token_expire_minutes * 60
         }
-    except JWTError:
+    except InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
 
@@ -234,22 +249,20 @@ async def oauth_callback(code: str = None, error: str = None, error_description:
 async def get_current_user_profile(current_user: dict = Depends(get_current_user)):
     try:
         response = supabase.table("profiles").select("*").eq("id", current_user["id"]).single().execute()
-
-        if not response.data:
-            return UserProfile(
-                id=current_user["id"],
-                email=current_user.get("email", ""),
-                full_name=None,
-                avatar_url=None,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
-            )
-
-        return response.data
-
+        if response.data:
+            return response.data
     except Exception as e:
         err = str(e)
         if "relation" in err or "42P01" in err:
-            raise HTTPException(status_code=503, detail="Database schema not initialized. Please run migrations.")
-        logger.error(f"Profile fetch error: {err}")
-        raise HTTPException(status_code=500, detail="Failed to fetch profile")
+            logger.warning("Profiles table missing, returning default profile")
+        else:
+            logger.warning(f"Profile fetch error (returning default): {err}")
+
+    return UserProfile(
+        id=current_user["id"],
+        email=current_user.get("email", ""),
+        full_name=None,
+        avatar_url=None,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )

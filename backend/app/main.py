@@ -7,18 +7,16 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
-from app.routers import scan, auth, mentor, enforcement, diagnostics, vault, agent
+from app.rate_limiter import limiter
+from app.routers import scan, auth, mentor, enforcement, diagnostics, vault, agent, leads, feedback
 from app.services.vertex_ai import vertex_ai_service
 from app.services.storage import storage_service
 
 logger = logging.getLogger(__name__)
-
-limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title="CVBER Free API",
@@ -45,9 +43,9 @@ async def add_security_headers(request: Request, call_next):
 app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=[
-        "localhost", "127.0.0.1", "0.0.0.0",
-        "*.cvber.app", "cvber.free.las.app", "*.onrender.com",
-        "*.vercel.app",
+        "localhost", "127.0.0.1",
+        "*.cvber.app", "cvber.free.las.app",
+        "cvber-free-las-app.vercel.app",
     ]
 )
 
@@ -57,7 +55,7 @@ cors_regex = None
 if settings.allowed_origins == "*":
     cors_origins = ["*"]
 else:
-    cors_regex = r"https://.*\.vercel\.app"
+    cors_regex = r"https://cvber-free-las-app\.vercel\.app"
 
 app.add_middleware(
     CORSMiddleware,
@@ -87,6 +85,12 @@ def validate_environment():
     if missing:
         logger.warning(f"Missing or placeholder values for: {', '.join(missing)}")
 
+    svc_key = settings.supabase_service_role_key
+    if svc_key and svc_key.startswith("sb_secret_"):
+        logger.warning("SUPABASE_SERVICE_ROLE_KEY appears to be a real key stored in plaintext. "
+                        "Rotate it immediately in the Supabase dashboard. "
+                        "Never commit real service role keys. Use a secrets manager for production.")
+
     if not settings.google_api_key and not settings.groq_api_key:
         logger.warning("No AI API keys configured. AI features will use mock data.")
 
@@ -101,13 +105,17 @@ async def startup():
     gcp_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
     if gcp_json:
         try:
-            cred_path = settings.google_application_credentials
-            os.makedirs(os.path.dirname(os.path.abspath(cred_path)), exist_ok=True)
-            with open(cred_path, "w") as f:
-                f.write(gcp_json)
-            logger.info(f"GCP credentials initialized at {cred_path}")
+            from supabase import create_client
+            from app.config import settings as s
+            gcp_storage = create_client(s.supabase_url, s.supabase_service_role_key)
+            gcp_storage.table("app_secrets").upsert({
+                "key": "gcp_service_account",
+                "value": gcp_json,
+                "updated_at": datetime.utcnow().isoformat()
+            }).execute()
+            logger.info("GCP credentials stored in Supabase secrets table")
         except Exception as e:
-            logger.error(f"Failed to initialize GCP credentials: {e}")
+            logger.warning(f"Could not store GCP credentials in secrets table: {e}")
 
     try:
         await storage_service.ensure_buckets_exist()
@@ -126,6 +134,8 @@ app.include_router(enforcement.router)
 app.include_router(diagnostics.router)
 app.include_router(vault.router)
 app.include_router(agent.router)
+app.include_router(leads.router)
+app.include_router(feedback.router)
 
 
 @app.get("/")

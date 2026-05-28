@@ -15,7 +15,8 @@ class C2PAService:
     
     def __init__(self):
         self.c2pa_url = settings.c2pa_service_url
-        self.client = httpx.AsyncClient(timeout=30.0)
+        transport = httpx.HTTPTransport(verify=True, retries=1)
+        self.client = httpx.AsyncClient(timeout=30.0, transport=transport)
     
     async def sign_file(
         self,

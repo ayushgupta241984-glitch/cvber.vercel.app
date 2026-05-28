@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Backgro
 from uuid import uuid4, UUID
 from datetime import datetime
 from typing import Optional
-from app.models.schemas import ScanResponse, VerifyResponse, VerifyRequest
+from app.models.schemas import ScanResponse, VerifyResponse, VerifyRequest, ThreatCategory, DetailedFinding
 from app.services.vertex_ai import vertex_ai_service
 from app.services.c2pa_service import c2pa_service, embed_and_store_after_signing
 from app.services.storage import storage_service
@@ -12,6 +12,7 @@ from app.services.web_search import web_search_service
 from app.supabase_client import get_supabase
 from app.config import settings
 from app.dependencies import get_current_user
+import re
 import logging
 
 logger = logging.getLogger(__name__)
@@ -261,11 +262,11 @@ async def scan_file(
         # Add our threat reasons and findings
         for tr in threat_reasons:
             risk_report.threat_categories.append(
-                type('ThreatCategory', (), tr)()
+                ThreatCategory(**{k: v for k, v in tr.items() if k in {"name", "severity", "confidence", "description"}})
             )
         for fd in finding_details:
             risk_report.detailed_findings.append(
-                type('DetailedFinding', (), fd)()
+                DetailedFinding(**{k: v for k, v in fd.items() if k in {"category", "description", "evidence"}})
             )
 
         storage_path = None
@@ -280,9 +281,10 @@ async def scan_file(
             )
         except Exception as store_err:
             logger.warning(f"Supabase storage failed, saving locally: {store_err}")
+            safe_name = re.sub(r'[^\w\.\-]', '_', file.filename)
             local_dir = os.path.join(settings.local_storage_path or "uploads", str(current_user["id"]))
             os.makedirs(local_dir, exist_ok=True)
-            local_path = os.path.join(local_dir, f"{scan_id}_{file.filename}")
+            local_path = os.path.join(local_dir, f"{scan_id}_{safe_name}")
             with open(local_path, "wb") as f:
                 f.write(file_buffer)
             storage_path = local_path

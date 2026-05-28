@@ -1235,8 +1235,13 @@ async def _find_image_copies(scan_id: str, user_id: str) -> str:
             thinking.append("No keywords could be extracted from the image, so I'll rely solely on reverse image search.")
 
         # Run RIS + keyword searches in parallel
+        MAX_RIS_IMAGE_BYTES = 10 * 1024 * 1024
+
         async def _do_ris(img_bytes: bytes = None) -> dict:
             try:
+                if img_bytes and len(img_bytes) > MAX_RIS_IMAGE_BYTES:
+                    logger.warning(f"Image too large for reverse search ({len(img_bytes)} bytes), skipping")
+                    return {"bing": [], "google": [], "yandex": [], "tineye": [], "baidu": [], "duckduckgo": [], "total_matches": 0, "engines_used": []}
                 from app.services.enhanced_reverse_search import enhanced_reverse_search
                 text_q = query if has_vision else ""
                 actual_bytes = img_bytes

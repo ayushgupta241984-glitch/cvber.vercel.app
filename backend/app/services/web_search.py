@@ -82,23 +82,34 @@ class WebSearchService:
         return results
     
     async def _search_by_filename(self, file_name: str) -> List[Dict]:
-        """Try to find similar filenames on search engines (limited fallback)"""
-        # Strip extension and common patterns
+        """Search the web using filename as query"""
         search_term = file_name.rsplit('.', 1)[0] if '.' in file_name else file_name
         search_term = search_term.replace('_', ' ').replace('-', ' ')
-        
-        # Remove common suffixes that aren't helpful
+
         for suffix in ['IMG_', 'DSC_', 'screenshot', 'photo', 'image']:
             if search_term.upper().startswith(suffix):
                 search_term = search_term[len(suffix):].strip()
-        
+
         if len(search_term) < 3:
             return []
-        
-        # This is a placeholder - real implementation would need a search API
-        # For now, we return empty and let the AI handle the uncertainty
-        logger.info(f"Would search web for: {search_term[:50]}")
-        return []
+
+        try:
+            from duckduckgo_search import DDGS
+            results = []
+            with DDGS(timeout=10) as ddgs:
+                for r in ddgs.text(search_term, max_results=10, region="wt-wt", safesearch="off"):
+                    if r.get("href"):
+                        results.append({
+                            "url": r["href"],
+                            "source": "web",
+                            "filename": r.get("title", ""),
+                            "confidence": 0.3,
+                            "snippet": r.get("body", "")
+                        })
+            return results
+        except Exception as e:
+            logger.warning(f"DuckDuckGo filename search failed: {e}")
+            return []
     
     async def find_similar_uploads(self, user_id: str, file_hash: str) -> List[Dict]:
         """Check if THIS USER has uploaded this before"""

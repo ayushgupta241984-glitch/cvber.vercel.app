@@ -13,39 +13,29 @@ router = APIRouter(prefix="/diagnostics", tags=["diagnostics"], dependencies=[De
 
 @router.get("/all")
 async def full_diagnostics():
+    provider_status = vertex_ai_service.get_provider_status()
+    safe_status = {k: {"available": v.get("available", False)} for k, v in provider_status.items() if isinstance(v, dict)}
     return {
         "system": {
             "python_version": platform.python_version(),
-            "platform": platform.platform(),
-            "hostname": platform.node(),
         },
-        "environment": {
-            "supabase_url_configured": bool(settings.supabase_url and "placeholder" not in settings.supabase_url.lower()),
-            "supabase_key_configured": bool(settings.supabase_service_role_key and "placeholder" not in settings.supabase_service_role_key.lower()),
-            "jwt_secret_configured": bool(settings.jwt_secret and "dev-secret" not in settings.jwt_secret.lower()),
-            "groq_key_configured": bool(settings.groq_api_key),
-            "google_key_configured": bool(settings.google_api_key),
-        },
-        "ai_providers": vertex_ai_service.get_provider_status(),
-        "allowed_origins": settings.parsed_allowed_origins,
+        "ai_providers": safe_status,
     }
 
 
 @router.get("/supabase")
 async def check_supabase():
     status = {
-        "url": settings.supabase_url,
-        "key_configured": "placeholder" not in settings.supabase_service_role_key.lower(),
         "connectivity": "unknown"
     }
 
     try:
-        supabase = create_client(settings.supabase_url, settings.supabase_service_role_key)
+        from app.supabase_client import get_supabase
+        supabase = get_supabase()
         resp = supabase.auth.admin.list_users()
         status["connectivity"] = "ok"
-        status["user_count"] = len(resp.users) if hasattr(resp, 'users') else "unknown"
     except Exception as e:
-        status["connectivity"] = f"failed: {str(e)}"
+        status["connectivity"] = "failed"
 
     return status
 
