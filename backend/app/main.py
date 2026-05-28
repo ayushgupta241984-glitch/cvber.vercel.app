@@ -55,7 +55,7 @@ cors_regex = None
 if settings.allowed_origins == "*":
     cors_origins = ["*"]
 else:
-    cors_regex = r"https://cvber-free-las-app\.vercel\.app"
+    cors_regex = r"https://.*\.vercel\.app"
 
 app.add_middleware(
     CORSMiddleware,

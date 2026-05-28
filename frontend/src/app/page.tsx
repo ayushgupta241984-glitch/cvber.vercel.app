@@ -9,37 +9,6 @@ import { apiClient } from "@/lib/api-client";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
-    const [isScrolled, setIsScrolled] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [user, setUser] = useState<{ full_name: string } | null>(null);
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-        const token = localStorage.getItem("access_token");
-        const cachedName = localStorage.getItem("user_full_name");
-
-        setIsLoggedIn(!!token);
-        if (cachedName) {
-            setUser({ full_name: cachedName });
-        }
-
-        if (token) {
-            apiClient.getUserProfile()
-                .then(profile => {
-                    setUser(profile);
-                    if (profile.full_name) {
-                        localStorage.setItem("user_full_name", profile.full_name);
-                    }
-                })
-                .catch(err => console.error("Failed to load user profile", err));
-        }
-
-        const handleScroll = () => setIsScrolled(window.scrollY > 50);
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
-
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -84,61 +53,6 @@ export default function Home() {
                     className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-500/20 blur-[120px] rounded-full"
                 />
             </div>
-
-            {/* Top Navigation */}
-            <nav
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? "py-4 bg-black/60 backdrop-blur-xl border-b border-white/5" : "py-8 bg-transparent"
-                    }`}
-            >
-                <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2.5 group">
-                        <Logo className="w-9 h-9 group-hover:scale-105 transition-transform" />
-                        <span className="text-2xl font-black tracking-tighter uppercase italic">CVBER</span>
-                    </Link>
-
-                    <div className="hidden md:flex items-center gap-10 text-[13px] font-bold uppercase tracking-widest text-zinc-500">
-                        {[
-                            { name: "Features", href: "/features" },
-                            { name: "How It Works", href: "/how-it-works" },
-                            { name: "Art Hub", href: "/art-hub" },
-                            { name: "Verify", href: "/verify" }
-                        ].map((item) => (
-                            <Link key={item.name} href={item.href} className="hover:text-white transition-colors">
-                                {item.name}
-                            </Link>
-                        ))}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        {isLoggedIn ? (
-                            <div className="flex items-center gap-3 pl-4 border-l border-white/10">
-                                <div className="flex flex-col items-end hidden sm:flex">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500/80 leading-none mb-1">Active Session</span>
-                                    <span className="text-sm font-bold text-white tracking-tight">{user?.full_name || "User"}</span>
-                                </div>
-                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-purple-500/20 border border-white/10 hover:scale-105 transition-transform cursor-pointer">
-                                    {(user?.full_name || "U").split(' ').map(n => n[0]).join('').toUpperCase()}
-                                </div>
-                            </div>
-                        ) : (
-                            <>
-                                <Link
-                                    href="/login"
-                                    className="hidden sm:block px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors"
-                                >
-                                    Log in
-                                </Link>
-                                <Link
-                                    href="/register"
-                                    className="px-8 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition-all active:scale-95 shadow-[0_4px_20px_rgba(255,255,255,0.2)]"
-                                >
-                                    Get Started
-                                </Link>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </nav>
 
             {/* Hero Section */}
             <section className="relative pt-[20vh] pb-32 px-6 z-10 flex flex-col items-center text-center">
