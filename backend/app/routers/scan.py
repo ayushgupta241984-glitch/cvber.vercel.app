@@ -7,6 +7,7 @@ from app.services.vertex_ai import vertex_ai_service
 from app.services.c2pa_service import c2pa_service, embed_and_store_after_signing
 from app.services.storage import storage_service
 from app.services.metadata_engine import metadata_engine
+import os
 from app.services.web_search import web_search_service
 from app.supabase_client import get_supabase
 from app.config import settings
@@ -182,91 +183,82 @@ async def scan_file(
 
         # Calculate hash FIRST
         original_hash = storage_service.calculate_hash(file_buffer)
-        
-        # START with search results - this is what determines originality
-        originality_score = 50.0  # Default: unknown
-        threat_reasons = []
-        finding_details = []
-        
+
+        # Check for existing vault duplicates for originality scoring
+        existing_vault_matches = None
         try:
-            # Check if THIS USER has uploaded this exact image before
-            user_prior = await web_search_service.find_similar_uploads(
+            existing_vault_matches = await web_search_service.find_similar_uploads(
                 user_id=current_user["id"],
                 file_hash=original_hash
             )
-            if user_prior and len(user_prior) > 0:
-                originality_score = 10.0
-                threat_reasons.append({
-                    "name": "Duplicate Upload",
-                    "severity": "medium",
-                    "confidence": 1.0,
-                    "description": f"You uploaded this exact image before ({len(user_prior)} times)"
-                })
-                finding_details.append({
-                    "category": "Your Uploads",
-                    "description": f"Found {len(user_prior)} previous uploads of same file",
-                    "evidence": f"scan_ids: {', '.join([p['scan_id'][:8] for p in user_prior[:3]])}"
-                })
         except Exception as e:
             logger.warning(f"User prior check failed: {e}")
-        
-        # Only check global if user didn't upload before
-        if originality_score > 20:
-            try:
-                web_results = await web_search_service.check_image_online(
-                    file_hash=original_hash,
-                    file_name=file.filename
+
+        # === MULTI-FACTOR ORIGINALITY ENGINE ===
+        threat_reasons = []
+        finding_details = []
+
+        try:
+            from app.services.originality_engine import originality_engine
+            orig_result = await originality_engine.compute_originality(
+                file_bytes=file_buffer,
+                file_name=file.filename,
+                file_hash=original_hash,
+                user_id=current_user["id"],
+                has_c2pa=has_c2pa,
+                has_blockchain_proof=False,
+                existing_vault_matches=existing_vault_matches,
+            )
+            originality_score = orig_result["originality_score"]
+            logger.info(f"Originality score: {originality_score} (confidence: {orig_result['confidence']})")
+
+            for factor_name, factor_data in orig_result.get("factors", {}).items():
+                score = factor_data.get("score", 50)
+                if score < 60:
+                    severity = "high" if score < 20 else "medium"
+                else:
+                    severity = "low"
+                threat_reasons.append({
+                    "name": factor_name.replace("_", " ").title(),
+                    "severity": severity,
+                    "confidence": max(0.5, (100 - score) / 100),
+                    "description": factor_data.get("details", ""),
+                })
+                finding_details.append({
+                    "category": factor_name.replace("_", " ").title(),
+                    "description": factor_data.get("details", ""),
+                    "evidence": f"score: {score}/100 (weight: {factor_data.get('weight', 0)})",
+                })
+
+            # Run reverse search in background for full originality (non-blocking)
+            if orig_result.get("reverse_search_needed"):
+                asyncio.create_task(
+                    originality_engine.compute_full_originality_with_search(
+                        file_bytes=file_buffer,
+                        file_name=file.filename,
+                        file_hash=original_hash,
+                        user_id=current_user["id"],
+                        has_c2pa=has_c2pa,
+                        has_blockchain_proof=False,
+                        existing_vault_matches=existing_vault_matches,
+                    )
                 )
-                
-                if web_results.get("matches_found", 0) > 0:
-                    originality_score = 5.0
-                    threat_reasons.append({
-                        "name": "Found Online",
-                        "severity": "high",
-                        "confidence": 0.9,
-                        "description": web_results.get("explanation", f"Found {web_results['matches_found']} matches")
-                    })
-                    finding_details.append({
-                        "category": "Web Search",
-                        "description": web_results.get("search_method", "unknown"),
-                        "evidence": f"{web_results['matches_found']} matches"
-                    })
-            except Exception as e:
-                logger.warning(f"Web search failed: {e}")
-        
-        # If still at default, do basic pixel analysis for screenshot detection
-        if originality_score == 50.0:
-            try:
-                from app.services.vertex_ai import _analyze_image_for_screenshot
-                img_analysis = _analyze_image_for_screenshot(file_buffer)
-                if img_analysis.get("is_screenshot"):
-                    originality_score = 15.0
-                    threat_reasons.append({
-                        "name": "Screenshot Detected",
-                        "severity": "medium",
-                        "confidence": 0.7,
-                        "description": f"Detected screenshot via pixel analysis"
-                    })
-                    finding_details.append({
-                        "category": "Image Analysis",
-                        "description": f"Screenshot indicators: {img_analysis.get('reasons', [])}",
-                        "evidence": f"score: {img_analysis.get('score')}"
-                    })
-            except Exception:
-                pass
-        
-        # Now get basic AI risk report (without originality - we've handled that)
+        except Exception as e:
+            logger.warning(f"Originality engine failed, falling back to basic: {e}")
+            originality_score = 50.0
+
+        # Now get basic AI risk report
         risk_report = await vertex_ai_service.analyze_file_threat(
             file_buffer=file_buffer,
             file_name=file.filename,
             file_type=file_type,
             has_c2pa=has_c2pa
         )
-        
-        # REPLACE originality score with our search-based result
+
+        # Use the multi-factor originality score
         risk_report.originality_score = originality_score
-        
-        # Add our threat reasons
+
+        # Add our threat reasons and findings
         for tr in threat_reasons:
             risk_report.threat_categories.append(
                 type('ThreatCategory', (), tr)()
@@ -286,6 +278,17 @@ async def scan_file(
                 user_id=UUID(current_user["id"]),
                 content_type=file_type
             )
+        except Exception as store_err:
+            logger.warning(f"Supabase storage failed, saving locally: {store_err}")
+            local_dir = os.path.join(settings.local_storage_path or "uploads", str(current_user["id"]))
+            os.makedirs(local_dir, exist_ok=True)
+            local_path = os.path.join(local_dir, f"{scan_id}_{file.filename}")
+            with open(local_path, "wb") as f:
+                f.write(file_buffer)
+            storage_path = local_path
+            logger.info(f"Saved locally: {local_path}")
+
+        try:
             try:
                 # Require proof if screenshot or low originality
                 proof_required = risk_report.is_screenshot or risk_report.originality_score < 50
