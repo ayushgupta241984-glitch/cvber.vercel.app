@@ -56,7 +56,7 @@ async def register(request: Request, body: RegisterRequest):
             "user_metadata": {"full_name": body.full_name or ""}
         }
 
-        if "mock.supabase.co" in settings.supabase_url:
+        if "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url:
             user_id = str(uuid4())
             admin_response = type('obj', (object,), {'user': type('obj', (object,), {'id': user_id})})()
         else:
@@ -78,7 +78,7 @@ async def register(request: Request, body: RegisterRequest):
 
         user_id = admin_response.user.id
 
-        if "mock.supabase.co" in settings.supabase_url:
+        if "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url:
             auth_response = True
         else:
             try:
@@ -126,7 +126,7 @@ async def register(request: Request, body: RegisterRequest):
 @limiter.limit("10/minute")
 async def login(request: Request, body: LoginRequest):
     try:
-        if "mock.supabase.co" in settings.supabase_url:
+        if "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url:
             user_id = str(uuid4())
             auth_response = type('obj', (object,), {'user': type('obj', (object,), {'id': user_id})})()
         else:
