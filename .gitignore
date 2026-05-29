@@ -54,7 +54,98 @@ htmlcov/
 # C2PA
 c2pa-service/signed-files/
 
+# Nested git repo (separate project)
+cvber.free.las.app/
+
 # Secrets
 **/secrets/
 credentials.json
 *.cred
+
+# OpenCode / agent config
+.agents/
+.opencode/
+.playwright-cli/
+AGENTS.md
+skills-lock.json
+
+# Dev docs & plans
+ABOUT_CVBER.md
+FEATURES.md
+IMPLEMENTATION_PLAN.md
+PRD.md
+MIGRATION_GUIDE.md
+MIGRATION.sql
+SESSION_OVERVIEW.md
+DEBUG.md
+FIXING_ERRORS.md
+wobbly-purring-pascal.md
+
+# Standalone projects / nested repos
+Agent-Reach/
+Scrapling/
+company-research-agent/
+cvber-agent/
+cvber-demo-video/
+remotion-cinematic/
+tools/
+ui-ux-pro-max-skill/
+
+# Scripts
+check_code.py
+check_db.py
+create_demo_video.py
+create_test_image.py
+find_query.py
+frontend_check.py
+list_vault.py
+run_migrations.js
+start_server.py
+test_*.py
+verify_backend.py
+apply_dna_migration.py
+create_tables.py
+create_user_final.py
+
+# Generated artwork / images / video
+_test_artwork.png
+test_artwork.png
+*.mp4
+*.wav
+cvber_dashboard.png
+cvber_features.png
+cvber_home.png
+cvber_howitworks.png
+cvber_login.png
+
+# Backend junk
+backend/.cvber_memory/
+backend/BLOCKCHAIN_TEST_RESULTS.md
+backend/launch_backend.vbs
+backend/start_bg.ps1
+backend/requirements-base.txt
+backend/package.json
+backend/package-lock.json
+backend/supabase/
+backend/migrations/
+backend/tests/
+backend/*.bak
+backend/build_err.txt
+backend/build_output.txt
+
+# Frontend junk
+frontend/build_err*.txt
+frontend/build_output.txt
+frontend/package-lock.json
+frontend/tsconfig.tsbuildinfo
+
+# Other config
+.env.example
+render.yaml
+Dockerfile
+
+# GitHub templates / CI
+.github/
+
+# Compliance docs
+docs/
