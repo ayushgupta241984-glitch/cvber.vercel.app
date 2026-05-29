@@ -10,9 +10,9 @@ services:
     healthCheckPath: /health
     envVars:
       - key: SUPABASE_URL
-        sync: false
+        value: "https://fklluemyardnjwcqrzgw.supabase.co"
       - key: SUPABASE_ANON_KEY
-        sync: false
+        value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrbGx1ZW15YXJkbmp3Y3Fyemd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODY3NDYsImV4cCI6MjA4Mjc2Mjc0Nn0.DWwedN58Reit3MG4hIniKquOVzsbeV0Nr63n7Dr0NQ0"
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: JWT_SECRET
