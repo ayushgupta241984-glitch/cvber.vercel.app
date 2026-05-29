@@ -42,11 +42,7 @@ async def add_security_headers(request: Request, call_next):
 
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=[
-        "localhost", "127.0.0.1",
-        "*.cvber.app", "cvber.free.las.app",
-        "cvber-free-las-app.vercel.app",
-    ]
+    allowed_hosts=["*"],
 )
 
 cors_origins = settings.parsed_allowed_origins
