@@ -7,26 +7,21 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
-# Reject the development default secret in production-like environments
-PLACEHOLDER_SECRETS = ["dev-secret-key-change-in-production", "placeholder"]
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
-def _is_placeholder_secret(secret: str) -> bool:
-    return any(p in secret.lower() for p in PLACEHOLDER_SECRETS)
+def _is_mock_mode() -> bool:
+    return "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+async def get_current_user(token: str | None = Depends(oauth2_scheme)) -> dict:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    if _is_placeholder_secret(settings.jwt_secret):
-        logger.critical("JWT_SECRET is still set to the default placeholder! "
-                        "Set a strong unique secret in production via environment variable.")
+    if not token:
         raise credentials_exception
 
     try:

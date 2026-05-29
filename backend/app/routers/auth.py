@@ -19,6 +19,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 supabase = get_supabase()
 
 
+def _is_mock_mode() -> bool:
+    return "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url
+
+
 def _encode_jwt(payload: dict) -> str:
     token = jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
     return token if isinstance(token, str) else token.decode("utf-8")
@@ -56,9 +60,8 @@ async def register(request: Request, body: RegisterRequest):
             "user_metadata": {"full_name": body.full_name or ""}
         }
 
-        if "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url:
+        if _is_mock_mode():
             user_id = str(uuid4())
-            admin_response = type('obj', (object,), {'user': type('obj', (object,), {'id': user_id})})()
         else:
             try:
                 admin_response = supabase.auth.admin.create_user(user_attributes)
@@ -73,38 +76,26 @@ async def register(request: Request, body: RegisterRequest):
                 logger.error(f"Admin create_user failed: {err_msg}")
                 raise HTTPException(status_code=400, detail=f"Registration failed: {err_msg}")
 
-        if not admin_response.user:
-            raise HTTPException(status_code=400, detail="Registration failed: no user returned")
+            if not admin_response.user:
+                raise HTTPException(status_code=400, detail="Registration failed: no user returned")
 
-        user_id = admin_response.user.id
+            user_id = admin_response.user.id
 
-        if "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url:
-            auth_response = True
-        else:
             try:
-                auth_response = supabase.auth.sign_in_with_password({
+                profile = {
+                    "id": user_id,
                     "email": body.email,
-                    "password": body.password
-                })
-            except Exception as login_err:
-                logger.warning(f"Auto-login after registration failed: {login_err}")
-                auth_response = None
-
-        try:
-            profile = {
-                "id": user_id,
-                "email": body.email,
-                "full_name": body.full_name or "",
-                "created_at": datetime.utcnow().isoformat(),
-                "updated_at": datetime.utcnow().isoformat()
-            }
-            supabase.table("profiles").insert(profile).execute()
-        except Exception as profile_error:
-            err = str(profile_error)
-            if "relation" in err or "42P01" in err:
-                logger.warning("Profiles table missing. Run database migrations.")
-            else:
-                logger.warning(f"Profile creation warning: {err}")
+                    "full_name": body.full_name or "",
+                    "created_at": datetime.utcnow().isoformat(),
+                    "updated_at": datetime.utcnow().isoformat()
+                }
+                supabase.table("profiles").insert(profile).execute()
+            except Exception as profile_error:
+                err = str(profile_error)
+                if "relation" in err or "42P01" in err:
+                    logger.warning("Profiles table missing. Run database migrations.")
+                else:
+                    logger.warning(f"Profile creation warning: {err}")
 
         access_token = create_access_token(data={"sub": user_id, "email": body.email})
         refresh_token = create_refresh_token(data={"sub": user_id, "email": body.email})
@@ -126,19 +117,18 @@ async def register(request: Request, body: RegisterRequest):
 @limiter.limit("10/minute")
 async def login(request: Request, body: LoginRequest):
     try:
-        if "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url:
+        if _is_mock_mode():
             user_id = str(uuid4())
-            auth_response = type('obj', (object,), {'user': type('obj', (object,), {'id': user_id})})()
         else:
             auth_response = supabase.auth.sign_in_with_password({
                 "email": body.email,
                 "password": body.password
             })
 
-        if not auth_response or not auth_response.user:
-            raise HTTPException(status_code=401, detail="Invalid email or password")
+            if not auth_response or not auth_response.user:
+                raise HTTPException(status_code=401, detail="Invalid email or password")
 
-        user_id = auth_response.user.id
+            user_id = auth_response.user.id
 
         access_token = create_access_token(data={"sub": user_id, "email": body.email})
         refresh_token = create_refresh_token(data={"sub": user_id, "email": body.email})
@@ -258,16 +248,17 @@ async def oauth_callback(code: str = None, error: str = None, error_description:
 
 @router.get("/me", response_model=UserProfile)
 async def get_current_user_profile(current_user: dict = Depends(get_current_user)):
-    try:
-        response = supabase.table("profiles").select("*").eq("id", current_user["id"]).single().execute()
-        if response.data:
-            return response.data
-    except Exception as e:
-        err = str(e)
-        if "relation" in err or "42P01" in err:
-            logger.warning("Profiles table missing, returning default profile")
-        else:
-            logger.warning(f"Profile fetch error (returning default): {err}")
+    if not _is_mock_mode():
+        try:
+            response = supabase.table("profiles").select("*").eq("id", current_user["id"]).single().execute()
+            if response.data:
+                return response.data
+        except Exception as e:
+            err = str(e)
+            if "relation" in err or "42P01" in err:
+                logger.warning("Profiles table missing, returning default profile")
+            else:
+                logger.warning(f"Profile fetch error (returning default): {err}")
 
     return UserProfile(
         id=current_user["id"],
