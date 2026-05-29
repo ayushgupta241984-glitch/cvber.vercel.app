@@ -31,6 +31,7 @@ interface FileViewerProps {
 
 export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerProps) {
     const [hasSignedWaiver, setHasSignedWaiver] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
     if (!isOpen || !file) return null;
 
@@ -96,18 +97,20 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                     <div className="flex flex-col lg:flex-row gap-8">
                         {/* Preview Area */}
                         <div className="flex-1 min-h-[400px] bg-black rounded-3xl border border-zinc-900 shadow-inner flex items-center justify-center overflow-hidden relative group">
-                            {file.previewUrl ? (
+                            {file.previewUrl && !imageError ? (
                                 isVideoFile(file.name) ? (
                                     <video
                                         src={file.previewUrl}
                                         controls
                                         className="max-w-full max-h-[600px] object-contain select-none"
                                         controlsList="nodownload"
+                                        onError={() => setImageError(true)}
                                     />
                                 ) : (
                                     <img
                                         src={file.previewUrl}
                                         alt={file.name}
+                                        onError={() => setImageError(true)}
                                         className="max-w-full max-h-[600px] object-contain select-none"
                                     />
                                 )
@@ -116,7 +119,9 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
                                     <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-700">
                                         <Shield className="h-10 w-10" />
                                     </div>
-                                    <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm">Draft Preview Only</p>
+                                    <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm">
+                                        {imageError ? 'Preview Unavailable' : 'Draft Preview Only'}
+                                    </p>
                                 </div>
                             )}
 

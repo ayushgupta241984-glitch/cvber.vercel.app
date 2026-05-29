@@ -2,6 +2,7 @@
 
 import { FileText, Shield, AlertTriangle, CheckCircle, Trash2, Anchor, Image } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
 interface FileItem {
     id: string;
@@ -45,6 +46,12 @@ function SkeletonCard() {
 }
 
 export function SafeVault({ files = [], loading = false, onView, onWatermark, onDelete, onTimestamp }: SafeVaultProps) {
+    const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
+
+    const markBroken = (id: string) => {
+        setBrokenImages(prev => new Set(prev).add(id));
+    };
+
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'safe': return { label: 'Verified', class: 'text-luxury-gold/80' };
@@ -120,15 +127,17 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                             >
                                 {/* Preview Area - Rolex style image zoom */}
                                 <div className="aspect-[4/3] bg-luxury-steel/10 flex items-center justify-center overflow-hidden relative">
-                                    {file.previewUrl ? (
+                                    {file.previewUrl && !brokenImages.has(file.id) ? (
                                         <img
                                             src={file.previewUrl}
                                             alt={file.name}
+                                            onError={() => markBroken(file.id)}
                                             className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] group-hover:scale-105"
                                         />
                                     ) : (
-                                        <div className="text-luxury-muted/20">
+                                        <div className="text-luxury-muted/20 flex flex-col items-center gap-2">
                                             <Image className="h-10 w-10" />
+                                            <span className="text-[9px] uppercase tracking-widest text-luxury-muted/10">{file.name}</span>
                                         </div>
                                     )}
                                     {/* Status overlay */}

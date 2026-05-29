@@ -127,7 +127,13 @@ function DashboardInner() {
         const saved = localStorage.getItem('cvber_vault_memory');
         if (saved) {
             try {
-                setFiles(JSON.parse(saved));
+                const parsed = JSON.parse(saved) as FileData[];
+                const cleaned = parsed.map(f => ({
+                    ...f,
+                    previewUrl: f.previewUrl?.startsWith('blob:') ? undefined : f.previewUrl,
+                    storageUrl: f.storageUrl?.startsWith('blob:') ? undefined : f.storageUrl,
+                }));
+                setFiles(cleaned);
             } catch (e) {
                 console.error("Memory corruption:", e);
             }
