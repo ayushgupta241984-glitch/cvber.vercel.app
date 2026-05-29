@@ -9,7 +9,6 @@ import { FileViewer } from '@/components/dashboard/FileViewer';
 import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
 import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
-import { AIAgentChat } from '@/components/agent/AIAgentChat';
 import { ToastProvider, useToast } from '@/components/common/Toast';
 import { apiClient, BASE_URL } from '@/lib/api-client';
 import { FeedbackWidget } from '@/components/common/FeedbackWidget';
@@ -106,7 +105,7 @@ const lineVariants = {
 
 function DashboardInner() {
     const { toast } = useToast();
-    const [activeTab, setActiveTab] = useState<'monitor' | 'provenance' | 'investigator'>('investigator');
+    const [activeTab, setActiveTab] = useState<'monitor' | 'provenance'>('monitor');
     const [files, setFiles] = useState<FileData[]>([]);
     const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -586,8 +585,8 @@ function DashboardInner() {
                             </div>
 
                             <div className="hidden lg:flex items-center gap-12">
-                                {(['monitor', 'provenance', 'investigator'] as const).map((tab) => {
-                                    const labels = { monitor: 'Collection', provenance: 'Ledger', investigator: 'Enquiry' };
+                                {(['monitor', 'provenance'] as const).map((tab) => {
+                                    const labels = { monitor: 'Collection', provenance: 'Ledger' };
                                     return (
                                         <button
                                             key={tab}
@@ -620,8 +619,8 @@ function DashboardInner() {
                     {/* Mobile Tab Switcher */}
                     <div className="lg:hidden border-b border-luxury-steel/30 px-8 md:px-16">
                         <div className="flex gap-6">
-                            {(['monitor', 'provenance', 'investigator'] as const).map((tab) => {
-                                const labels = { monitor: 'Collection', provenance: 'Ledger', investigator: 'Enquiry' };
+                            {(['monitor', 'provenance'] as const).map((tab) => {
+                                const labels = { monitor: 'Collection', provenance: 'Ledger' };
                                 return (
                                     <button
                                         key={tab}
@@ -700,26 +699,8 @@ function DashboardInner() {
                                                 <p className="text-xs text-luxury-muted/50 leading-relaxed mb-6">
                                                     Our agent scours the open web for unauthorized reproductions of your work&mdash;social platforms, marketplaces, and beyond.
                                                 </p>
-                                                <button
-                                                    onClick={() => setActiveTab('investigator')}
-                                                    suppressHydrationWarning
-                                                    className="w-full py-3 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
-                                                >
-                                                    Open Enquiry
-                                                </button>
                                             </motion.div>
                                         </motion.div>
-                                    </div>
-                                </motion.div>
-                            ) : activeTab === 'investigator' ? (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ duration: 0.15, ease: easeLuxury }}
-                                    className="flex-1 flex flex-col px-8 md:px-16 lg:px-24 py-6"
-                                >
-                                    <div className="flex-1 min-h-0">
-                                        <AIAgentChat />
                                     </div>
                                 </motion.div>
                             ) : (
