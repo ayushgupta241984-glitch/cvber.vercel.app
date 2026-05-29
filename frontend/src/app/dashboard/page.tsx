@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { FileUploader } from '@/components/dashboard/FileUploader';
 import { SafeVault } from '@/components/dashboard/SafeVault';
 import { SecurityMentor } from '@/components/chat/SecurityMentor';
@@ -129,6 +129,8 @@ function DashboardInner() {
     const [searchError, setSearchError] = useState<string | null>(null);
     const [searchFileName, setSearchFileName] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const searchFileInputRef = useRef<HTMLInputElement>(null);
+    const [pendingSearchId, setPendingSearchId] = useState<string | null>(null);
 
     useEffect(() => {
         const saved = localStorage.getItem('cvber_vault_memory');
@@ -449,34 +451,29 @@ function DashboardInner() {
 
     const handleSearch = async (file: any) => {
         setSearchFileName(file.name);
+        setPendingSearchId(file.id);
+        searchFileInputRef.current?.click();
+    };
+
+    const handleSearchFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0];
+        if (!selectedFile) return;
+
         setSearchResults(null);
         setSearchError(null);
         setSearchLoading(true);
         setIsSearchOpen(true);
 
         try {
-            const token = localStorage.getItem('access_token');
-            const response = await fetch(`${BASE_URL}/vault/files/${file.id}/url`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-            let fileToUpload: File;
-            if (response.ok) {
-                const { url } = await response.json();
-                const blobResp = await fetch(url);
-                const blob = await blobResp.blob();
-                fileToUpload = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
-            } else {
-                const blobResp = await fetch(file.previewUrl || '');
-                const blob = await blobResp.blob();
-                fileToUpload = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
-            }
-            const result = await apiClient.reverseImageSearch(fileToUpload);
+            const result = await apiClient.reverseImageSearch(selectedFile);
             setSearchResults(result);
         } catch (err: any) {
             setSearchError(err?.message || 'Search failed');
             console.error('Image search error:', err);
         } finally {
             setSearchLoading(false);
+            setPendingSearchId(null);
+            if (searchFileInputRef.current) searchFileInputRef.current.value = '';
         }
     };
 
@@ -924,6 +921,14 @@ function DashboardInner() {
                     file={selectedFile}
                     isOpen={isWatermarkOpen}
                     onClose={() => setIsWatermarkOpen(false)}
+                />
+
+                <input
+                    type="file"
+                    ref={searchFileInputRef}
+                    onChange={handleSearchFileSelected}
+                    accept="image/*"
+                    className="hidden"
                 />
 
                 <SearchResultsModal
