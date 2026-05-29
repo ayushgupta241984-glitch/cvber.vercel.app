@@ -466,6 +466,13 @@ function DashboardInner() {
 
         try {
             const result = await apiClient.reverseImageSearch(selectedFile);
+            if (result?.scan_id) {
+                const baseUrl = apiClient.getBaseUrl();
+                const imageUrl = `${baseUrl}/search/temp/${result.scan_id}`;
+                result._yandexUrl = `https://yandex.com/images/search?url=${encodeURIComponent(imageUrl)}&rpt=imageview`;
+                result._bingUrl = `https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:${encodeURIComponent(imageUrl)}`;
+                result._imageUrl = imageUrl;
+            }
             setSearchResults(result);
         } catch (err: any) {
             setSearchError(err?.message || 'Search failed');
