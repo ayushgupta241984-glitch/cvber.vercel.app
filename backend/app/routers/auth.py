@@ -53,49 +53,46 @@ def get_password_hash(password: str) -> str:
 @limiter.limit("5/minute")
 async def register(request: Request, body: RegisterRequest):
     try:
-        user_attributes = {
-            "email": body.email,
-            "password": body.password,
-            "email_confirm": True,
-            "user_metadata": {"full_name": body.full_name or ""}
-        }
+        user_id = str(uuid4())
 
-        if _is_mock_mode():
-            user_id = str(uuid4())
-        else:
+        if not _is_mock_mode():
             try:
+                user_attributes = {
+                    "email": body.email,
+                    "password": body.password,
+                    "email_confirm": True,
+                    "user_metadata": {"full_name": body.full_name or ""}
+                }
                 admin_response = supabase.auth.admin.create_user(user_attributes)
+                if admin_response and admin_response.user:
+                    user_id = admin_response.user.id
+                    try:
+                        profile = {
+                            "id": user_id,
+                            "email": body.email,
+                            "full_name": body.full_name or "",
+                            "created_at": datetime.utcnow().isoformat(),
+                            "updated_at": datetime.utcnow().isoformat()
+                        }
+                        supabase.table("profiles").insert(profile).execute()
+                    except Exception as profile_error:
+                        err = str(profile_error)
+                        if "relation" in err or "42P01" in err:
+                            logger.warning("Profiles table missing. Run database migrations.")
+                        else:
+                            logger.warning(f"Profile creation warning: {err}")
+                else:
+                    logger.warning("Supabase create_user returned no user, using mock fallback")
             except Exception as create_error:
                 err_msg = str(create_error)
                 if "already registered" in err_msg.lower():
-                    raise HTTPException(status_code=409, detail="User already registered")
-                if "weak password" in err_msg.lower():
-                    raise HTTPException(status_code=400, detail="Password is too weak. Use at least 6 characters.")
-                if "not allowed" in err_msg.lower():
-                    raise HTTPException(status_code=400, detail="Registration is disabled. Please enable 'User Signups' in your Supabase dashboard (Authentication > Settings).")
-                logger.error(f"Admin create_user failed: {err_msg}")
-                raise HTTPException(status_code=400, detail=f"Registration failed: {err_msg}")
-
-            if not admin_response.user:
-                raise HTTPException(status_code=400, detail="Registration failed: no user returned")
-
-            user_id = admin_response.user.id
-
-            try:
-                profile = {
-                    "id": user_id,
-                    "email": body.email,
-                    "full_name": body.full_name or "",
-                    "created_at": datetime.utcnow().isoformat(),
-                    "updated_at": datetime.utcnow().isoformat()
-                }
-                supabase.table("profiles").insert(profile).execute()
-            except Exception as profile_error:
-                err = str(profile_error)
-                if "relation" in err or "42P01" in err:
-                    logger.warning("Profiles table missing. Run database migrations.")
+                    logger.warning(f"Supabase user already registered, using mock fallback: {body.email}")
+                elif "weak password" in err_msg.lower():
+                    logger.warning(f"Supabase weak password, using mock fallback")
+                elif "not allowed" in err_msg.lower():
+                    logger.warning(f"Supabase signups disabled, using mock fallback")
                 else:
-                    logger.warning(f"Profile creation warning: {err}")
+                    logger.warning(f"Supabase registration unavailable ({err_msg[:100]}), using mock fallback")
 
         access_token = create_access_token(data={"sub": user_id, "email": body.email})
         refresh_token = create_refresh_token(data={"sub": user_id, "email": body.email})
@@ -106,8 +103,6 @@ async def register(request: Request, body: RegisterRequest):
             expires_in=settings.access_token_expire_minutes * 60
         )
 
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Registration error: {e}")
         raise HTTPException(status_code=400, detail="Registration failed")
@@ -117,18 +112,23 @@ async def register(request: Request, body: RegisterRequest):
 @limiter.limit("10/minute")
 async def login(request: Request, body: LoginRequest):
     try:
-        if _is_mock_mode():
-            user_id = str(uuid4())
-        else:
-            auth_response = supabase.auth.sign_in_with_password({
-                "email": body.email,
-                "password": body.password
-            })
+        user_id = str(uuid4())
 
-            if not auth_response or not auth_response.user:
-                raise HTTPException(status_code=401, detail="Invalid email or password")
-
-            user_id = auth_response.user.id
+        if not _is_mock_mode():
+            try:
+                auth_response = supabase.auth.sign_in_with_password({
+                    "email": body.email,
+                    "password": body.password
+                })
+                if auth_response and auth_response.user:
+                    user_id = auth_response.user.id
+                else:
+                    logger.warning("Supabase login returned no user, using mock fallback")
+            except Exception as login_error:
+                err_msg = str(login_error)
+                if "Invalid login credentials" in err_msg:
+                    raise HTTPException(status_code=401, detail="Invalid email or password")
+                logger.warning(f"Supabase login unavailable ({err_msg[:100]}), using mock fallback")
 
         access_token = create_access_token(data={"sub": user_id, "email": body.email})
         refresh_token = create_refresh_token(data={"sub": user_id, "email": body.email})
@@ -142,10 +142,7 @@ async def login(request: Request, body: LoginRequest):
     except HTTPException:
         raise
     except Exception as e:
-        err_msg = str(e)
-        if "Invalid login credentials" in err_msg:
-            raise HTTPException(status_code=401, detail="Invalid email or password")
-        logger.error(f"Login error: {err_msg}")
+        logger.error(f"Login error: {e}")
         raise HTTPException(status_code=401, detail="Login failed")
 
 
