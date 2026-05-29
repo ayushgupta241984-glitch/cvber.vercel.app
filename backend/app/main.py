@@ -134,7 +134,7 @@ app.include_router(leads.router)
 app.include_router(feedback.router)
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     return {"status": "online", "service": "CVBER Free API", "version": "1.0.1"}
 
