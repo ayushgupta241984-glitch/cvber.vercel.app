@@ -13,6 +13,7 @@ import { ToastProvider, useToast } from '@/components/common/Toast';
 import { apiClient, BASE_URL } from '@/lib/api-client';
 import { FeedbackWidget } from '@/components/common/FeedbackWidget';
 import { ReferralBanner } from '@/components/common/ReferralBanner';
+import { SearchResultsModal } from '@/components/search/SearchResultsModal';
 import { Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, Eye, ScanLine, Anchor, Globe, ChevronDown, ArrowUpRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -122,6 +123,12 @@ function DashboardInner() {
     const [proofText, setProofText] = useState('');
     const [proofUrl, setProofUrl] = useState('');
     const [submittingProof, setSubmittingProof] = useState(false);
+
+    const [searchResults, setSearchResults] = useState<any>(null);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState<string | null>(null);
+    const [searchFileName, setSearchFileName] = useState('');
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
 
     useEffect(() => {
         const saved = localStorage.getItem('cvber_vault_memory');
@@ -440,6 +447,39 @@ function DashboardInner() {
         }
     };
 
+    const handleSearch = async (file: any) => {
+        setSearchFileName(file.name);
+        setSearchResults(null);
+        setSearchError(null);
+        setSearchLoading(true);
+        setIsSearchOpen(true);
+
+        try {
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`${BASE_URL}/vault/files/${file.id}/url`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            let fileToUpload: File;
+            if (response.ok) {
+                const { url } = await response.json();
+                const blobResp = await fetch(url);
+                const blob = await blobResp.blob();
+                fileToUpload = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
+            } else {
+                const blobResp = await fetch(file.previewUrl || '');
+                const blob = await blobResp.blob();
+                fileToUpload = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
+            }
+            const result = await apiClient.reverseImageSearch(fileToUpload);
+            setSearchResults(result);
+        } catch (err: any) {
+            setSearchError(err?.message || 'Search failed');
+            console.error('Image search error:', err);
+        } finally {
+            setSearchLoading(false);
+        }
+    };
+
     return (
         <ScreenshotGuard>
             {proofModalFile && (
@@ -685,6 +725,7 @@ function DashboardInner() {
                                                     onWatermark={handleWatermark}
                                                     onDelete={handleDelete}
                                                     onTimestamp={handleTimestamp}
+                                                    onSearch={handleSearch}
                                                 />
                                             </motion.section>
                                         </div>
@@ -883,6 +924,15 @@ function DashboardInner() {
                     file={selectedFile}
                     isOpen={isWatermarkOpen}
                     onClose={() => setIsWatermarkOpen(false)}
+                />
+
+                <SearchResultsModal
+                    isOpen={isSearchOpen}
+                    onClose={() => { setIsSearchOpen(false); setSearchResults(null); setSearchError(null); }}
+                    fileName={searchFileName}
+                    results={searchResults}
+                    loading={searchLoading}
+                    error={searchError}
                 />
 
                 <FeedbackWidget />

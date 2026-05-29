@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, Shield, AlertTriangle, CheckCircle, Trash2, Anchor, Image } from 'lucide-react';
+import { FileText, Shield, AlertTriangle, CheckCircle, Trash2, Anchor, Image, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
@@ -23,6 +23,7 @@ interface SafeVaultProps {
     onWatermark?: (file: FileItem) => void;
     onDelete?: (file: FileItem) => void;
     onTimestamp?: (file: FileItem) => void;
+    onSearch?: (file: FileItem) => void;
 }
 
 const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
@@ -45,7 +46,7 @@ function SkeletonCard() {
     );
 }
 
-export function SafeVault({ files = [], loading = false, onView, onWatermark, onDelete, onTimestamp }: SafeVaultProps) {
+export function SafeVault({ files = [], loading = false, onView, onWatermark, onDelete, onTimestamp, onSearch }: SafeVaultProps) {
     const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
 
     const markBroken = (id: string) => {
@@ -219,6 +220,13 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                                 title="Anchor to Blockchain"
                                             >
                                                 <Anchor className="h-3.5 w-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => onSearch?.(file)}
+                                                className="p-2 text-luxury-muted/40 hover:text-luxury-gold/60 transition-colors duration-300"
+                                                title="Search web for copies"
+                                            >
+                                                <Search className="h-3.5 w-3.5" />
                                             </button>
                                             <button
                                                 onClick={() => onView?.(file)}

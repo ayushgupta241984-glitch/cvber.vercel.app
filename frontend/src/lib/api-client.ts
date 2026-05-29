@@ -118,6 +118,17 @@ export const apiClient = {
         return handleResponse<ScanResult>(response);
     },
 
+    async reverseImageSearch(file: File): Promise<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetchWithRetry(`${BASE_URL}/search/reverse`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData,
+        });
+        return handleResponse<any>(response);
+    },
+
     async verifyFile(file: File): Promise<any> {
         const formData = new FormData();
         formData.append('file', file);
