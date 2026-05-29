@@ -140,7 +140,6 @@ frontend/tsconfig.tsbuildinfo
 
 # Other config
 .env.example
-render.yaml
 
 # GitHub templates / CI
 .github/
