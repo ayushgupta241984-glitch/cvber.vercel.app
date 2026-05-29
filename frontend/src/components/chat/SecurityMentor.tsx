@@ -49,7 +49,7 @@ function searchFiles(query: string, files: FileData[]): { message: string; resul
         return { message: "Please ask me something about your collection.", results: [] };
     }
 
-    const isHelp = /^(help|what can you do|commands|?)$/i.test(q);
+    const isHelp = /^(help|what can you do|commands|\?)$/i.test(q);
     if (isHelp) {
         return {
             message: `I can help you search and analyze your collection. Try asking:
