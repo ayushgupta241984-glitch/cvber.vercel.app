@@ -123,7 +123,6 @@ backend/.cvber_memory/
 backend/BLOCKCHAIN_TEST_RESULTS.md
 backend/launch_backend.vbs
 backend/start_bg.ps1
-backend/requirements-base.txt
 backend/package.json
 backend/package-lock.json
 backend/supabase/
@@ -142,7 +141,6 @@ frontend/tsconfig.tsbuildinfo
 # Other config
 .env.example
 render.yaml
-Dockerfile
 
 # GitHub templates / CI
 .github/
