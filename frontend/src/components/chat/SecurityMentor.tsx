@@ -25,6 +25,7 @@ interface Message {
 
 interface SecurityMentorProps {
     context?: { files: FileData[] };
+    onSearchFile?: (file: { id: string; name: string; storageUrl?: string; previewUrl?: string }) => void;
 }
 
 const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
@@ -124,7 +125,8 @@ function searchFiles(query: string, files: FileData[]): { message: string; resul
 
     const findMatch = q.match(/(?:find|search|look|locate|show|where|get|open)\s*(?:for\s*)?["']?(.+?)["']?$/i);
     if (findMatch) {
-        const searchTerm = findMatch[1].toLowerCase();
+        let searchTerm = findMatch[1].toLowerCase();
+        searchTerm = searchTerm.replace(/\s+(online|on the web|on the internet|on google|on yandex|on bing|internet|web)$/i, '');
         const matched = searchTerm ? files.filter(f => f.name.toLowerCase().includes(searchTerm)) : [];
         if (matched.length === 0) return { message: `I couldn't find any files matching "${searchTerm}".`, results: [] };
         return {
@@ -168,7 +170,7 @@ function searchFiles(query: string, files: FileData[]): { message: string; resul
     };
 }
 
-export function SecurityMentor({ context }: SecurityMentorProps) {
+export function SecurityMentor({ context, onSearchFile }: SecurityMentorProps) {
     const files = context?.files || [];
     const [messages, setMessages] = useState<Message[]>([
         {
@@ -224,6 +226,51 @@ export function SecurityMentor({ context }: SecurityMentorProps) {
 
         setTimeout(() => {
             const result = searchFiles(input, files);
+
+            const wantsOnline = /\b(online|internet|web|google|yandex|bing|on the web|on the internet)\b/i.test(input);
+            const genericSearch = /find my file|search my file|search online|find online|reverse image|search web|find web/i.test(input);
+            const matched = result.results;
+
+            // "find my file online" with exactly 1 total file → auto-search it
+            if (genericSearch && files.length === 1 && onSearchFile && matched.length === 0) {
+                const only = files[0];
+                setMessages(prev => [...prev, {
+                    id: (Date.now() + 1).toString(),
+                    role: 'assistant',
+                    content: `You have only one file — **${only.name}**. Searching it across the web...`,
+                    timestamp: new Date(),
+                }]);
+                setIsTyping(false);
+                onSearchFile({ id: only.id, name: only.name, storageUrl: (only as any).storageUrl, previewUrl: (only as any).previewUrl, _fromChat: true });
+                return;
+            }
+
+            // "find my file online" with multiple files → ask which one
+            if (genericSearch && files.length > 1 && matched.length === 0) {
+                const names = files.map(f => `• **${f.name}**`).join('\n');
+                result.message = `I have ${files.length} files. Which one should I search online?\n\n${names}`;
+                result.results = files.map(f => ({ name: f.name, score: f.riskScore, status: f.status, originality: f.originalityScore }));
+            }
+
+            if (wantsOnline && matched.length === 1 && onSearchFile) {
+                const file = files.find(f => f.name === matched[0].name);
+                if (file) {
+                    setMessages(prev => [...prev, {
+                        id: (Date.now() + 1).toString(),
+                        role: 'assistant',
+                        content: `Searching **${file.name}** across the web...`,
+                        timestamp: new Date(),
+                    }]);
+                    setIsTyping(false);
+                    onSearchFile({ id: file.id, name: file.name, storageUrl: (file as any).storageUrl, previewUrl: (file as any).previewUrl, _fromChat: true });
+                    return;
+                }
+            }
+
+            if (wantsOnline && matched.length > 1 && onSearchFile) {
+                const names = matched.map(r => `• **${r.name}**`).join('\n');
+                result.message = `I found ${matched.length} files. Which one should I search online?\n\n${names}`;
+            }
 
             const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),

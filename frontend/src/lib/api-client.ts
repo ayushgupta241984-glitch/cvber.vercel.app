@@ -129,6 +129,35 @@ export const apiClient = {
         return handleResponse<any>(response);
     },
 
+    async findCopies(file: File): Promise<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetchWithRetry(`${BASE_URL}/search/hashes/find-copies`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData,
+        });
+        return handleResponse<any>(response);
+    },
+
+    async registerHash(file: File, scanId: string): Promise<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        const url = `${BASE_URL}/search/hashes/register?scan_id=${encodeURIComponent(scanId)}`;
+        const response = await fetchWithRetry(url, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData,
+        });
+        return handleResponse<any>(response);
+    },
+
+    async indexVault(): Promise<any> {
+        return fetchJson(`${BASE_URL}/search/hashes/index-vault`, {
+            method: 'POST',
+        });
+    },
+
     async verifyFile(file: File): Promise<any> {
         const formData = new FormData();
         formData.append('file', file);

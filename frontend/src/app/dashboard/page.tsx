@@ -132,6 +132,24 @@ function DashboardInner() {
     const searchFileInputRef = useRef<HTMLInputElement>(null);
     const [pendingSearchId, setPendingSearchId] = useState<string | null>(null);
 
+    const [isIndexing, setIsIndexing] = useState(false);
+    const indexedRef = useRef(false);
+
+    const indexVault = useCallback(async (silent: boolean = false) => {
+        if (isIndexing) return;
+        setIsIndexing(true);
+        try {
+            const result = await apiClient.indexVault();
+            if (!silent && result?.registered > 0) {
+                toast(`Indexed ${result.registered} file(s) for copy detection`, 'success');
+            }
+        } catch {
+            if (!silent) toast('Failed to index vault', 'error');
+        } finally {
+            setIsIndexing(false);
+        }
+    }, [isIndexing, toast]);
+
     useEffect(() => {
         const saved = localStorage.getItem('cvber_vault_memory');
         if (saved) {
@@ -210,6 +228,10 @@ function DashboardInner() {
                 console.error("Failed to fetch vault files:", err);
             } finally {
                 setVaultLoading(false);
+                if (!indexedRef.current) {
+                    indexedRef.current = true;
+                    apiClient.indexVault().catch(() => {});
+                }
             }
         };
         fetchVault();
@@ -449,28 +471,23 @@ function DashboardInner() {
         }
     };
 
-    const handleSearch = async (file: any) => {
-        setSearchFileName(file.name);
-        setPendingSearchId(file.id);
-        searchFileInputRef.current?.click();
-    };
-
-    const handleSearchFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = e.target.files?.[0];
-        if (!selectedFile) return;
-
+    const performSearch = async (fileToUpload: File) => {
         setSearchResults(null);
         setSearchError(null);
         setSearchLoading(true);
         setIsSearchOpen(true);
 
         try {
-            const result = await apiClient.reverseImageSearch(selectedFile);
+            const result = await apiClient.reverseImageSearch(fileToUpload);
             if (result?.scan_id) {
                 const baseUrl = apiClient.getBaseUrl();
                 const imageUrl = `${baseUrl}/search/temp/${result.scan_id}`;
-                result._yandexUrl = `https://yandex.com/images/search?url=${encodeURIComponent(imageUrl)}&rpt=imageview`;
-                result._bingUrl = `https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:${encodeURIComponent(imageUrl)}`;
+                const encodedUrl = encodeURIComponent(imageUrl);
+                result._yandexUrl = `https://yandex.com/images/search?url=${encodedUrl}&rpt=imageview`;
+                result._bingUrl = `https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:${encodedUrl}`;
+                result._googleLensUrl = `https://lens.google.com/uploadbyurl?url=${encodedUrl}`;
+                result._saucenaoUrl = `https://saucenao.com/search.php?db=999&url=${encodedUrl}`;
+                result._tineyeUrl = `https://tineye.com/search?url=${encodedUrl}`;
                 result._imageUrl = imageUrl;
             }
             setSearchResults(result);
@@ -482,6 +499,46 @@ function DashboardInner() {
             setPendingSearchId(null);
             if (searchFileInputRef.current) searchFileInputRef.current.value = '';
         }
+    };
+
+    const handleSearch = async (file: any) => {
+        setSearchFileName(file.name);
+        setPendingSearchId(file.id);
+
+        const url = file.storageUrl || file.previewUrl;
+        if (url && !url.startsWith('blob:')) {
+            try {
+                const resp = await fetch(url);
+                if (resp.ok) {
+                    const blob = await resp.blob();
+                    const fileToUpload = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
+                    await performSearch(fileToUpload);
+                    try {
+                        await apiClient.registerHash(fileToUpload, file.id);
+                    } catch {
+                        // non-critical
+                    }
+                    return;
+                }
+            } catch {
+                // fall through
+            }
+        }
+
+        const hasDirectCaller = file._fromChat;
+        if (hasDirectCaller) {
+            toast('Could not access vault file. Try clicking the search icon on the file card.', 'error');
+            return;
+        }
+        searchFileInputRef.current?.click();
+    };
+
+    const handleSearchFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0];
+        if (!selectedFile) return;
+        setSearchFileName(selectedFile.name);
+        setPendingSearchId(null);
+        await performSearch(selectedFile);
     };
 
     return (
@@ -736,7 +793,7 @@ function DashboardInner() {
 
                                         {/* Sidebar Column */}
                                         <motion.div variants={itemVariants} className="space-y-8">
-                                            <SecurityMentor context={{ files }} />
+                                            <SecurityMentor context={{ files }} onSearchFile={handleSearch} />
                                             <motion.div
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
@@ -750,6 +807,13 @@ function DashboardInner() {
                                                 <p className="text-xs text-luxury-muted/50 leading-relaxed mb-6">
                                                     Our agent scours the open web for unauthorized reproductions of your work&mdash;social platforms, marketplaces, and beyond.
                                                 </p>
+                                                <button
+                                                    onClick={() => indexVault(false)}
+                                                    disabled={isIndexing}
+                                                    className="w-full py-3 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-steel/30 text-luxury-muted/60 hover:text-luxury-gold hover:border-luxury-gold/40 transition-all duration-300 disabled:opacity-30"
+                                                >
+                                                    {isIndexing ? 'Indexing Files...' : `Index Vault for Copy Detection (${files.length} files)`}
+                                                </button>
                                             </motion.div>
                                         </motion.div>
                                     </div>

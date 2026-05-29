@@ -1,7 +1,13 @@
 'use client';
 
-import { X, Search, Globe, ExternalLink, Loader2, AlertTriangle, Hash } from 'lucide-react';
+import { X, Search, Globe, ExternalLink, Loader2, AlertTriangle, Hash, Layers } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+interface SimilarFile {
+    scan_id: string;
+    file_name: string;
+    hash_distance: number;
+}
 
 interface SearchResults {
     scan_id?: string;
@@ -9,7 +15,11 @@ interface SearchResults {
     message?: string;
     _yandexUrl?: string;
     _bingUrl?: string;
+    _googleLensUrl?: string;
+    _saucenaoUrl?: string;
+    _tineyeUrl?: string;
     _imageUrl?: string;
+    similar_files?: SimilarFile[];
 }
 
 interface SearchResultsModalProps {
@@ -22,6 +32,14 @@ interface SearchResultsModalProps {
 }
 
 const easeLuxury = [0.16, 1, 0.3, 1] as const;
+
+const searchEngines = [
+    { key: 'yandex', label: 'Yandex Images', desc: 'Search on Yandex', urlKey: '_yandexUrl' as const },
+    { key: 'bing', label: 'Bing Images', desc: 'Search on Bing', urlKey: '_bingUrl' as const },
+    { key: 'googleLens', label: 'Google Lens', desc: 'Search with Google Lens', urlKey: '_googleLensUrl' as const },
+    { key: 'saucenao', label: 'SauceNAO', desc: 'Search on SauceNAO (anime/art)', urlKey: '_saucenaoUrl' as const },
+    { key: 'tineye', label: 'TinEye', desc: 'Search on TinEye', urlKey: '_tineyeUrl' as const },
+];
 
 export function SearchResultsModal({ isOpen, onClose, fileName, results, loading, error }: SearchResultsModalProps) {
     if (!isOpen) return null;
@@ -84,53 +102,57 @@ export function SearchResultsModal({ isOpen, onClose, fileName, results, loading
                             <div className="space-y-4">
                                 <p className="text-xs text-luxury-muted/60 uppercase tracking-wider font-semibold">Search Engines</p>
 
-                                {results._yandexUrl ? (
-                                    <a
-                                        href={results._yandexUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center justify-between p-4 border border-luxury-steel/20 hover:border-luxury-gold/40 hover:bg-luxury-gold/5 transition-all duration-200 group"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-luxury-steel/10 flex items-center justify-center">
-                                                <Globe className="h-5 w-5 text-luxury-gold/60" />
+                                {searchEngines.map(engine => {
+                                    const url = results[engine.urlKey as keyof typeof results] as string | undefined;
+                                    if (!url) return null;
+                                    return (
+                                        <a
+                                            key={engine.key}
+                                            href={url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-between p-4 border border-luxury-steel/20 hover:border-luxury-gold/40 hover:bg-luxury-gold/5 transition-all duration-200 group"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 bg-luxury-steel/10 flex items-center justify-center">
+                                                    <Globe className="h-5 w-5 text-luxury-gold/60" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-luxury-cream/90 group-hover:text-luxury-gold transition-colors">{engine.label}</p>
+                                                    <p className="text-[10px] text-luxury-muted/40 mt-1">{engine.desc}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm text-luxury-cream/90 group-hover:text-luxury-gold transition-colors">Yandex Images</p>
-                                                <p className="text-[10px] text-luxury-muted/40 mt-1">Search for copies on Yandex</p>
-                                            </div>
-                                        </div>
-                                        <ExternalLink className="w-4 h-4 text-luxury-muted/30 group-hover:text-luxury-gold/60 transition-colors shrink-0" />
-                                    </a>
-                                ) : null}
+                                            <ExternalLink className="w-4 h-4 text-luxury-muted/30 group-hover:text-luxury-gold/60 transition-colors shrink-0" />
+                                        </a>
+                                    );
+                                })}
 
-                                {results._bingUrl ? (
-                                    <a
-                                        href={results._bingUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center justify-between p-4 border border-luxury-steel/20 hover:border-luxury-gold/40 hover:bg-luxury-gold/5 transition-all duration-200 group"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-luxury-steel/10 flex items-center justify-center">
-                                                <Globe className="h-5 w-5 text-luxury-gold/60" />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-luxury-cream/90 group-hover:text-luxury-gold transition-colors">Bing Images</p>
-                                                <p className="text-[10px] text-luxury-muted/40 mt-1">Search for copies on Bing</p>
-                                            </div>
-                                        </div>
-                                        <ExternalLink className="w-4 h-4 text-luxury-muted/30 group-hover:text-luxury-gold/60 transition-colors shrink-0" />
-                                    </a>
-                                ) : null}
+                                {searchEngines.every(e => !results[e.urlKey as keyof typeof results]) && (
+                                    <div className="border border-luxury-steel/30 p-12 text-center">
+                                        <p className="text-sm text-luxury-muted/50">Image processed successfully</p>
+                                        <p className="text-[10px] text-luxury-muted/30 uppercase tracking-wider mt-2">
+                                            Open the file picker above to search a different image
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
-                            {!results._yandexUrl && !results._bingUrl && (
-                                <div className="border border-luxury-steel/30 p-12 text-center">
-                                    <p className="text-sm text-luxury-muted/50">Image processed successfully</p>
-                                    <p className="text-[10px] text-luxury-muted/30 uppercase tracking-wider mt-2">
-                                        Open the file picker above to search a different image
-                                    </p>
+                            {results.similar_files && results.similar_files.length > 0 && (
+                                <div className="space-y-4">
+                                    <p className="text-xs text-luxury-muted/60 uppercase tracking-wider font-semibold">Similar Files in Vault</p>
+                                    <div className="border border-luxury-steel/20 divide-y divide-luxury-steel/20">
+                                        {results.similar_files.map((sf) => (
+                                            <div key={sf.scan_id} className="flex items-center justify-between p-3">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <Layers className="w-4 h-4 text-luxury-gold/40 shrink-0" />
+                                                    <span className="text-xs text-luxury-cream/70 truncate">{sf.file_name}</span>
+                                                </div>
+                                                <span className="text-[10px] text-luxury-muted/40 shrink-0 ml-4">
+                                                    {sf.hash_distance === 0 ? 'Exact match' : `Distance: ${sf.hash_distance}`}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>
