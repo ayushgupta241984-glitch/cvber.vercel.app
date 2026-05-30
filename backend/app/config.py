@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     # NVIDIA NIM (OpenAI-compatible API)
     nvidia_nim_api_key: Optional[str] = None
     nvidia_nim_base_url: str = "https://integrate.api.nvidia.com/v1"
-    nvidia_nim_model: str = "stepfun-ai/step-3.5-flash"
+    nvidia_nim_model: str = "google/gemma-3n-e4b-it"
 
     # Hugging Face
     hf_token: Optional[str] = None

@@ -6,7 +6,7 @@ from app.supabase_client import get_supabase, init_supabase
 from app.config import settings
 from app.dependencies import get_current_user
 from app.services.storage import storage_service
-from app.models.schemas import VaultFile, VaultFileList, VaultFileDetail, BlockchainProof
+from app.models.schemas import VaultFile, VaultFileList, VaultFileDetail, BlockchainProof, OwnershipProofRequest
 from app.services.blockchain import blockchain_service
 import logging
 
@@ -308,12 +308,13 @@ async def get_vault_file_with_proofs(
 @router.post("/files/{scan_id}/ownership-proof")
 async def submit_ownership_proof(
     scan_id: UUID,
-    proof_type: str,
-    proof_text: str = "",
-    proof_url: str = "",
+    body: OwnershipProofRequest,
     current_user: dict = Depends(get_current_user)
 ):
     """Submit proof of ownership for a file that was flagged as screenshot/not original"""
+    proof_type = body.proof_type
+    proof_text = body.proof_text
+    proof_url = body.proof_url
     try:
         # Verify file belongs to user
         vault_resp = supabase.table("vault_files")\

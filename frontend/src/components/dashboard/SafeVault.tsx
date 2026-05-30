@@ -124,7 +124,7 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                     ease: easeLuxury,
                                     delay: index * 0.1,
                                 }}
-                                className="group relative border border-luxury-steel/30 bg-luxury-deep"
+                                className="group relative border border-luxury-steel/30 bg-luxury-deep flex flex-col"
                             >
                                 {/* Preview Area - Rolex style image zoom */}
                                 <div className="aspect-[4/3] bg-luxury-steel/10 flex items-center justify-center overflow-hidden relative">
@@ -150,7 +150,7 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                 </div>
 
                                 {/* Details */}
-                                <div className="p-6">
+                                <div className="p-6 flex flex-col flex-1">
                                     <div className="mb-4">
                                         <h3 className="font-display text-luxury-cream truncate pr-2 text-sm mb-1">
                                             {file.name}
@@ -203,8 +203,8 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                         )}
                                     </div>
 
-                                    {/* Actions */}
-                                    <div className="flex items-center justify-between pt-4 border-t border-luxury-steel/20">
+                                    {/* Actions - pushed to bottom by flex-1 */}
+                                    <div className="flex items-center justify-between pt-4 border-t border-luxury-steel/20 mt-auto">
                                         <span className="text-[9px] text-luxury-muted/40 uppercase tracking-widest">{new Date(file.uploadedAt).toLocaleDateString()}</span>
                                         <div className="flex gap-1">
                                             <button
@@ -228,19 +228,23 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                             >
                                                 <Search className="h-3.5 w-3.5" />
                                             </button>
-                                            <button
-                                                onClick={() => onView?.(file)}
-                                                className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold text-luxury-cream border border-luxury-steel/40 hover:border-luxury-gold/40 hover:text-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
-                                            >
-                                                View
-                                            </button>
-                                            <button
-                                                onClick={() => onWatermark?.(file)}
-                                                className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] flex items-center gap-2"
-                                            >
-                                                <Shield className="h-3 w-3" />
-                                                Mark
-                                            </button>
+                                            {file.status !== 'scanning' && (
+                                                <button
+                                                    onClick={() => onView?.(file)}
+                                                    className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold text-luxury-cream border border-luxury-steel/40 hover:border-luxury-gold/40 hover:text-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
+                                                >
+                                                    View
+                                                </button>
+                                            )}
+                                            {file.status === 'safe' && (
+                                                <button
+                                                    onClick={() => onWatermark?.(file)}
+                                                    className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] flex items-center gap-2"
+                                                >
+                                                    <Shield className="h-3 w-3" />
+                                                    Mark
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

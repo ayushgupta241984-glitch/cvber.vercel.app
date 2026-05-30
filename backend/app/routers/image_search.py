@@ -1,4 +1,5 @@
 import io
+import os
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Request
 from fastapi.responses import Response
 from PIL import Image
@@ -133,6 +134,32 @@ async def index_vault_for_copies(
     except Exception as e:
         logger.error(f"Vault indexing failed: {e}")
         raise HTTPException(status_code=500, detail="Vault indexing failed")
+
+
+@router.post("/deep")
+@limiter.limit("3/minute")
+async def deep_image_search(
+    request: Request,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+):
+    image_bytes = await file.read()
+    if len(image_bytes) == 0:
+        raise HTTPException(status_code=400, detail="Empty file")
+    if len(image_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large (max 10MB)")
+
+    api_key = settings.nvidia_nim_api_key or os.getenv("NVIDIA_NIM_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="NVIDIA NIM API key not configured")
+
+    try:
+        from app.services.deep_search import deep_search
+        result = await deep_search(image_bytes, api_key)
+        return result
+    except Exception as e:
+        logger.error(f"Deep search failed: {e}")
+        raise HTTPException(status_code=500, detail="Deep search failed")
 
 
 @router.post("/hashes/find-copies")

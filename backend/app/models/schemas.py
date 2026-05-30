@@ -167,6 +167,12 @@ class VaultFileList(BaseModel):
     total: int
 
 
+class OwnershipProofRequest(BaseModel):
+    proof_type: str = "declaration"
+    proof_text: str = ""
+    proof_url: str = ""
+
+
 class AuditLog(BaseModel):
     id: UUID
     user_id: UUID

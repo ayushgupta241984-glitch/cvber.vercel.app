@@ -129,6 +129,17 @@ export const apiClient = {
         return handleResponse<any>(response);
     },
 
+    async deepImageSearch(file: File): Promise<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetchWithRetry(`${BASE_URL}/search/deep`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData,
+        });
+        return handleResponse<any>(response);
+    },
+
     async findCopies(file: File): Promise<any> {
         const formData = new FormData();
         formData.append('file', file);

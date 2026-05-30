@@ -1,6 +1,7 @@
 'use client';
 
-import { X, Search, Globe, ExternalLink, Loader2, AlertTriangle, Hash, Copy } from 'lucide-react';
+import { useState } from 'react';
+import { X, Search, Globe, ExternalLink, Loader2, AlertTriangle, Hash, Copy, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface SimilarFile {
@@ -20,6 +21,24 @@ interface SearchResults {
     _tineyeUrl?: string;
     _imageUrl?: string;
     similar_files?: SimilarFile[];
+    _deepResults?: DeepSearchResponse;
+}
+
+interface DeepSearchResult {
+    url: string;
+    title: string;
+    source: string;
+    similarity: number;
+    hash_distance: number;
+}
+
+interface DeepSearchResponse {
+    original_dhash?: string;
+    description?: string;
+    results: DeepSearchResult[];
+    total_found: number;
+    queries_used?: string[];
+    images_searched?: number;
 }
 
 interface SearchResultsModalProps {
@@ -29,6 +48,8 @@ interface SearchResultsModalProps {
     results: SearchResults | null;
     loading: boolean;
     error: string | null;
+    searchFileBlob?: Blob | null;
+    onDeepSearch?: (blob: Blob, fileName: string) => Promise<void>;
 }
 
 const easeLuxury = [0.16, 1, 0.3, 1] as const;
@@ -41,7 +62,26 @@ const searchEngines = [
     { key: 'tineye', label: 'TinEye', desc: 'Search on TinEye', urlKey: '_tineyeUrl' as const },
 ];
 
-export function SearchResultsModal({ isOpen, onClose, fileName, results, loading, error }: SearchResultsModalProps) {
+export function SearchResultsModal({ isOpen, onClose, fileName, results, loading, error, searchFileBlob, onDeepSearch }: SearchResultsModalProps) {
+    const [deepLoading, setDeepLoading] = useState(false);
+    const [deepError, setDeepError] = useState<string | null>(null);
+
+    const _deepResults = results?._deepResults as DeepSearchResponse | undefined;
+    const displayDeepResults = _deepResults?.results || [];
+
+    const handleDeepSearch = async () => {
+        if (!searchFileBlob || !onDeepSearch) return;
+        setDeepLoading(true);
+        setDeepError(null);
+        try {
+            await onDeepSearch(searchFileBlob, fileName);
+        } catch (err: any) {
+            setDeepError(err?.message || 'Deep search failed');
+        } finally {
+            setDeepLoading(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -134,6 +174,86 @@ export function SearchResultsModal({ isOpen, onClose, fileName, results, loading
                                             Open the file picker above to search a different image
                                         </p>
                                     </div>
+                                )}
+                            </div>
+
+                            {/* Deep Search section */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs text-luxury-muted/60 uppercase tracking-wider font-semibold">AI Deep Search</p>
+                                    {searchFileBlob && onDeepSearch && !deepLoading && displayDeepResults.length === 0 && (
+                                        <button
+                                            onClick={handleDeepSearch}
+                                            className="flex items-center gap-2 px-4 py-2 text-[10px] uppercase tracking-wider border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition-all"
+                                        >
+                                            <Sparkles className="w-3 h-3" />
+                                            Deep Search
+                                        </button>
+                                    )}
+                                </div>
+
+                                {deepLoading && (
+                                    <div className="flex items-center justify-center py-12 gap-4">
+                                        <Loader2 className="h-6 w-6 text-luxury-gold/60 animate-spin" />
+                                        <div>
+                                            <p className="text-xs text-luxury-cream/70">AI is searching visually similar images...</p>
+                                            <p className="text-[10px] text-luxury-muted/40 mt-1">Describes image, generates queries, searches web, compares hashes</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {deepError && (
+                                    <div className="flex items-center gap-3 px-4 py-3 border border-red-900/40">
+                                        <AlertTriangle className="w-4 h-4 text-red-400/60 shrink-0" />
+                                        <p className="text-xs text-red-400/70">{deepError}</p>
+                                    </div>
+                                )}
+
+                                {_deepResults?.description && (
+                                    <div className="px-4 py-3 border border-luxury-steel/20">
+                                        <p className="text-[10px] text-luxury-muted/50 uppercase tracking-wider mb-2">AI Description</p>
+                                        <p className="text-xs text-luxury-muted/50 leading-relaxed">{_deepResults.description.slice(0, 300)}...</p>
+                                    </div>
+                                )}
+
+                                {displayDeepResults.length > 0 && (
+                                    <div>
+                                        <p className="text-[10px] text-luxury-muted/40 uppercase tracking-wider mb-3">
+                                            {_deepResults?.images_searched ? `${_deepResults.images_searched} images searched · ` : ''}
+                                            {displayDeepResults.length} matches found
+                                        </p>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {displayDeepResults.map((item, idx) => (
+                                                <a
+                                                    key={idx}
+                                                    href={item.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="group border border-luxury-steel/20 hover:border-luxury-gold/40 transition-all"
+                                                >
+                                                    <div className="aspect-square bg-luxury-steel/10 flex items-center justify-center overflow-hidden">
+                                                        <img
+                                                            src={item.url}
+                                                            alt={item.title || 'Deep search result'}
+                                                            className="w-full h-full object-cover"
+                                                            loading="lazy"
+                                                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                        />
+                                                    </div>
+                                                    <div className="p-2 flex items-center justify-between">
+                                                        <span className="text-[10px] text-luxury-gold/70">{item.similarity}%</span>
+                                                        <span className="text-[9px] text-luxury-muted/40">dist: {item.hash_distance}</span>
+                                                    </div>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!deepLoading && !deepError && displayDeepResults.length === 0 && !_deepResults && searchFileBlob && onDeepSearch && (
+                                    <p className="text-[10px] text-luxury-muted/30 italic">
+                                        Click "Deep Search" to use NVIDIA AI to find visually similar images on the web
+                                    </p>
                                 )}
                             </div>
 

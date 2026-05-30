@@ -129,6 +129,7 @@ function DashboardInner() {
     const [searchError, setSearchError] = useState<string | null>(null);
     const [searchFileName, setSearchFileName] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchFileBlob, setSearchFileBlob] = useState<Blob | null>(null);
     const searchFileInputRef = useRef<HTMLInputElement>(null);
     const [pendingSearchId, setPendingSearchId] = useState<string | null>(null);
 
@@ -501,8 +502,22 @@ function DashboardInner() {
         }
     };
 
+    const handleDeepSearch = async (fileBlob: Blob, fileName: string) => {
+        setSearchError(null);
+
+        try {
+            const file = new File([fileBlob], fileName, { type: fileBlob.type || 'image/jpeg' });
+            const result = await apiClient.deepImageSearch(file);
+            setSearchResults((prev: any) => ({ ...(prev || {}), _deepResults: result }));
+        } catch (err: any) {
+            setSearchError(err?.message || 'Deep search failed');
+            console.error('Deep search error:', err);
+        }
+    };
+
     const handleSearch = async (file: any) => {
         setSearchFileName(file.name);
+        setSearchFileBlob(null);
         setPendingSearchId(file.id);
 
         const url = file.storageUrl || file.previewUrl;
@@ -511,6 +526,7 @@ function DashboardInner() {
                 const resp = await fetch(url);
                 if (resp.ok) {
                     const blob = await resp.blob();
+                    setSearchFileBlob(blob);
                     const fileToUpload = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
                     await performSearch(fileToUpload);
                     try {
@@ -532,6 +548,7 @@ function DashboardInner() {
         const selectedFile = e.target.files?.[0];
         if (!selectedFile) return;
         setSearchFileName(selectedFile.name);
+        setSearchFileBlob(selectedFile);
         setPendingSearchId(null);
         await performSearch(selectedFile);
     };
@@ -999,11 +1016,13 @@ function DashboardInner() {
 
                 <SearchResultsModal
                     isOpen={isSearchOpen}
-                    onClose={() => { setIsSearchOpen(false); setSearchResults(null); setSearchError(null); }}
+                    onClose={() => { setIsSearchOpen(false); setSearchResults(null); setSearchError(null); setSearchFileBlob(null); }}
                     fileName={searchFileName}
                     results={searchResults}
                     loading={searchLoading}
                     error={searchError}
+                    searchFileBlob={searchFileBlob}
+                    onDeepSearch={handleDeepSearch}
                 />
 
                 <FeedbackWidget />
