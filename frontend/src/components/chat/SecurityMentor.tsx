@@ -241,7 +241,7 @@ export function SecurityMentor({ context, onSearchFile }: SecurityMentorProps) {
                     timestamp: new Date(),
                 }]);
                 setIsTyping(false);
-                onSearchFile({ id: only.id, name: only.name, storageUrl: (only as any).storageUrl, previewUrl: (only as any).previewUrl, _fromChat: true });
+                onSearchFile({ id: only.id, name: only.name, storageUrl: (only as any).storageUrl, previewUrl: (only as any).previewUrl });
                 return;
             }
 
@@ -262,7 +262,7 @@ export function SecurityMentor({ context, onSearchFile }: SecurityMentorProps) {
                         timestamp: new Date(),
                     }]);
                     setIsTyping(false);
-                    onSearchFile({ id: file.id, name: file.name, storageUrl: (file as any).storageUrl, previewUrl: (file as any).previewUrl, _fromChat: true });
+                    onSearchFile({ id: file.id, name: file.name, storageUrl: (file as any).storageUrl, previewUrl: (file as any).previewUrl });
                     return;
                 }
             }

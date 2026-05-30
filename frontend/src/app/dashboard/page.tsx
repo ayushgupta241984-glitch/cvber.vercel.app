@@ -525,12 +525,7 @@ function DashboardInner() {
             }
         }
 
-        const hasDirectCaller = file._fromChat;
-        if (hasDirectCaller) {
-            toast('Could not access vault file. Try clicking the search icon on the file card.', 'error');
-            return;
-        }
-        searchFileInputRef.current?.click();
+        toast('Could not access vault file for search', 'error');
     };
 
     const handleSearchFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {

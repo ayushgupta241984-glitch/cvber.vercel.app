@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Search, Globe, ExternalLink, Loader2, AlertTriangle, Hash, Layers } from 'lucide-react';
+import { X, Search, Globe, ExternalLink, Loader2, AlertTriangle, Hash, Copy } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface SimilarFile {
@@ -144,7 +144,7 @@ export function SearchResultsModal({ isOpen, onClose, fileName, results, loading
                                         {results.similar_files.map((sf) => (
                                             <div key={sf.scan_id} className="flex items-center justify-between p-3">
                                                 <div className="flex items-center gap-3 min-w-0">
-                                                    <Layers className="w-4 h-4 text-luxury-gold/40 shrink-0" />
+                                                    <Copy className="w-4 h-4 text-luxury-gold/40 shrink-0" />
                                                     <span className="text-xs text-luxury-cream/70 truncate">{sf.file_name}</span>
                                                 </div>
                                                 <span className="text-[10px] text-luxury-muted/40 shrink-0 ml-4">
