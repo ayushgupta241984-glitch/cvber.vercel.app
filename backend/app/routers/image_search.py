@@ -137,7 +137,7 @@ async def index_vault_for_copies(
 
 
 @router.post("/deep")
-@limiter.limit("3/minute")
+@limiter.limit("6/minute")
 async def deep_image_search(
     request: Request,
     file: UploadFile = File(...),

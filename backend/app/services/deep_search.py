@@ -14,13 +14,13 @@ logger = logging.getLogger(__name__)
 
 NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 NVIDIA_MODEL = "google/gemma-3n-e4b-it"
-MAX_ITERATIONS = 5
-QUERIES_PER_BATCH = 5
-IMAGES_PER_QUERY = 30
+MAX_ITERATIONS = 2
+QUERIES_PER_BATCH = 3
+IMAGES_PER_QUERY = 15
 SIMILARITY_THRESHOLD = 26
 MAX_RESULTS = 10
-TIMEOUT_IMAGE_DL = 10
-TIMEOUT_NIM = 45
+TIMEOUT_IMAGE_DL = 8
+TIMEOUT_NIM = 30
 DDGS_DELAY = 2.0  # seconds between DuckDuckGo calls to avoid rate limits
 
 
@@ -94,7 +94,7 @@ def _search_bing(query: str, max_results: int = IMAGES_PER_QUERY) -> list[dict]:
     }
     params = {"q": query, "form": "HDRSC2", "first": "1", "count": str(min(max_results, 35))}
     try:
-        time.sleep(1.0)
+        time.sleep(0.3)
         r = httpx.get("https://www.bing.com/images/search", headers=headers, params=params, timeout=15.0, follow_redirects=True)
         if r.status_code != 200:
             logger.warning(f"Bing search returned {r.status_code} for '{query[:50]}'")
