@@ -3,25 +3,23 @@ import base64
 import time
 import logging
 from typing import Optional
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import httpx
 from PIL import Image
-from duckduckgo_search import DDGS
-
 from app.services.image_search import dhash
 
 logger = logging.getLogger(__name__)
 
 NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 NVIDIA_MODEL = "google/gemma-3n-e4b-it"
-MAX_ITERATIONS = 2
+MAX_ITERATIONS = 1
 QUERIES_PER_BATCH = 3
-IMAGES_PER_QUERY = 15
+IMAGES_PER_QUERY = 5
 SIMILARITY_THRESHOLD = 26
-MAX_RESULTS = 10
-TIMEOUT_IMAGE_DL = 8
-TIMEOUT_NIM = 30
-DDGS_DELAY = 2.0  # seconds between DuckDuckGo calls to avoid rate limits
+MAX_RESULTS = 5
+TIMEOUT_IMAGE_DL = 4
+TIMEOUT_NIM = 18
 
 
 def _nim_call(messages: list, api_key: str, max_tokens: int = 256, temp: float = 0.1) -> Optional[str]:
@@ -55,29 +53,22 @@ def describe_image(image_bytes: bytes, api_key: str) -> Optional[str]:
             "role": "user",
             "content": [
                 {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
-                {"type": "text", "text": "Describe this image in detail. Focus on the main subject, setting, colors, composition, style, and any distinctive visual elements. Be specific and thorough."}
+                {"type": "text", "text": "Describe this image concisely: main subject, colors, composition, style, distinctive elements."}
             ]
         }
     ]
-    return _nim_call(messages, api_key, max_tokens=300, temp=0.1)
+    return _nim_call(messages, api_key, max_tokens=200, temp=0.1)
 
 
 def generate_queries(description: str, api_key: str, iteration: int = 0) -> list[str]:
     prompt = (
-        f"Based on this image description:\n{description}\n\n"
-        f"Generate {QUERIES_PER_BATCH} specific image search queries that would find visually similar or identical images on the web. "
-        "Focus on concrete visual keywords: the main subject, colors, composition, setting, style. "
-        "Return only the queries, one per line."
+        f"From this image description:\n{description}\n\n"
+        f"Generate {QUERIES_PER_BATCH} short image search queries (2-4 words each) to find visually similar images. "
+        "Focus on specific visual features. One per line."
     )
-    if iteration > 0:
-        prompt += (
-            "\n\nThe previous queries didn't find good visual matches. "
-            "Try completely different approaches — focus on unique visual features, unusual details, "
-            "or specific technical aspects (lighting, angle, texture, framing) that make this image distinctive."
-        )
 
     messages = [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
-    result = _nim_call(messages, api_key, max_tokens=300, temp=0.3)
+    result = _nim_call(messages, api_key, max_tokens=150, temp=0.3)
     if not result:
         return []
     queries = [q.strip().strip('"').strip("'").strip("- ").lstrip("1234567890.") for q in result.strip().split("\n") if q.strip()]
@@ -94,8 +85,7 @@ def _search_bing(query: str, max_results: int = IMAGES_PER_QUERY) -> list[dict]:
     }
     params = {"q": query, "form": "HDRSC2", "first": "1", "count": str(min(max_results, 35))}
     try:
-        time.sleep(0.3)
-        r = httpx.get("https://www.bing.com/images/search", headers=headers, params=params, timeout=15.0, follow_redirects=True)
+        r = httpx.get("https://www.bing.com/images/search", headers=headers, params=params, timeout=10.0, follow_redirects=True)
         if r.status_code != 200:
             logger.warning(f"Bing search returned {r.status_code} for '{query[:50]}'")
             return []
@@ -127,15 +117,6 @@ def _search_bing(query: str, max_results: int = IMAGES_PER_QUERY) -> list[dict]:
 
 
 def search_images(query: str, max_results: int = IMAGES_PER_QUERY) -> list[dict]:
-    time.sleep(DDGS_DELAY)
-    try:
-        with DDGS() as ddgs:
-            results = list(ddgs.images(query, max_results=max_results))
-            if results:
-                return [{"url": r["image"], "title": r.get("title", ""), "source": r.get("url", "")} for r in results if r.get("image")]
-    except Exception as e:
-        logger.debug(f"DuckDuckGo failed for '{query[:50]}': {e}")
-    # Fallback to Bing scrape
     return _search_bing(query, max_results)
 
 
@@ -165,7 +146,7 @@ def compare_and_score(original_dhash: str, image_url: str) -> Optional[dict]:
 
 
 def search_and_score_batch(queries: list[str], original_dhash: str, seen_urls: set) -> list[dict]:
-    batch_results = []
+    all_urls = []
     for query in queries:
         search_results = search_images(query)
         if not search_results:
@@ -176,12 +157,20 @@ def search_and_score_batch(queries: list[str], original_dhash: str, seen_urls: s
             if url in seen_urls:
                 continue
             seen_urls.add(url)
-            comparison = compare_and_score(original_dhash, url)
+            all_urls.append((url, sr.get("title", ""), sr.get("source", "")))
+
+    # Parallelize image downloads
+    batch_results = []
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        fut_map = {pool.submit(compare_and_score, original_dhash, url): (url, title, source) for url, title, source in all_urls}
+        for fut in as_completed(fut_map):
+            url, title, source = fut_map[fut]
+            comparison = fut.result()
             if comparison and comparison["distance"] <= SIMILARITY_THRESHOLD:
                 batch_results.append({
                     "url": comparison["url"],
-                    "title": sr.get("title", ""),
-                    "source": sr.get("source", ""),
+                    "title": title,
+                    "source": source,
                     "similarity": comparison["similarity"],
                     "hash_distance": comparison["distance"],
                 })
