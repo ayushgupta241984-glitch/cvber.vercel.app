@@ -77,35 +77,80 @@ def generate_queries(description: str, api_key: str, iteration: int = 0) -> list
 
 
 def _search_bing(query: str, max_results: int = IMAGES_PER_QUERY) -> list[dict]:
-    import re
+    import re, urllib.parse
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
     }
-    params = {"q": query, "form": "HDRSC2", "first": "1", "count": str(min(max_results, 35))}
+    params = {"q": query, "form": "HDRSC2", "first": "1", "count": str(min(max_results * 2, 35))}
     try:
         r = httpx.get("https://www.bing.com/images/search", headers=headers, params=params, timeout=10.0, follow_redirects=True)
-        if r.status_code != 200:
-            logger.warning(f"Bing search returned {r.status_code} for '{query[:50]}'")
-            return []
-        urls = set()
-        for match in re.finditer(r'data-src="(https?://[^"]+)"', r.text):
-            url = match.group(1).replace("\\u0026", "&").replace("\\/", "/")
-            urls.add(url)
-        for match in re.finditer(r'"murl"\s*:\s*"(https?://[^"]+)"', r.text):
-            url = match.group(1).replace("\\u0026", "&").replace("\\/", "/")
-            urls.add(url)
-        for match in re.finditer(r'<img[^>]+src="(https?://[^"]+)"', r.text):
-            url = match.group(1).replace("\\u0026", "&").replace("\\/", "/")
-            if "th.bing.com" in url:
-                urls.add(url)
+        html = r.text if r.status_code == 200 else ""
+        if not html:
+            r2 = httpx.get("https://www.bing.com/images/async", headers=headers, params={"q": query, "first": "1", "count": str(min(max_results, 35)), "form": "IRFLHG"}, timeout=10.0, follow_redirects=True)
+            html = r2.text if r2.status_code == 200 else ""
+
+        seen_urls = set()
         results = []
-        for url in list(urls)[:max_results]:
-            results.append({"url": url, "title": "", "source": ""})
+
+        # Collect all candidate image URLs with their context
+        candidates = []
+
+        # 1. data-src attributes (main image URLs)
+        for m in re.finditer(r'data-src="(https?://[^"]+)"', html):
+            url = m.group(1).replace("\\u0026", "&").replace("\\/", "/")
+            if url in seen_urls:
+                continue
+            # Filter to real image hosts (skip SVGs, UI elements)
+            if not any(host in url for host in ["th.bing.com", "tse", ".bing.net", "mm.bing.net"]):
+                continue
+            seen_urls.add(url)
+            candidates.append({"url": url, "pos": m.start(), "len": len(url)})
+
+        # 2. <img src> with th.bing.com
+        for m in re.finditer(r'<img[^>]+src="(https?://[^"]+)"', html):
+            url = m.group(1).replace("\\u0026", "&").replace("\\/", "/")
+            if url in seen_urls and "th.bing.com" in url:
+                seen_urls.add(url)
+                candidates.append({"url": url, "pos": m.start(), "len": len(url)})
+
+        # Extract source links (lnkw) and alt texts from the page
+        lnkw_links = list(re.finditer(r'data-hookid="pgdom"[^>]+href="([^"]+)"', html))
+        alt_texts = list(re.finditer(r'alt="([^"]*)"', html))
+
+        for cand in candidates[:max_results * 2]:
+            if len(results) >= max_results:
+                break
+            url = cand["url"]
+            pos = cand["pos"]
+
+            # Find nearest alt text before this position
+            title = ""
+            for a in alt_texts:
+                if a.start() < pos and a.start() > pos - 300:
+                    title = a.group(1)
+                    break
+
+            # Find nearest source link after this position
+            source = ""
+            for l in lnkw_links:
+                if l.start() > pos and l.start() < pos + 800:
+                    source = l.group(1)
+                    break
+
+            if not source:
+                source = f"https://www.bing.com/images/search?view=detailV2&mediaurl={urllib.parse.quote(url, '')}"
+
+            results.append({
+                "url": url,
+                "title": title.replace("\\u0026", "&").replace("\\/", "/") if title else "",
+                "source": source,
+            })
+
         if results:
             logger.info(f"  Bing '{query[:50]}' → {len(results)} results")
-        return results
+        return results[:max_results]
     except Exception as e:
         logger.warning(f"Bing search failed for '{query[:50]}': {e}")
         return []
@@ -174,35 +219,38 @@ async def deep_search_stream(image_bytes: bytes, api_key: str):
                 yield {"event": "query_empty", "data": {"query": q}}
                 continue
 
-            # Collect unique URLs
-            batch_urls = []
+            # Collect unique URLs with metadata
+            batch_items = []
             for sr in search_results:
                 url = sr["url"]
                 if url in seen_urls:
                     continue
                 seen_urls.add(url)
-                batch_urls.append(url)
+                batch_items.append(sr)
 
-            yield {"event": "query_results", "data": {"query": q, "count": len(batch_urls), "total": len(search_results)}}
+            yield {"event": "query_results", "data": {"query": q, "count": len(batch_items), "total": len(search_results)}}
 
             # Compare each image (sequential to show each one)
-            for i, url in enumerate(batch_urls):
-                yield {"event": "checking", "data": {"url": url, "index": i + 1, "total": len(batch_urls)}}
+            for i, item in enumerate(batch_items):
+                url = item["url"]
+                title = item.get("title", "")
+                source = item.get("source", "")
+                yield {"event": "checking", "data": {"url": url, "title": title, "source": source, "index": i + 1, "total": len(batch_items)}}
 
                 comparison = await loop.run_in_executor(None, compare_and_score, original_dhash_val, url)
                 if comparison and comparison["distance"] <= SIMILARITY_THRESHOLD:
                     all_results.append({
                         "url": comparison["url"],
-                        "title": "",
-                        "source": "",
+                        "title": title,
+                        "source": source,
                         "similarity": comparison["similarity"],
                         "hash_distance": comparison["distance"],
                     })
-                    yield {"event": "match", "data": {"url": comparison["url"], "similarity": comparison["similarity"], "distance": comparison["distance"]}}
+                    yield {"event": "match", "data": {"url": comparison["url"], "title": title, "source": source, "similarity": comparison["similarity"], "distance": comparison["distance"]}}
                     await asyncio.sleep(0.1)
                 else:
                     score = comparison["similarity"] if comparison else 0
-                    yield {"event": "reject", "data": {"url": url, "similarity": score, "reason": f"Below threshold (max {SIMILARITY_THRESHOLD} bits)" if not comparison else f"Only {score}% similar"}}
+                    yield {"event": "reject", "data": {"url": url, "title": title, "source": source, "similarity": score, "reason": f"Below threshold (max {SIMILARITY_THRESHOLD} bits)" if not comparison else f"Only {score}% similar"}}
 
                 if len(all_results) >= MAX_RESULTS:
                     break
