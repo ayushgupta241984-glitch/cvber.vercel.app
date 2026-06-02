@@ -1,7 +1,9 @@
 import io
 import os
+import json
+import asyncio
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Request
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from PIL import Image
 from app.dependencies import get_current_user
 from app.config import settings
@@ -9,6 +11,7 @@ from app.supabase_client import get_supabase
 from app.rate_limiter import limiter
 from app.services.image_search import search_image, get_temp_image, dhash, store_temp_image
 from app.services.hash_db import register_hash, find_similar, get_hash_for_scan
+from app.services.deep_search import deep_search_stream
 import logging
 import httpx
 
@@ -160,6 +163,44 @@ async def deep_image_search(
     except Exception as e:
         logger.error(f"Deep search failed: {e}")
         raise HTTPException(status_code=500, detail="Deep search failed")
+
+
+@router.post("/deep/tv")
+@limiter.limit("6/minute")
+async def deep_image_search_tv(
+    request: Request,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+):
+    image_bytes = await file.read()
+    if len(image_bytes) == 0:
+        raise HTTPException(status_code=400, detail="Empty file")
+    if len(image_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large (max 10MB)")
+
+    api_key = settings.nvidia_nim_api_key or os.getenv("NVIDIA_NIM_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="NVIDIA NIM API key not configured")
+
+    async def event_stream():
+        try:
+            async for event in deep_search_stream(image_bytes, api_key):
+                sse_event = event.get("event", "")
+                sse_data = json.dumps(event.get("data", {}))
+                yield f"event: {sse_event}\ndata: {sse_data}\n\n"
+        except Exception as e:
+            logger.error(f"Deep search TV error: {e}")
+            yield f"event: error\ndata: {json.dumps({'message': str(e)})}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
+    )
 
 
 @router.post("/hashes/find-copies")

@@ -1,8 +1,9 @@
 import io
 import base64
 import time
+import json
 import logging
-from typing import Optional
+from typing import Optional, Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import httpx
@@ -76,7 +77,6 @@ def generate_queries(description: str, api_key: str, iteration: int = 0) -> list
 
 
 def _search_bing(query: str, max_results: int = IMAGES_PER_QUERY) -> list[dict]:
-    """Fallback: scrape Bing image search via web interface."""
     import re
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -89,18 +89,13 @@ def _search_bing(query: str, max_results: int = IMAGES_PER_QUERY) -> list[dict]:
         if r.status_code != 200:
             logger.warning(f"Bing search returned {r.status_code} for '{query[:50]}'")
             return []
-        # Extract image URLs from the page
-        # Bing stores image metadata in a JSON-like script tag and also in data-src attributes
         urls = set()
-        # Method 1: data-src attributes (lazy-loaded images)
         for match in re.finditer(r'data-src="(https?://[^"]+)"', r.text):
             url = match.group(1).replace("\\u0026", "&").replace("\\/", "/")
             urls.add(url)
-        # Method 2: murl (media URL) in JSON metadata
         for match in re.finditer(r'"murl"\s*:\s*"(https?://[^"]+)"', r.text):
             url = match.group(1).replace("\\u0026", "&").replace("\\/", "/")
             urls.add(url)
-        # Method 3: img src fallback
         for match in re.finditer(r'<img[^>]+src="(https?://[^"]+)"', r.text):
             url = match.group(1).replace("\\u0026", "&").replace("\\/", "/")
             if "th.bing.com" in url:
@@ -145,37 +140,92 @@ def compare_and_score(original_dhash: str, image_url: str) -> Optional[dict]:
         return None
 
 
-def search_and_score_batch(queries: list[str], original_dhash: str, seen_urls: set) -> list[dict]:
-    all_urls = []
-    for query in queries:
-        search_results = search_images(query)
-        if not search_results:
-            continue
-        logger.info(f"  '{query[:50]}' → {len(search_results)} results")
-        for sr in search_results:
-            url = sr["url"]
-            if url in seen_urls:
-                continue
-            seen_urls.add(url)
-            all_urls.append((url, sr.get("title", ""), sr.get("source", "")))
+async def deep_search_stream(image_bytes: bytes, api_key: str):
+    """Async generator yielding SSE events for live TV display."""
+    import asyncio
+    original_dhash_val = dhash(image_bytes)
+    seen_urls: set[str] = set()
+    all_results: list[dict] = []
+    queries_used: list[str] = []
 
-    # Parallelize image downloads
-    batch_results = []
-    with ThreadPoolExecutor(max_workers=5) as pool:
-        fut_map = {pool.submit(compare_and_score, original_dhash, url): (url, title, source) for url, title, source in all_urls}
-        for fut in as_completed(fut_map):
-            url, title, source = fut_map[fut]
-            comparison = fut.result()
-            if comparison and comparison["distance"] <= SIMILARITY_THRESHOLD:
-                batch_results.append({
-                    "url": comparison["url"],
-                    "title": title,
-                    "source": source,
-                    "similarity": comparison["similarity"],
-                    "hash_distance": comparison["distance"],
-                })
-                logger.info(f"    ✓ {comparison['similarity']}% - {url[:70]}")
-    return batch_results
+    yield {"event": "start", "data": {"dhash": original_dhash_val}}
+
+    # Step 1: Describe
+    yield {"event": "describe", "data": {"status": "Analyzing image with NVIDIA AI..."}}
+    loop = asyncio.get_event_loop()
+    description = await loop.run_in_executor(None, describe_image, image_bytes, api_key)
+    if not description:
+        yield {"event": "error", "data": {"message": "Failed to describe image"}}
+        return
+    yield {"event": "describe_done", "data": {"description": description[:300]}}
+
+    # Step 2: Generate + execute queries
+    for iteration in range(MAX_ITERATIONS):
+        yield {"event": "thinking", "data": {"status": "Generating search queries..."}}
+        queries = await loop.run_in_executor(None, generate_queries, description, api_key, iteration)
+        if not queries:
+            break
+        queries_used.extend(queries)
+
+        for q in queries:
+            yield {"event": "query", "data": {"query": q}}
+            search_results = await loop.run_in_executor(None, search_images, q, IMAGES_PER_QUERY)
+            if not search_results:
+                yield {"event": "query_empty", "data": {"query": q}}
+                continue
+
+            # Collect unique URLs
+            batch_urls = []
+            for sr in search_results:
+                url = sr["url"]
+                if url in seen_urls:
+                    continue
+                seen_urls.add(url)
+                batch_urls.append(url)
+
+            yield {"event": "query_results", "data": {"query": q, "count": len(batch_urls), "total": len(search_results)}}
+
+            # Compare each image (sequential to show each one)
+            for i, url in enumerate(batch_urls):
+                yield {"event": "checking", "data": {"url": url, "index": i + 1, "total": len(batch_urls)}}
+
+                comparison = await loop.run_in_executor(None, compare_and_score, original_dhash_val, url)
+                if comparison and comparison["distance"] <= SIMILARITY_THRESHOLD:
+                    all_results.append({
+                        "url": comparison["url"],
+                        "title": "",
+                        "source": "",
+                        "similarity": comparison["similarity"],
+                        "hash_distance": comparison["distance"],
+                    })
+                    yield {"event": "match", "data": {"url": comparison["url"], "similarity": comparison["similarity"], "distance": comparison["distance"]}}
+                    await asyncio.sleep(0.1)
+                else:
+                    score = comparison["similarity"] if comparison else 0
+                    yield {"event": "reject", "data": {"url": url, "similarity": score, "reason": f"Below threshold (max {SIMILARITY_THRESHOLD} bits)" if not comparison else f"Only {score}% similar"}}
+
+                if len(all_results) >= MAX_RESULTS:
+                    break
+
+            yield {"event": "progress", "data": {"searched": len(seen_urls), "found": len(all_results)}}
+
+            if len(all_results) >= MAX_RESULTS:
+                break
+
+        if len(all_results) >= MAX_RESULTS:
+            break
+
+    all_results.sort(key=lambda r: r["similarity"], reverse=True)
+    all_results = all_results[:MAX_RESULTS]
+
+    yield {"event": "done", "data": {
+        "original_dhash": original_dhash_val,
+        "description": description,
+        "results": all_results,
+        "total_found": len(all_results),
+        "queries_used": queries_used,
+        "images_searched": len(seen_urls),
+    }}
 
 
 async def deep_search(image_bytes: bytes, api_key: str) -> dict:
@@ -218,3 +268,35 @@ async def deep_search(image_bytes: bytes, api_key: str) -> dict:
         "queries_used": queries_used,
         "images_searched": len(seen_urls),
     }
+
+
+def search_and_score_batch(queries: list[str], original_dhash: str, seen_urls: set) -> list[dict]:
+    all_urls = []
+    for query in queries:
+        search_results = search_images(query)
+        if not search_results:
+            continue
+        logger.info(f"  '{query[:50]}' → {len(search_results)} results")
+        for sr in search_results:
+            url = sr["url"]
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            all_urls.append((url, sr.get("title", ""), sr.get("source", "")))
+
+    batch_results = []
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        fut_map = {pool.submit(compare_and_score, original_dhash, url): (url, title, source) for url, title, source in all_urls}
+        for fut in as_completed(fut_map):
+            url, title, source = fut_map[fut]
+            comparison = fut.result()
+            if comparison and comparison["distance"] <= SIMILARITY_THRESHOLD:
+                batch_results.append({
+                    "url": comparison["url"],
+                    "title": title,
+                    "source": source,
+                    "similarity": comparison["similarity"],
+                    "hash_distance": comparison["distance"],
+                })
+                logger.info(f"    ✓ {comparison['similarity']}% - {url[:70]}")
+    return batch_results

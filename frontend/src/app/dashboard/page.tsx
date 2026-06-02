@@ -14,6 +14,7 @@ import { apiClient, BASE_URL } from '@/lib/api-client';
 import { FeedbackWidget } from '@/components/common/FeedbackWidget';
 import { ReferralBanner } from '@/components/common/ReferralBanner';
 import { SearchResultsModal } from '@/components/search/SearchResultsModal';
+import { SearchTV } from '@/components/search/SearchTV';
 import { Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, Eye, ScanLine, Anchor, Globe, ChevronDown, ArrowUpRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -826,6 +827,9 @@ function DashboardInner() {
                                                 >
                                                     {isIndexing ? 'Indexing Files...' : `Index Vault for Copy Detection (${files.length} files)`}
                                                 </button>
+                                                <div className="mt-3">
+                                                    <SearchTV fileBlob={searchFileBlob ?? undefined} fileName={searchFileName || undefined} />
+                                                </div>
                                             </motion.div>
                                         </motion.div>
                                     </div>

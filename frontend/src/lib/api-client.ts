@@ -140,6 +140,66 @@ export const apiClient = {
         return handleResponse<any>(response);
     },
 
+    deepImageSearchTV(
+        file: File,
+        onEvent: (event: string, data: any) => void,
+        onError?: (err: string) => void,
+        onDone?: () => void,
+    ): { abort: () => void } {
+        const controller = new AbortController();
+        const formData = new FormData();
+        formData.append('file', file);
+        const headers: Record<string, string> = getAuthHeaders();
+
+        (async () => {
+            try {
+                const response = await fetch(`${BASE_URL}/search/deep/tv`, {
+                    method: 'POST',
+                    headers,
+                    body: formData,
+                    signal: controller.signal,
+                });
+                if (!response.ok) {
+                    const text = await response.text().catch(() => 'Unknown error');
+                    onError?.(`Server ${response.status}: ${text}`);
+                    return;
+                }
+                const reader = response.body?.getReader();
+                if (!reader) {
+                    onError?.('No response body');
+                    return;
+                }
+                const decoder = new TextDecoder();
+                let buffer = '';
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    let currentEvent = '';
+                    for (const line of lines) {
+                        if (line.startsWith('event: ')) {
+                            currentEvent = line.slice(7).trim();
+                        } else if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                onEvent(currentEvent, data);
+                            } catch { /* ignore malformed JSON */ }
+                        }
+                    }
+                }
+                onDone?.();
+            } catch (err: any) {
+                if (err.name !== 'AbortError') {
+                    onError?.(err?.message || 'Connection failed');
+                }
+            }
+        })();
+
+        return { abort: () => controller.abort() };
+    },
+
     async findCopies(file: File): Promise<any> {
         const formData = new FormData();
         formData.append('file', file);
