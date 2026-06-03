@@ -521,20 +521,10 @@ function DashboardInner() {
         setSearchFileBlob(null);
         setPendingSearchId(file.id);
 
-        // Get a usable URL — refresh signed URL if missing or blob:
-        let url = file.storageUrl || file.previewUrl;
-        if (!url || url.startsWith('blob:')) {
-            try {
-                const urlResp = await apiClient.getVaultFileUrl(file.id);
-                url = urlResp.url;
-            } catch {
-                toast('Could not get file URL for search', 'error');
-                setPendingSearchId(null);
-                return;
-            }
-        }
-
+        // Always get a fresh signed URL — stored URLs expire
         try {
+            const urlResp = await apiClient.getVaultFileUrl(file.id);
+            const url = urlResp.url;
             const resp = await fetch(url);
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const blob = await resp.blob();
@@ -547,8 +537,9 @@ function DashboardInner() {
                 // non-critical
             }
         } catch (err) {
-            console.error('Search fetch failed:', err);
-            toast('Could not access vault file for search', 'error');
+            console.error('Search failed:', err);
+            const msg = err instanceof Error ? err.message : 'Unknown error';
+            toast(`Could not search file: ${msg}`, 'error');
         } finally {
             setPendingSearchId(null);
         }
