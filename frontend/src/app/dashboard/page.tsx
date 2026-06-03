@@ -521,28 +521,37 @@ function DashboardInner() {
         setSearchFileBlob(null);
         setPendingSearchId(file.id);
 
-        const url = file.storageUrl || file.previewUrl;
-        if (url && !url.startsWith('blob:')) {
+        // Get a usable URL — refresh signed URL if missing or blob:
+        let url = file.storageUrl || file.previewUrl;
+        if (!url || url.startsWith('blob:')) {
             try {
-                const resp = await fetch(url);
-                if (resp.ok) {
-                    const blob = await resp.blob();
-                    setSearchFileBlob(blob);
-                    const fileToUpload = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
-                    await performSearch(fileToUpload);
-                    try {
-                        await apiClient.registerHash(fileToUpload, file.id);
-                    } catch {
-                        // non-critical
-                    }
-                    return;
-                }
+                const urlResp = await apiClient.getVaultFileUrl(file.id);
+                url = urlResp.url;
             } catch {
-                // fall through
+                toast('Could not get file URL for search', 'error');
+                setPendingSearchId(null);
+                return;
             }
         }
 
-        toast('Could not access vault file for search', 'error');
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const blob = await resp.blob();
+            setSearchFileBlob(blob);
+            const fileToUpload = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
+            await performSearch(fileToUpload);
+            try {
+                await apiClient.registerHash(fileToUpload, file.id);
+            } catch {
+                // non-critical
+            }
+        } catch (err) {
+            console.error('Search fetch failed:', err);
+            toast('Could not access vault file for search', 'error');
+        } finally {
+            setPendingSearchId(null);
+        }
     };
 
     const handleSearchFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
