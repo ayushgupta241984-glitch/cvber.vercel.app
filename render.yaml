@@ -23,6 +23,8 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         value: "https://cvber.free.las.app,https://cvber.vercel.app"
+      - key: NVIDIA_NIM_API_KEY
+        sync: false
       - key: C2PA_SERVICE_URL
         fromService:
             name: cvber-c2pa
