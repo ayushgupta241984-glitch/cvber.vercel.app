@@ -8,6 +8,7 @@ import { ScreenshotGuard } from '@/components/security/ScreenshotGuard';
 import { FileViewer } from '@/components/dashboard/FileViewer';
 import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
 import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
+import { DMCAGenerator } from '@/components/enforcement/DMCAGenerator';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { ToastProvider, useToast } from '@/components/common/Toast';
 import { apiClient, BASE_URL } from '@/lib/api-client';
@@ -32,6 +33,9 @@ interface FileData {
     forensicSummary?: string;
     aiProvider?: string;
     aiModel?: string;
+    c2paSignedUrl?: string;
+    c2paManifest?: string;
+    c2paSignature?: string;
     uploadedAt: string;
     previewUrl?: string;
     storageUrl?: string;
@@ -112,6 +116,7 @@ function DashboardInner() {
     const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [isWatermarkOpen, setIsWatermarkOpen] = useState(false);
+    const [dmcaAsset, setDmcaAsset] = useState<{ name: string; hash: string; originalityScore: number; forensicSummary: string } | null>(null);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [vaultLoading, setVaultLoading] = useState(true);
@@ -211,6 +216,11 @@ function DashboardInner() {
                         isScreenshot: f.is_screenshot,
                         proofRequired: f.proof_required,
                         ownershipProofStatus: f.ownership_proof_status,
+                        aiProvider: f.ai_provider,
+                        aiModel: f.ai_model,
+                        c2paSignedUrl: f.c2pa_signed_url,
+                        c2paManifest: f.c2pa_manifest,
+                        c2paSignature: f.c2pa_signature,
                         uploadedAt: f.created_at,
                         storageUrl: f.storage_url,
                         previewUrl: f.storage_url || undefined,
@@ -289,8 +299,9 @@ function DashboardInner() {
     };
 
     const checkProofRequired = (file: FileData) => {
-        const screenshotWithLowScore = file.isScreenshot && (file.originalityScore === undefined || file.originalityScore < 50);
-        const hasProofRequired = file.proofRequired === true && file.ownershipProofStatus !== 'verified';
+        const alreadySubmitted = file.ownershipProofStatus === 'pending' || file.ownershipProofStatus === 'verified';
+        const screenshotWithLowScore = file.isScreenshot && (file.originalityScore === undefined || file.originalityScore < 50) && !alreadySubmitted;
+        const hasProofRequired = file.proofRequired === true && !alreadySubmitted;
 
         if (hasProofRequired || screenshotWithLowScore) {
             console.log('Blocking access for:', file.name, { proofRequired: file.proofRequired, isScreenshot: file.isScreenshot, originality: file.originalityScore });
@@ -327,9 +338,25 @@ function DashboardInner() {
                     const vaultFiles = vault.files.map((f: any) => ({
                         ...f,
                         proofRequired: f.proof_required,
-                        ownershipProofStatus: f.ownership_proof_status
+                        ownershipProofStatus: f.ownership_proof_status,
+                        aiProvider: f.ai_provider,
+                        aiModel: f.ai_model,
+                        c2paSignedUrl: f.c2pa_signed_url,
+                        c2paManifest: f.c2pa_manifest,
+                        c2paSignature: f.c2pa_signature,
                     }));
-                    setFiles(prev => [...prev, ...vaultFiles.filter(vf => !prev.find(p => p.id === vf.id))]);
+                    setFiles(prev => {
+                        const updated = [...prev];
+                        for (const vf of vaultFiles) {
+                            const idx = updated.findIndex(p => p.id === vf.id);
+                            if (idx >= 0) {
+                                updated[idx] = { ...updated[idx], ...vf };
+                            } else {
+                                updated.push(vf);
+                            }
+                        }
+                        return updated;
+                    });
                 }
             } else {
                 toast('Failed to submit proof. Please try again.', 'error');
@@ -423,11 +450,28 @@ function DashboardInner() {
         if (window.innerWidth < 1024) setIsSidebarOpen(false);
     };
 
-    const handleWatermark = (file: FileData) => {
+    const handleWatermark = async (file: FileData) => {
         if (checkProofRequired(file)) return;
+        if (!file.previewUrl) {
+            try {
+                const urlResp = await apiClient.getVaultFileUrl(file.id);
+                file.previewUrl = urlResp.url;
+            } catch (err) {
+                console.error("Failed to refresh URL for watermark:", err);
+            }
+        }
         setSelectedFile(file);
         setIsWatermarkOpen(true);
         if (window.innerWidth < 1024) setIsSidebarOpen(false);
+    };
+
+    const handleDMCA = (file: FileData) => {
+        setDmcaAsset({
+            name: file.name,
+            hash: file.hash || 'unknown',
+            originalityScore: file.originalityScore || 0,
+            forensicSummary: file.forensicSummary || 'No forensic summary available',
+        });
     };
 
     const handleDelete = async (file: FileData) => {
@@ -800,6 +844,7 @@ function DashboardInner() {
                                                     onDelete={handleDelete}
                                                     onTimestamp={handleTimestamp}
                                                     onSearch={handleSearch}
+                                                    onDMCA={handleDMCA}
                                                 />
                                             </motion.section>
                                         </div>
@@ -1009,6 +1054,13 @@ function DashboardInner() {
                     isOpen={isWatermarkOpen}
                     onClose={() => setIsWatermarkOpen(false)}
                 />
+
+                {dmcaAsset && (
+                    <DMCAGenerator
+                        asset={dmcaAsset}
+                        onClose={() => setDmcaAsset(null)}
+                    />
+                )}
 
                 <input
                     type="file"

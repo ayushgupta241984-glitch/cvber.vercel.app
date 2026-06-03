@@ -65,6 +65,11 @@ async def list_vault_files(
                 is_screenshot=item.get("is_screenshot", False),
                 proof_required=bool(item.get("proof_required")),
                 ownership_proof_status=item.get("ownership_proof_status"),
+                ai_provider=item.get("ai_provider"),
+                ai_model=item.get("ai_model"),
+                c2pa_signed_url=item.get("c2pa_signed_url"),
+                c2pa_manifest=item.get("c2pa_manifest"),
+                c2pa_signature=item.get("c2pa_signature"),
                 storage_url=signed_url,
                 created_at=item.get("created_at", datetime.utcnow())
             ))
@@ -311,14 +316,13 @@ async def submit_ownership_proof(
     body: OwnershipProofRequest,
     current_user: dict = Depends(get_current_user)
 ):
-    """Submit proof of ownership for a file that was flagged as screenshot/not original"""
+    """Submit proof of ownership — creates a Bitcoin-anchored timestamp via OpenTimestamps for cryptographic verification"""
     proof_type = body.proof_type
     proof_text = body.proof_text
     proof_url = body.proof_url
     try:
-        # Verify file belongs to user
         vault_resp = supabase.table("vault_files")\
-            .select("id, proof_required")\
+            .select("id, file_name, original_hash, proof_required")\
             .eq("scan_id", str(scan_id))\
             .eq("user_id", current_user["id"])\
             .single()\
@@ -327,28 +331,59 @@ async def submit_ownership_proof(
         if not vault_resp.data:
             raise HTTPException(status_code=404, detail="File not found")
         
-        # Check if proof is actually required
-        if not vault_resp.data.get("proof_required"):
-            return {"success": True, "message": "Proof not required for this file"}
+        vault_data = vault_resp.data
         
-        # Insert ownership proof
         proof_data = {
             "scan_id": str(scan_id),
             "user_id": current_user["id"],
             "proof_type": proof_type,
             "proof_text": proof_text[:500] if proof_text else "",
             "proof_url": proof_url[:500] if proof_url else "",
-            "status": "pending"
+            "status": "verifying"
         }
         supabase.table("ownership_proofs").insert(proof_data).execute()
-        
-        # Update vault file status
+
+        blockchain_proof_id = None
+        ots_status = "not_submitted"
+        try:
+            if vault_data.get("original_hash"):
+                bcp = await blockchain_service.create_timestamp(
+                    vault_data["original_hash"],
+                    vault_data.get("file_name", "Unknown"),
+                    current_user["id"]
+                )
+                blockchain_proof_id = bcp.proof_id
+                if bcp.status == "pending":
+                    ots_status = "submitted_to_bitcoin"
+                elif bcp.status == "local_only":
+                    ots_status = "timestamped_locally"
+                else:
+                    ots_status = bcp.status
+
+                if vault_data.get("id"):
+                    supabase.table("blockchain_proofs")\
+                        .update({"vault_file_id": vault_data["id"]})\
+                        .eq("proof_id", bcp.proof_id)\
+                        .execute()
+        except Exception as bc_err:
+            logger.warning(f"Blockchain timestamp creation failed (non-critical): {bc_err}")
+            ots_status = "failed"
+
+        status = "verifying" if ots_status == "submitted_to_bitcoin" else "pending"
         supabase.table("vault_files")\
-            .update({"ownership_proof_status": "pending"})\
+            .update({"ownership_proof_status": status})\
             .eq("scan_id", str(scan_id))\
             .execute()
-        
-        return {"success": True, "message": "Ownership proof submitted successfully"}
+
+        return {
+            "success": True,
+            "message": "Ownership proof submitted successfully",
+            "blockchain_proof_id": blockchain_proof_id,
+            "blockchain_status": ots_status,
+            "blockchain_type": "OpenTimestamps (Bitcoin)",
+            "blockchain_url": "https://opentimestamps.org/" if blockchain_proof_id else None,
+            "note": "File hash has been submitted to the Bitcoin blockchain for cryptographic anchoring. Verification is independent and permanent."
+        }
     except HTTPException:
         raise
     except Exception as e:

@@ -132,7 +132,33 @@ def validate_file(file: UploadFile):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
     if file.content_type and file.content_type not in ALLOWED_CONTENT_TYPES:
-        logger.warning(f"Unexpected content type: {file.content_type}")
+        raise HTTPException(status_code=400, detail=f"Content type '{file.content_type}' not allowed")
+
+
+def validate_image_content(file_buffer: bytes) -> dict:
+    """Full Pillow-based image validation — opens, parses, and verifies the image structure."""
+    try:
+        from PIL import Image
+        import io
+        img = Image.open(io.BytesIO(file_buffer))
+        img.verify()
+        img = Image.open(io.BytesIO(file_buffer))
+        img.load()
+        width, height = img.size
+        if width > 10000 or height > 10000:
+            raise HTTPException(status_code=400, detail=f"Image dimensions too large: {width}x{height} (max 10000)")
+        extrema = img.getextrema() if hasattr(img, 'getextrema') else None
+        return {
+            "valid": True,
+            "width": width,
+            "height": height,
+            "format": img.format,
+            "mode": img.mode,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid or corrupted image: {str(e)}")
 
 
 async def read_file_safe(file: UploadFile) -> bytes:
@@ -158,6 +184,14 @@ async def scan_file(
         validate_file(file)
         file_buffer = await read_file_safe(file)
         file_size = len(file_buffer)
+
+        if file.content_type and file.content_type.startswith("image/"):
+            try:
+                validate_image_content(file_buffer)
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.warning(f"Image validation warning (non-blocking): {e}")
 
         user_email = current_user.get("email") or "Cvber User"
         creator_info = {
@@ -300,6 +334,9 @@ async def scan_file(
 
             if not _is_mock_mode():
                 try:
+                    file_meta = risk_report.file_metadata or {}
+                    ai_provider = file_meta.get("ai_provider", "unknown")
+                    ai_model = file_meta.get("ai_model", "unknown")
                     vault_record = {
                         "user_id": current_user["id"],
                         "scan_id": str(scan_id),
@@ -314,6 +351,8 @@ async def scan_file(
                         "is_screenshot": risk_report.is_screenshot,
                         "proof_required": proof_required,
                         "ownership_proof_status": "pending" if proof_required else None,
+                        "ai_provider": ai_provider,
+                        "ai_model": ai_model,
                     }
                     vault_insert = supabase.table("vault_files").insert(vault_record).execute()
                     if not vault_insert.data:
@@ -336,7 +375,8 @@ async def scan_file(
                         file_buffer=file_buffer,
                         file_name=file.filename,
                         scan_results=risk_report,
-                        user_id=current_user["id"]
+                        user_id=current_user["id"],
+                        scan_id=str(scan_id),
                     )
             except Exception as c2pa_err:
                 logger.warning(f"C2PA signing failed (non-critical): {c2pa_err}")

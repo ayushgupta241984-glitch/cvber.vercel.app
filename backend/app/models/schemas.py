@@ -140,6 +140,11 @@ class VaultFile(BaseModel):
     is_screenshot: bool = False
     proof_required: bool = False
     ownership_proof_status: Optional[str] = None
+    ai_provider: Optional[str] = None
+    ai_model: Optional[str] = None
+    c2pa_signed_url: Optional[str] = None
+    c2pa_manifest: Optional[str] = None
+    c2pa_signature: Optional[str] = None
     storage_url: Optional[str] = None
     created_at: datetime
 

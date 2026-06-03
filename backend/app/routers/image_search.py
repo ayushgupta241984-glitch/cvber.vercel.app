@@ -2,6 +2,7 @@ import io
 import os
 import json
 import asyncio
+from uuid import uuid4
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Request
 from fastapi.responses import Response, StreamingResponse
 from PIL import Image
@@ -9,8 +10,8 @@ from app.dependencies import get_current_user
 from app.config import settings
 from app.supabase_client import get_supabase
 from app.rate_limiter import limiter
-from app.services.image_search import search_image, get_temp_image, dhash, store_temp_image
-from app.services.hash_db import register_hash, find_similar, get_hash_for_scan
+from app.services.image_search import search_image, get_temp_image, dhash, compute_hashes, store_temp_image, verify_image_structure
+from app.services.hash_db import register_hash, find_similar_multi, get_hashes_for_scan
 from app.services.deep_search import deep_search_stream
 import logging
 import httpx
@@ -68,9 +69,9 @@ async def register_image_hash(
         raise HTTPException(status_code=400, detail="Empty file")
 
     try:
-        perceptual_hash = dhash(image_bytes)
-        register_hash(scan_id, perceptual_hash, file.filename or scan_id, user_id)
-        return {"status": "registered", "scan_id": scan_id, "dhash": perceptual_hash}
+        hashes = compute_hashes(image_bytes)
+        register_hash(scan_id, hashes, file.filename or scan_id, user_id)
+        return {"status": "registered", "scan_id": scan_id, "hashes": hashes}
     except Exception as e:
         logger.error(f"Hash registration failed: {e}")
         raise HTTPException(status_code=500, detail="Hash registration failed")
@@ -105,7 +106,7 @@ async def index_vault_for_copies(
             if not scan_id or not storage_path:
                 continue
 
-            existing = get_hash_for_scan(scan_id, user_id)
+            existing = get_hashes_for_scan(str(scan_id), user_id)
             if existing:
                 continue
 
@@ -121,8 +122,8 @@ async def index_vault_for_copies(
                         continue
                     image_bytes = dl_resp.content
 
-                perceptual_hash = dhash(image_bytes)
-                register_hash(str(scan_id), perceptual_hash, file_name, user_id)
+                hashes = compute_hashes(image_bytes)
+                register_hash(str(scan_id), hashes, file_name, user_id)
                 registered += 1
             except Exception as e:
                 logger.warning(f"Failed to index {file_name}: {e}")
@@ -219,12 +220,14 @@ async def find_copies(
         raise HTTPException(status_code=400, detail="Empty file")
 
     try:
-        perceptual_hash = dhash(image_bytes)
-        similar = find_similar(perceptual_hash, user_id, max_distance=10)
+        hashes = compute_hashes(image_bytes)
+        similar = find_similar_multi(hashes, user_id, min_confidence=50.0)
+        register_hash(str(uuid4()), hashes, file.filename or "unknown", user_id)
         return {
-            "query_hash": perceptual_hash,
+            "query_hashes": hashes,
             "similar_files": similar,
             "total_found": len(similar),
+            "hash_methods": ["dhash", "ahash", "color_hist"],
         }
     except Exception as e:
         logger.error(f"Find copies failed: {e}")

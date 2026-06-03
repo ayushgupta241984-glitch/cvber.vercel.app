@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, Shield, AlertTriangle, CheckCircle, Trash2, Anchor, Image, Search } from 'lucide-react';
+import { FileText, Shield, AlertTriangle, CheckCircle, Trash2, Anchor, Image, Search, Scale, BadgeCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
@@ -12,6 +12,13 @@ interface FileItem {
     riskScore?: number;
     originalityScore?: number;
     isScreenshot?: boolean;
+    proofRequired?: boolean;
+    ownershipProofStatus?: 'pending' | 'verified' | 'rejected' | null;
+    c2paSignedUrl?: string;
+    c2paManifest?: string;
+    c2paSignature?: string;
+    aiProvider?: string;
+    aiModel?: string;
     uploadedAt: string;
     previewUrl?: string;
 }
@@ -24,6 +31,7 @@ interface SafeVaultProps {
     onDelete?: (file: FileItem) => void;
     onTimestamp?: (file: FileItem) => void;
     onSearch?: (file: FileItem) => void;
+    onDMCA?: (file: FileItem) => void;
 }
 
 const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
@@ -46,7 +54,7 @@ function SkeletonCard() {
     );
 }
 
-export function SafeVault({ files = [], loading = false, onView, onWatermark, onDelete, onTimestamp, onSearch }: SafeVaultProps) {
+export function SafeVault({ files = [], loading = false, onView, onWatermark, onDelete, onTimestamp, onSearch, onDMCA }: SafeVaultProps) {
     const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
 
     const markBroken = (id: string) => {
@@ -142,7 +150,13 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                         </div>
                                     )}
                                     {/* Status overlay */}
-                                    <div className="absolute top-4 right-4">
+                                    <div className="absolute top-4 right-4 flex items-center gap-2">
+                                        {file.c2paSignedUrl && (
+                                            <span className="text-[8px] uppercase tracking-ultra-wide font-semibold text-cyan-400/80 flex items-center gap-1">
+                                                <BadgeCheck className="h-2.5 w-2.5" />
+                                                C2PA
+                                            </span>
+                                        )}
                                         <span className={`text-[9px] uppercase tracking-ultra-wide font-semibold ${badge.class}`}>
                                             {badge.label}
                                         </span>
@@ -228,6 +242,24 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                             >
                                                 <Search className="h-3.5 w-3.5" />
                                             </button>
+                                            {file.c2paSignedUrl && (
+                                                <a
+                                                    href={file.c2paSignedUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 text-cyan-400/60 hover:text-cyan-400 transition-colors duration-300"
+                                                    title="Download C2PA Signed File"
+                                                >
+                                                    <BadgeCheck className="h-3.5 w-3.5" />
+                                                </a>
+                                            )}
+                                            <button
+                                                onClick={() => onDMCA?.(file)}
+                                                className="p-2 text-luxury-muted/40 hover:text-purple-400/80 transition-colors duration-300"
+                                                title="Generate DMCA takedown notice"
+                                            >
+                                                <Scale className="h-3.5 w-3.5" />
+                                            </button>
                                             {file.status !== 'scanning' && (
                                                 <button
                                                     onClick={() => onView?.(file)}
@@ -236,7 +268,7 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                                     View
                                                 </button>
                                             )}
-                                            {file.status === 'safe' && (
+                                            {file.status === 'safe' && (!file.proofRequired || file.ownershipProofStatus === 'verified') && (
                                                 <button
                                                     onClick={() => onWatermark?.(file)}
                                                     className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] flex items-center gap-2"
