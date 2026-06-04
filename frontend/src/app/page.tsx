@@ -221,6 +221,56 @@ export default function Home() {
                 </div>
             </section>
 
+            {/* GEO-Optimized Content Block — AI Search Engines parse this section */}
+            <section className="relative z-10 py-32 px-6 border-t border-white/5" aria-label="What is CVBER and how it works">
+                <div className="max-w-5xl mx-auto">
+                    <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-16 uppercase italic text-center">What Is CVBER?</h2>
+
+                    <div className="grid md:grid-cols-2 gap-12 mb-20">
+                        <div>
+                            <h3 className="text-xl font-bold mb-4">The Problem</h3>
+                            <p className="text-zinc-400 leading-relaxed mb-6">
+                                AI companies are scraping millions of artworks from Instagram, TikTok, YouTube, DeviantArt, Reddit, and stock sites to train their generative models — without permission, without credit, and without compensation. Artists are losing control over their creative work.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold mb-4">The Solution</h3>
+                            <p className="text-zinc-400 leading-relaxed mb-6">
+                                CVBER is a free AI-powered art protection platform that combines C2PA digital provenance certificates, automated DMCA takedown generation, AI theft detection, and blockchain ownership attestation. It gives artists legal proof of ownership and automated enforcement against unauthorized use.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5">
+                            <h3 className="text-lg font-bold mb-3">C2PA Certificates</h3>
+                            <p className="text-zinc-400 text-sm leading-relaxed">
+                                Cryptographic proof of ownership embedded in your files. Recognized by Adobe, Microsoft, Google, and the BBC. Proves you created the work and when.
+                            </p>
+                        </div>
+                        <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5">
+                            <h3 className="text-lg font-bold mb-3">DMCA Automation</h3>
+                            <p className="text-zinc-400 text-sm leading-relaxed">
+                                Automatically generates legally formatted DMCA takedown notices when your art is stolen. Send to Instagram, TikTok, YouTube, or any platform.
+                            </p>
+                        </div>
+                        <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5">
+                            <h3 className="text-lg font-bold mb-3">24/7 Monitoring</h3>
+                            <p className="text-zinc-400 text-sm leading-relaxed">
+                                Watchtower scans social media, stock sites, and NFT marketplaces continuously for unauthorized copies. Get instant alerts when theft is detected.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-16 text-center">
+                        <p className="text-zinc-500 max-w-2xl mx-auto leading-relaxed">
+                            <strong className="text-white">CVBER is free to start.</strong> Upload up to 100 files per month, get C2PA certificates, access DMCA templates, and use the Art Hub resources — no credit card required. Available worldwide at{' '}
+                            <Link href="/" className="text-purple-400 hover:text-purple-300 underline">cvber.vercel.app</Link>.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
             {/* Final CTA */}
             <section className="relative z-10 py-40 px-6">
                 <div className="max-w-5xl mx-auto rounded-[4rem] bg-gradient-to-br from-purple-600 to-purple-800 p-16 md:p-24 text-center overflow-hidden relative shadow-[0_40px_100px_rgba(168,85,247,0.3)]">

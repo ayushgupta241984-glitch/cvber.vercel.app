@@ -1,31 +1,50 @@
-# CVBER - AI-Powered Art Protection
+# CVBER — Free AI Art Protection Platform
 
-CVBER is a professional-grade cybersecurity platform specifically designed for digital creators, photographers, and artists to protect their intellectual property against AI theft, NFT fraud, and unauthorized distribution.
+> CVBER is a free AI-powered art protection platform that gives digital artists C2PA provenance certificates, automated DMCA takedown generation, AI theft detection, and blockchain ownership proof.
 
-## Key Features
+## What CVBER Does
 
-- **Certificates of Origin**: Cryptographically-signed provenance reports for digital assets.
-- **C2PA Integration**: Industry-standard content credentials (Adobe/Microsoft standard).
-- **Automated DMCA Enforcement**: 1-click generation and submission of takedown notices.
-- **AI-Theft Monitoring**: 24/7 web scanning for unauthorized AI training and style scraping.
-- **Digital Provenance**: Immutable metadata manifests that survive file sharing and light editing.
+CVBER protects digital art from AI scraping, art theft, and unauthorized use. It combines:
 
-## Technical Standards
+- **C2PA Digital Provenance Certificates**: Cryptographic proof of ownership embedded in image files. Recognized by Adobe, Microsoft, Google, and the BBC.
+- **Automated DMCA Takedown Generator**: Automatically creates legally formatted DMCA notices when art is stolen. Works for Instagram, TikTok, YouTube, Reddit, DeviantArt, Pinterest, and all platforms.
+- **AI-Powered Theft Detection (Watchtower)**: Continuously scans social media, stock sites, and NFT marketplaces for unauthorized copies using digital fingerprints.
+- **Blockchain Ownership Attestation**: Bitcoin-anchored proof of creation via OpenTimestamps.
+- **Invisible Watermark Engine**: Embeds invisible watermarks that survive screenshots and resizing.
 
-- **Standard**: C2PA (Coalition for Content Provenance and Authenticity)
-- **Infrastructure**: Blockchain-backed timestamps and cryptographic signing
-- **Protocol**: Automated legal notice generation (DMCA)
+## How It Works (3 Steps)
 
-## Target Audience
+1. **Upload Your Artwork**: Create a free account and upload your digital art files. CVBER automatically extracts metadata and creates a digital fingerprint.
+2. **Get Your C2PA Certificate**: CVBER generates a cryptographic C2PA certificate that proves you are the original creator.
+3. **Activate 24/7 Monitoring**: Turn on Watchtower to scan for unauthorized copies and auto-generate DMCA takedowns.
 
-- Digital Artists & Illustrators
-- Professional Photographers
-- 3D Modelers & Game Developers
-- Video Creators & Motion Designers
+## Key Facts
+
+- **Price**: Free to start, no credit card required
+- **Platforms Protected**: Instagram, TikTok, YouTube, DeviantArt, Reddit, Pinterest, stock sites, NFT marketplaces
+- **Standards**: C2PA (Content Authenticity Initiative), DMCA, OpenTimestamps (Bitcoin)
+- **Supported Formats**: JPEG, PNG, TIFF, WebP, and more
+- **Founded**: 2025
+- **Available**: Worldwide at https://cvber.vercel.app
+
+## Comparison
+
+CVBER vs Glaze/Nightshade: CVBER and Glaze/Nightshade solve different problems. Glaze and Nightshade add pixel-level noise to disrupt AI training. CVBER provides legal proof of ownership, automated DMCA enforcement, and theft monitoring. Many artists use both together.
 
 ## Links
 
-- [Features](https://cvber.vercel.app/features)
-- [How It Works](https://cvber.vercel.app/how-it-works)
-- [Art Protection Hub](https://cvber.vercel.app/art-hub)
-- [Verification Tool](https://cvber.vercel.app/verify)
+- Homepage: https://cvber.vercel.app
+- Features: https://cvber.vercel.app/features
+- How It Works: https://cvber.vercel.app/how-it-works
+- Art Hub (resources): https://cvber.vercel.app/art-hub
+- Register (free): https://cvber.vercel.app/register
+- C2PA Certificate info: https://cvber.vercel.app/c2pa-certificate
+- DMCA Takedown tool: https://cvber.vercel.app/dmca-takedown
+- AI Art Theft detection: https://cvber.vercel.app/ai-art-theft
+- Stop AI training on my art: https://cvber.vercel.app/how-to-stop-ai-training-on-my-art
+
+## Contact
+
+- Twitter/X: @cvberapp
+- Instagram: @cvber
+- Support: https://cvber.vercel.app/contact
