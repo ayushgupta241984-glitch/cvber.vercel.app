@@ -29,6 +29,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
         { url: `${baseUrl}/copyright-protection-reddit`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
         { url: `${baseUrl}/copyright-protection-pinterest`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
 
+        // Blog — organic traffic magnets
+        { url: `${baseUrl}/blog`, lastModified: currentDate, changeFrequency: 'weekly', priority: 0.8 },
+        { url: `${baseUrl}/blog/how-to-protect-art-from-ai`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
+        { url: `${baseUrl}/blog/c2pa-explained`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
+        { url: `${baseUrl}/blog/dmca-guide-for-artists`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
+
         // Legal pages
         { url: `${baseUrl}/privacy`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.5 },
         { url: `${baseUrl}/terms`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.5 },
