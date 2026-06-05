@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";

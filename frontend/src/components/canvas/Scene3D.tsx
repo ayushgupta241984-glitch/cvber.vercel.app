@@ -1,9 +1,18 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, Component, ReactNode } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, MeshTransmissionMaterial, Environment, ContactShadows } from "@react-three/drei";
+import { Float, Environment } from "@react-three/drei";
 import * as THREE from "three";
+
+class CanvasErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { hasError: boolean }> {
+    state = { hasError: false };
+    static getDerivedStateFromError() { return { hasError: true }; }
+    render() {
+        if (this.state.hasError) return this.props.fallback;
+        return this.props.children;
+    }
+}
 
 function FloatingShape({ geometry, color, position, rotationSpeed }: {
     geometry: JSX.Element;
@@ -23,16 +32,13 @@ function FloatingShape({ geometry, color, position, rotationSpeed }: {
         <Float speed={1.2} rotationIntensity={0.15} floatIntensity={0.6}>
             <mesh ref={meshRef} position={position}>
                 {geometry}
-                <MeshTransmissionMaterial
-                    transmission={0.85}
-                    thickness={0.3}
-                    roughness={0.05}
-                    metalness={0.1}
-                    chromaticAberration={0.06}
-                    backside
+                <meshPhysicalMaterial
                     color={color}
-                    ior={1.5}
-                    clearcoat={0.3}
+                    metalness={0.1}
+                    roughness={0.05}
+                    transparent
+                    opacity={0.75}
+                    envMapIntensity={1}
                 />
             </mesh>
         </Float>
@@ -53,19 +59,32 @@ function Shapes() {
     ));
 }
 
+function Scene() {
+    return (
+        <Canvas camera={{ position: [0, 0, 5], fov: 50 }} dpr={[1, 2]} gl={{ antialias: true, alpha: true }}>
+            <color attach="background" args={["#050505"]} />
+            <ambientLight intensity={0.5} />
+            <pointLight position={[5, 5, 5]} intensity={1} color="#a855f7" />
+            <pointLight position={[-5, -3, 2]} intensity={0.8} color="#3b82f6" />
+            <spotLight position={[0, 5, 5]} angle={0.3} penumbra={0.5} intensity={0.5} color="#a855f7" />
+            <Shapes />
+            <Environment preset="night" />
+        </Canvas>
+    );
+}
+
+function Fallback() {
+    return (
+        <div className="fixed inset-0 z-0 bg-[#050505]" />
+    );
+}
+
 export default function Scene3D() {
     return (
         <div className="fixed inset-0 z-0">
-            <Canvas camera={{ position: [0, 0, 5], fov: 50 }} dpr={[1, 2]} gl={{ antialias: true, alpha: true }}>
-                <color attach="background" args={["#050505"]} />
-                <ambientLight intensity={0.5} />
-                <pointLight position={[5, 5, 5]} intensity={1} color="#a855f7" />
-                <pointLight position={[-5, -3, 2]} intensity={0.8} color="#3b82f6" />
-                <spotLight position={[0, 5, 5]} angle={0.3} penumbra={0.5} intensity={0.5} color="#a855f7" />
-                <Shapes />
-                <Environment preset="night" />
-                <ContactShadows position={[0, -2.5, 0]} opacity={0.3} scale={10} blur={3} />
-            </Canvas>
+            <CanvasErrorBoundary fallback={<Fallback />}>
+                <Scene />
+            </CanvasErrorBoundary>
         </div>
     );
 }
