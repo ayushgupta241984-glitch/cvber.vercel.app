@@ -219,170 +219,155 @@ function Stats() {
     );
 }
 
-// ─── Product Demo (Apple-style clean interface walkthrough) ─
+// ─── Product Demo (interface workflow) ─
 
-const SCENES = [
+const DEMO_PHASES = [
     {
         id: "upload",
-        headline: "Upload your artwork.",
-        sub: "Drag & drop any image. CVBER supports PSD, PNG, JPG, SVG, and more.",
-        ui: "upload",
+        label: "Upload your artwork",
+        desc: "Drag & drop any image file — PSD, PNG, JPG, SVG. CVBER accepts all formats.",
+        action: "Drop file here",
+        icon: "\u2191",
     },
     {
         id: "fingerprint",
-        headline: "AI creates a unique fingerprint.",
-        sub: "Every pixel is analyzed. CVBER generates a cryptographic signature of your work.",
-        ui: "fingerprint",
+        label: "AI analyzes every pixel",
+        desc: "A cryptographic fingerprint is generated from your work's unique visual features.",
+        action: "Analyzing...",
+        icon: "\u25CB",
     },
     {
         id: "scanning",
-        headline: "Scanning 12.4M sites…",
-        sub: "Deep scan across the open web, social platforms, and AI training datasets.",
-        ui: "scanning",
+        label: "Scanning the web for copies",
+        desc: "Checking 12.4M+ sites, social platforms, and AI training datasets for matches.",
+        action: "Scanning...",
+        icon: "\u25CF",
     },
     {
         id: "results",
-        headline: "3 matches found.",
-        sub: "Unauthorized use detected. One on DeviantArt, two in an AI training set.",
-        ui: "results",
+        label: "3 unauthorized uses found",
+        desc: "DeviantArt — AI training dataset — Pinterest. All confirmed as unlicensed copies.",
+        action: "View matches",
+        icon: "\u26A0",
+    },
+    {
+        id: "protecting",
+        label: "Filing takedown notices...",
+        desc: "CVBER automatically submits DMCA takedowns and generates legal-grade evidence.",
+        action: "Protecting...",
+        icon: "\u25A0",
     },
     {
         id: "protected",
-        headline: "Protection active.",
-        sub: "Takedown notices filed. Evidence report generated. Your work is secure.",
-        ui: "protected",
+        label: "Your work is protected",
+        desc: "Takedowns served. Evidence archived. CVBER continues monitoring 24/7.",
+        action: "Dashboard",
+        icon: "\u2713",
     },
 ];
 
-function SceneContent({ scene, expanded }: { scene: typeof SCENES[0]; expanded?: boolean }) {
-    const sz = expanded ? "text-lg" : "text-xs";
-    const hz = expanded ? "text-4xl md:text-5xl" : "text-xl md:text-3xl";
+function ProductDemoContent({ phase, expanded }: { phase: typeof DEMO_PHASES[0]; expanded?: boolean }) {
+    const [progress, setProgress] = useState(0);
+
+    useEffect(() => {
+        if (phase.id === "protected") { setProgress(100); return; }
+        const t = setInterval(() => setProgress((p) => Math.min(p + 2, 95)), 60);
+        return () => clearInterval(t);
+    }, [phase.id]);
+
+    const sz = expanded ? "text-base" : "text-sm";
+    const hz = expanded ? "text-3xl md:text-5xl" : "text-xl md:text-3xl";
 
     return (
-        <div className="absolute inset-0 flex flex-col">
-            {/* Minimal top bar */}
-            <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-white/[0.03]">
-                <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-md border border-white/10 flex items-center justify-center">
-                        <span className="text-[6px] font-bold tracking-widest text-white/40">C</span>
-                    </div>
-                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-600">CVBER</span>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="w-14 h-4 rounded bg-zinc-800/60" />
-                    <div className="w-4 h-4 rounded-full bg-zinc-800/60" />
-                </div>
-            </div>
-
-            {/* Main content — Apple-style centered */}
-            <div className="flex-1 flex items-center justify-center px-6 md:px-12 relative overflow-hidden">
-                {/* Scanning beam (only for scanning scene) */}
-                {scene.id === "scanning" && (
-                    <motion.div
-                        animate={{ top: ["-10%", "110%"] }}
-                        transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-                        className="absolute left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none"
-                    />
-                )}
-
-                <motion.div
-                    key={scene.id}
-                    initial={{ opacity: 0, scale: 0.96 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.96 }}
-                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                    className="text-center max-w-2xl"
-                >
-                    {/* Icon / visual */}
-                    <div className="mb-6 md:mb-8 flex justify-center">
-                        {scene.id === "upload" && (
-                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl border-2 border-dashed border-white/20 flex items-center justify-center">
-                                <svg className="w-6 h-6 md:w-8 md:h-8 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
+        <div className="absolute inset-0 flex items-center justify-center px-6 md:px-12">
+            <motion.div
+                key={phase.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-lg"
+            >
+                {/* Dashboard-like panel */}
+                <div className="rounded-2xl border border-white/[0.06] bg-[#0c0c0c] overflow-hidden">
+                    {/* Title bar */}
+                    <div className="flex items-center justify-between px-4 md:px-5 py-3 border-b border-white/[0.04]">
+                        <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded border border-white/10 flex items-center justify-center">
+                                <span className="text-[5px] font-bold text-white/40">C</span>
                             </div>
-                        )}
-                        {scene.id === "fingerprint" && (
-                            <div className="relative w-16 h-16 md:w-20 md:h-20">
-                                <div className="absolute inset-0 rounded-2xl border border-white/10" />
-                                <motion.div
-                                    animate={{ opacity: [0.2, 0.6, 0.2] }}
-                                    transition={{ duration: 2, repeat: Infinity }}
-                                    className="absolute inset-1 rounded-xl bg-white/5"
-                                />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <svg className="w-6 h-6 md:w-8 md:h-8 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3M6.21 17.393A9.94 9.94 0 0012 21a9.94 9.94 0 005.79-1.607M21 11a9.94 9.94 0 01-3.21 7.393M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        )}
-                        {scene.id === "scanning" && (
-                            <div className="relative w-16 h-16 md:w-20 md:h-20">
-                                <motion.div
-                                    animate={{ rotate: 360 }}
-                                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                                    className="w-full h-full rounded-full border border-white/10 border-t-white/40"
-                                />
-                            </div>
-                        )}
-                        {scene.id === "results" && (
-                            <div className="flex items-center gap-2">
-                                {[0, 1, 2].map((i) => (
-                                    <motion.div
-                                        key={i}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: i * 0.15 }}
-                                        className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center"
-                                    >
-                                        <span className="text-red-400 text-[9px] font-bold">!</span>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        )}
-                        {scene.id === "protected" && (
-                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                                <svg className="w-6 h-6 md:w-8 md:h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                </svg>
-                            </div>
-                        )}
+                            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-600">CVBER — Protect</span>
+                        </div>
+                        <span className={`text-[7px] font-mono px-2 py-0.5 rounded-full border ${phase.id === "protected" ? "bg-green-500/10 border-green-500/20 text-green-400" : phase.id === "results" ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-zinc-800 border-zinc-700 text-zinc-500"}`}>
+                            {phase.id === "protected" ? "ACTIVE" : phase.id === "results" ? "3 FOUND" : "RUNNING"}
+                        </span>
                     </div>
 
-                    <h3 className={`${hz} font-black tracking-tighter leading-[1.05] text-white mb-3`}>{scene.headline}</h3>
-                    <p className={`${sz} text-zinc-500 leading-relaxed max-w-md mx-auto`}>{scene.sub}</p>
+                    {/* Body */}
+                    <div className="p-4 md:p-6">
+                        {/* Phase animation area */}
+                        <div className="mb-5 flex items-center justify-center">
+                            <div className={`w-14 h-14 md:w-16 md:h-16 rounded-xl flex items-center justify-center text-xl md:text-2xl ${phase.id === "results" ? "bg-red-500/10 text-red-400" : phase.id === "protected" ? "bg-green-500/10 text-green-400" : "bg-white/5 text-white/60"}`}>
+                                {phase.icon}
+                            </div>
+                        </div>
 
-                    {/* Progress dots */}
-                    <div className="flex items-center justify-center gap-1.5 mt-6 md:mt-8">
-                        {SCENES.map((s, i) => (
-                            <div
-                                key={s.id}
-                                className={`h-0.5 rounded-full transition-all duration-700 ${SCENES.indexOf(scene) === i ? "w-6 bg-white/50" : "w-1.5 bg-white/10"}`}
+                        <h3 className={`${hz} font-bold tracking-tight text-white mb-1.5 text-center`}>{phase.label}</h3>
+                        <p className={`${sz} text-zinc-500 leading-relaxed text-center mb-5 max-w-sm mx-auto`}>{phase.desc}</p>
+
+                        {/* Progress bar */}
+                        <div className="h-1 rounded-full bg-zinc-800 overflow-hidden mb-4">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${progress}%` }}
+                                className={`h-full rounded-full ${phase.id === "protected" ? "bg-green-500" : phase.id === "results" ? "bg-red-500" : phase.id === "upload" ? "bg-blue-500" : "bg-white/40"}`}
                             />
-                        ))}
-                    </div>
-                </motion.div>
-            </div>
+                        </div>
 
-            {/* Bottom status bar */}
-            <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-t border-white/[0.03]">
-                <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                    <span className="text-[8px] text-zinc-600 uppercase tracking-[0.15em]">System Active</span>
+                        {/* Action button */}
+                        {phase.id === "results" && (
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="w-full text-[9px] font-bold uppercase tracking-[0.2em] text-white bg-red-500/20 border border-red-500/30 rounded-xl py-2.5 hover:bg-red-500/30 transition-colors"
+                            >
+                                {phase.action}
+                            </motion.button>
+                        )}
+                        {phase.id === "protected" && (
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="w-full text-[9px] font-bold uppercase tracking-[0.2em] text-white bg-green-500/20 border border-green-500/30 rounded-xl py-2.5 hover:bg-green-500/30 transition-colors"
+                            >
+                                {phase.action}
+                            </motion.button>
+                        )}
+                        {(phase.id === "upload" || phase.id === "fingerprint" || phase.id === "scanning" || phase.id === "protecting") && (
+                            <div className="w-full text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-600 bg-zinc-800/50 rounded-xl py-2.5 text-center">
+                                {phase.action}
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <div className="text-[8px] text-zinc-700">v2.4.1</div>
-            </div>
+
+                {/* Step indicator */}
+                <div className="flex items-center justify-center gap-1.5 mt-4">
+                    {DEMO_PHASES.map((p, i) => (
+                        <div key={p.id}
+                            className={`h-0.5 rounded-full transition-all duration-700 ${DEMO_PHASES.indexOf(phase) === i ? "w-5 bg-white/50" : p.id === "protected" ? "w-1.5 bg-green-500/30" : "w-1.5 bg-white/10"}`}
+                        />
+                    ))}
+                </div>
+            </motion.div>
         </div>
     );
 }
 
 function ProductVideo() {
-    const [sceneIdx, setSceneIdx] = useState(0);
+    const [phaseIdx, setPhaseIdx] = useState(0);
     const [showOverlay, setShowOverlay] = useState(false);
 
     useEffect(() => {
-        const t = setInterval(() => setSceneIdx((s) => (s + 1) % SCENES.length), 2200);
+        const t = setInterval(() => setPhaseIdx((s) => (s + 1) % DEMO_PHASES.length), 3000);
         return () => clearInterval(t);
     }, []);
 
@@ -392,7 +377,7 @@ function ProductVideo() {
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-10">
                         <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-4">Product Demo</div>
-                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">See CVBER<br />in action.</h2>
+                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">How CVBER works.<br />See it in action.</h2>
                     </div>
                     <div
                         onClick={() => setShowOverlay(true)}
@@ -401,7 +386,7 @@ function ProductVideo() {
                     >
                         <div className="absolute inset-0">
                             <AnimatePresence mode="wait">
-                                <SceneContent key={SCENES[sceneIdx].id} scene={SCENES[sceneIdx]} />
+                                <ProductDemoContent key={DEMO_PHASES[phaseIdx].id} phase={DEMO_PHASES[phaseIdx]} />
                             </AnimatePresence>
                         </div>
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors duration-500 pointer-events-none" />
@@ -437,12 +422,12 @@ function ProductVideo() {
                         className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
                         onClick={() => setShowOverlay(false)}
                     >
-                        <div className="relative w-full h-full max-w-6xl max-h-[80vh] mx-4" onClick={(e) => e.stopPropagation()}>
-                            <div className="w-full h-full rounded-2xl overflow-hidden border border-white/[0.06] bg-[#0a0a0a] relative">
+                        <div className="relative w-full h-full max-w-2xl mx-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="w-full aspect-video rounded-2xl overflow-hidden border border-white/[0.06] bg-[#0a0a0a] relative">
                                 <AnimatePresence mode="wait">
-                                    <SceneContent key={`exp-${SCENES[sceneIdx].id}`} scene={SCENES[sceneIdx]} expanded />
+                                    <ProductDemoContent key={`exp-${DEMO_PHASES[phaseIdx].id}`} phase={DEMO_PHASES[phaseIdx]} expanded />
                                 </AnimatePresence>
-                                <button onClick={() => setShowOverlay(false)} className="absolute top-4 right-4 z-10 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 hover:text-white/80">
+                                <button onClick={() => setShowOverlay(false)} className="absolute top-3 right-3 z-10 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 hover:text-white/80">
                                     CLOSE
                                 </button>
                             </div>
