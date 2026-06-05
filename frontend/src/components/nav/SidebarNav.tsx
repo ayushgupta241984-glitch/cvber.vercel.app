@@ -10,9 +10,7 @@ const navLinks = [
     { href: "/how-it-works", label: "How It Works" },
     { href: "/verify", label: "Verification" },
     { href: "/art-hub", label: "Art Hub" },
-    { href: "/pricing", label: "Pricing" },
     { href: "/blog", label: "Blog" },
-    { href: "/contact", label: "Support" },
 ];
 
 const socialLinks = [
@@ -24,9 +22,10 @@ const socialLinks = [
 interface Props {
     open: boolean;
     onClose: () => void;
+    onStartOnboarding?: () => void;
 }
 
-export default function SidebarNav({ open, onClose }: Props) {
+export default function SidebarNav({ open, onClose, onStartOnboarding }: Props) {
     useEffect(() => {
         if (open) {
             document.body.style.overflow = "hidden";
@@ -40,7 +39,6 @@ export default function SidebarNav({ open, onClose }: Props) {
         <AnimatePresence>
             {open && (
                 <>
-                    {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -50,7 +48,6 @@ export default function SidebarNav({ open, onClose }: Props) {
                         className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-md"
                     />
 
-                    {/* Sidebar panel */}
                     <motion.div
                         initial={{ x: "100%" }}
                         animate={{ x: 0 }}
@@ -58,21 +55,16 @@ export default function SidebarNav({ open, onClose }: Props) {
                         transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
                         className="fixed top-0 right-0 bottom-0 z-[151] w-full md:w-[480px] bg-[#0a0a0a] border-l border-white/[0.04] flex flex-col"
                     >
-                        {/* Header */}
                         <div className="flex items-center justify-between px-8 py-6 border-b border-white/[0.04]">
                             <Link href="/" onClick={onClose} className="flex items-center gap-2.5">
                                 <Shield className="w-4 h-4 text-purple-400" />
                                 <span className="text-[10px] font-black tracking-[0.25em] uppercase text-white/60">CVBER</span>
                             </Link>
-                            <button
-                                onClick={onClose}
-                                className="w-10 h-10 rounded-full border border-white/[0.08] flex items-center justify-center hover:border-white/20 transition-colors"
-                            >
+                            <button onClick={onClose} className="w-10 h-10 rounded-full border border-white/[0.08] flex items-center justify-center hover:border-white/20 transition-colors">
                                 <X className="w-4 h-4 text-zinc-400" />
                             </button>
                         </div>
 
-                        {/* Navigation links */}
                         <nav className="flex-1 flex flex-col justify-center px-8 py-12">
                             <div className="space-y-1">
                                 {navLinks.map((link, i) => (
@@ -98,25 +90,29 @@ export default function SidebarNav({ open, onClose }: Props) {
                                 ))}
                             </div>
 
-                            {/* CTA */}
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.5, duration: 0.5 }}
-                                className="mt-12"
+                                className="mt-12 flex gap-4"
                             >
                                 <Link
-                                    href="/onboarding"
+                                    href="/login"
                                     onClick={onClose}
+                                    className="inline-flex items-center gap-3 px-8 py-4 border border-white/[0.08] text-white rounded-xl font-bold text-sm hover:border-white/20 transition-all"
+                                >
+                                    Log In
+                                </Link>
+                                <button
+                                    onClick={() => { onClose(); onStartOnboarding?.(); }}
                                     className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black rounded-xl font-bold text-sm hover:bg-zinc-200 transition-all active:scale-95"
                                 >
-                                    Get Started Free
+                                    Get Started
                                     <span className="text-lg">→</span>
-                                </Link>
+                                </button>
                             </motion.div>
                         </nav>
 
-                        {/* Footer */}
                         <div className="px-8 py-6 border-t border-white/[0.04] flex items-center justify-between">
                             <div className="flex gap-6">
                                 {socialLinks.map((s, i) => (
