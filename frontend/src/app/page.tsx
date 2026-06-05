@@ -1,28 +1,96 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { motion, useInView, AnimatePresence } from "framer-motion";
-import { ArrowRight, Shield, ChevronDown, Menu, Zap, Search, BookOpen } from "lucide-react";
+import { motion, useInView, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { ArrowRight, Shield, ChevronDown, Menu, X, Play, Pause } from "lucide-react";
 import StructuredData from "@/components/seo/StructuredData";
 import Preloader from "@/components/Preloader";
-import Logo from "@/components/common/Logo";
 
-// ─── Reusable scroll-reveal section ─────────────────────────────────
+// ─── Animated Background ──────────────────────────────────────────
 
-function Section({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-    const sectionRef = useRef<HTMLDivElement>(null);
-    const inView = useInView(sectionRef, { once: true, margin: "-10%" });
+function AnimatedBG() {
     return (
-        <motion.section
-            ref={sectionRef}
-            initial={{ opacity: 0, y: 50 }}
-            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-            transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-            className={className}
-        >
-            {children}
-        </motion.section>
+        <div className="fixed inset-0 z-0 overflow-hidden">
+            {/* Base */}
+            <div className="absolute inset-0 bg-[#050505]" />
+
+            {/* Grid */}
+            <div className="absolute inset-0 bg-grid-white/[0.015] bg-[size:50px_50px]" />
+
+            {/* Animated glow blobs */}
+            <motion.div
+                animate={{
+                    x: [0, 100, -50, 0],
+                    y: [0, -80, 60, 0],
+                    scale: [1, 1.3, 0.9, 1],
+                    opacity: [0.15, 0.3, 0.12, 0.15],
+                }}
+                transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-[-20%] left-[10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[150px]"
+            />
+            <motion.div
+                animate={{
+                    x: [0, -80, 40, 0],
+                    y: [0, 60, -40, 0],
+                    scale: [1, 0.8, 1.2, 1],
+                    opacity: [0.1, 0.2, 0.08, 0.1],
+                }}
+                transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+                className="absolute bottom-[10%] right-[5%] w-[500px] h-[500px] bg-blue-600/15 rounded-full blur-[130px]"
+            />
+            <motion.div
+                animate={{
+                    x: [0, 60, -80, 0],
+                    y: [0, -40, 80, 0],
+                    scale: [1, 1.1, 0.95, 1],
+                    opacity: [0.08, 0.15, 0.05, 0.08],
+                }}
+                transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 7 }}
+                className="absolute top-[40%] left-[40%] w-[400px] h-[400px] bg-violet-500/10 rounded-full blur-[120px]"
+            />
+
+            {/* Floating particles */}
+            {Array.from({ length: 30 }).map((_, i) => (
+                <motion.div
+                    key={i}
+                    className="absolute w-1 h-1 rounded-full bg-white/[0.15]"
+                    style={{
+                        left: `${Math.random() * 100}%`,
+                        top: `${Math.random() * 100}%`,
+                    }}
+                    animate={{
+                        y: [0, -(20 + Math.random() * 40), 0],
+                        opacity: [0, 0.4, 0],
+                    }}
+                    transition={{
+                        duration: 4 + Math.random() * 6,
+                        repeat: Infinity,
+                        delay: Math.random() * 5,
+                        ease: "easeInOut",
+                    }}
+                />
+            ))}
+
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-[#050505] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,transparent_20%,black)]" />
+        </div>
+    );
+}
+
+// ─── Scroll Indicator ──────────────────────────────────────────────
+
+function ScrollIndicator() {
+    const { scrollYProgress } = useScroll();
+    const scaleY = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
+    const opacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
+
+    return (
+        <motion.div style={{ opacity }} className="fixed right-6 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-center gap-3">
+            <div className="w-px h-20 bg-white/10 relative overflow-hidden">
+                <motion.div style={{ scaleY, transformOrigin: "top" }} className="absolute inset-0 bg-purple-500" />
+            </div>
+        </motion.div>
     );
 }
 
@@ -31,6 +99,16 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
 export default function Home() {
     const [loaded, setLoaded] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
+    const [videoOpen, setVideoOpen] = useState(false);
+    const [playing, setPlaying] = useState(false);
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    const handlePlay = () => {
+        if (videoRef.current) {
+            if (playing) { videoRef.current.pause(); } else { videoRef.current.play(); }
+            setPlaying(!playing);
+        }
+    };
 
     return (
         <>
@@ -45,7 +123,8 @@ export default function Home() {
                         transition={{ duration: 0.6 }}
                         className="relative min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 overflow-x-hidden font-sans"
                     >
-                        {/* 3D Background — disabled */}
+                        <AnimatedBG />
+                        <ScrollIndicator />
 
                         {/* ─── HEADER ─── */}
                         <motion.header
@@ -79,12 +158,17 @@ export default function Home() {
                                 transition={{ delay: 1.2, duration: 0.8 }}
                                 className="flex flex-col items-center text-center"
                             >
-                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.02] border border-white/[0.06] text-zinc-500 text-[9px] font-bold uppercase tracking-[0.2em] mb-8">
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 1.4, duration: 0.6 }}
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.02] border border-white/[0.06] text-zinc-500 text-[9px] font-bold uppercase tracking-[0.2em] mb-8"
+                                >
                                     <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
                                     AI Art Protection
-                                </div>
+                                </motion.div>
 
-                                <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.92] mb-5">
+                                <h1 className="text-5xl md:text-7xl lg:text-[100px] font-black tracking-tighter leading-[0.9] mb-5">
                                     Protect your art<br />
                                     <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">from AI theft</span>
                                 </h1>
@@ -93,15 +177,26 @@ export default function Home() {
                                     Free C2PA certificates, DMCA automation, and 24/7 monitoring.
                                 </p>
 
-                                <Link
-                                    href="/onboarding"
-                                    className="group px-10 py-5 bg-white text-black rounded-xl font-bold text-sm hover:bg-zinc-200 transition-all flex items-center gap-3 active:scale-95 shadow-[0_20px_40px_rgba(255,255,255,0.05)]"
-                                >
-                                    Get Started
-                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                </Link>
+                                <div className="flex flex-col sm:flex-row items-center gap-4">
+                                    <Link
+                                        href="/onboarding"
+                                        className="group px-10 py-5 bg-white text-black rounded-xl font-bold text-sm hover:bg-zinc-200 transition-all flex items-center gap-3 active:scale-95 shadow-[0_20px_40px_rgba(255,255,255,0.05)]"
+                                    >
+                                        Get Started
+                                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                    <button
+                                        onClick={() => setVideoOpen(true)}
+                                        className="group px-8 py-5 rounded-xl font-bold text-sm text-zinc-400 hover:text-white border border-white/[0.06] hover:border-white/[0.15] transition-all flex items-center gap-3"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center group-hover:bg-white/[0.1] transition-colors">
+                                            <Play className="w-3 h-3 text-white fill-white ml-0.5" />
+                                        </div>
+                                        Watch Demo
+                                    </button>
+                                </div>
 
-                                <div className="flex items-center justify-center gap-4 mt-6 text-zinc-600 text-xs">
+                                <div className="flex items-center justify-center gap-4 mt-8 text-zinc-600 text-xs">
                                     <span>Free forever</span>
                                     <span>·</span>
                                     <span>No credit card</span>
@@ -123,6 +218,62 @@ export default function Home() {
                                 </motion.div>
                             </motion.div>
                         </section>
+
+                        {/* ─── VIDEO OVERLAY ─── */}
+                        <AnimatePresence>
+                            {videoOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.4 }}
+                                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+                                    onClick={() => { setVideoOpen(false); setPlaying(false); }}
+                                >
+                                    <motion.div
+                                        initial={{ scale: 0.9, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        exit={{ scale: 0.9, opacity: 0 }}
+                                        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                                        className="relative w-full max-w-4xl aspect-video mx-6"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <button
+                                            onClick={() => { setVideoOpen(false); setPlaying(false); }}
+                                            className="absolute -top-12 right-0 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:border-white/50 transition-colors"
+                                        >
+                                            <X className="w-4 h-4 text-white" />
+                                        </button>
+
+                                        {/* Video placeholder with animated gradient */}
+                                        <div className="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900/50 to-blue-900/50 border border-white/[0.06] flex items-center justify-center">
+                                            <video
+                                                ref={videoRef}
+                                                className="w-full h-full object-cover"
+                                                poster=""
+                                                onEnded={() => setPlaying(false)}
+                                            >
+                                                <source src="https://cdn.coverr.co/videos/coverr-purple-ink-in-water-3483/1080p.mp4" type="video/mp4" />
+                                            </video>
+                                            <button
+                                                onClick={handlePlay}
+                                                className="absolute inset-0 flex items-center justify-center"
+                                            >
+                                                {!playing && (
+                                                    <motion.div
+                                                        initial={{ scale: 0.8, opacity: 0 }}
+                                                        animate={{ scale: 1, opacity: 1 }}
+                                                        className="w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-sm hover:bg-white/20 transition-colors"
+                                                    >
+                                                        <Play className="w-8 h-8 text-white fill-white ml-1" />
+                                                    </motion.div>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         {/* ─── HOW IT WORKS ─── */}
                         <Section className="relative z-10 py-32 px-6">
@@ -164,51 +315,39 @@ export default function Home() {
                                     <p className="text-zinc-500 max-w-md">From cryptographic certificates to automated enforcement.</p>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="md:col-span-8 p-10 md:p-14 rounded-3xl bg-white/[0.01] border border-white/[0.04] min-h-[380px] flex flex-col justify-between group hover:border-white/[0.08] transition-all">
-                                        <div>
-                                            <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-8">
-                                                <Zap className="w-7 h-7 text-purple-500" />
+                                    {[
+                                        { title: "Neural-Net Monitoring", desc: "Continuous deep-web scanning detects unauthorized usage across social platforms and marketplaces.", col: "md:col-span-8", icon: "⚡", iconBg: "bg-purple-500/10 border-purple-500/20" },
+                                        { title: "Asset Verification", desc: "Verify origin of any file using our C2PA validator.", col: "md:col-span-4", icon: "🔍", iconBg: "bg-white/[0.03] border-white/[0.06]", link: "/verify", linkText: "Launch Validator" },
+                                        { title: "The Art Hub", desc: "DMCA templates, scraping defense guides, legal toolkits.", col: "md:col-span-4", icon: "📖", iconBg: "bg-white/[0.03] border-white/[0.06]", link: "/art-hub", linkText: "Enter Hub" },
+                                        { title: "Universal SDK", desc: "Protect your entire portfolio with two lines of code.", col: "md:col-span-8", icon: "🛡️", iconBg: "bg-white/[0.03] border-white/[0.06]", code: true },
+                                    ].map((item, i) => (
+                                        <motion.div
+                                            key={i}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            whileInView={{ opacity: 1, y: 0 }}
+                                            viewport={{ once: true }}
+                                            transition={{ duration: 0.6, delay: i * 0.1 }}
+                                            className={`${item.col} p-10 md:p-14 rounded-3xl bg-white/[0.01] border border-white/[0.04] min-h-[380px] flex flex-col justify-between group hover:border-white/[0.08] transition-all`}
+                                        >
+                                            <div>
+                                                <div className={`w-14 h-14 rounded-2xl ${item.iconBg} border flex items-center justify-center mb-8`}>
+                                                    <span className="text-xl">{item.icon}</span>
+                                                </div>
+                                                <h3 className="text-3xl md:text-4xl font-black tracking-tight mb-4">{item.title}</h3>
+                                                <p className="text-base text-zinc-500 max-w-sm leading-relaxed">{item.desc}</p>
                                             </div>
-                                            <h3 className="text-3xl md:text-4xl font-black tracking-tight mb-4">Neural-Net Monitoring</h3>
-                                            <p className="text-base text-zinc-500 max-w-sm leading-relaxed">Continuous deep-web scanning detects unauthorized usage across social platforms and marketplaces.</p>
-                                        </div>
-                                    </motion.div>
-                                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="md:col-span-4 p-10 rounded-3xl bg-white/[0.01] border border-white/[0.04] min-h-[380px] flex flex-col justify-between group hover:border-white/[0.08] transition-all">
-                                        <div>
-                                            <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-6">
-                                                <Search className="w-5 h-5 text-zinc-400" />
-                                            </div>
-                                            <h3 className="text-xl font-black tracking-tight mb-3">Asset Verification</h3>
-                                            <p className="text-sm text-zinc-500 leading-relaxed">Verify origin of any file using our C2PA validator.</p>
-                                        </div>
-                                        <Link href="/verify" className="mt-8 text-[10px] font-bold uppercase tracking-widest text-purple-500 flex items-center gap-2 group/link">
-                                            Launch Validator <ArrowRight className="w-3 h-3 group-hover/link:translate-x-1 transition-transform" />
-                                        </Link>
-                                    </motion.div>
-                                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="md:col-span-4 p-10 rounded-3xl bg-white/[0.01] border border-white/[0.04] min-h-[380px] flex flex-col justify-between group hover:border-white/[0.08] transition-all">
-                                        <div>
-                                            <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-6">
-                                                <BookOpen className="w-5 h-5 text-zinc-400" />
-                                            </div>
-                                            <h3 className="text-xl font-black tracking-tight mb-3">The Art Hub</h3>
-                                            <p className="text-sm text-zinc-500 leading-relaxed">DMCA templates, scraping defense guides, legal toolkits.</p>
-                                        </div>
-                                        <Link href="/art-hub" className="mt-8 text-[10px] font-bold uppercase tracking-widest text-purple-500 flex items-center gap-2 group/link">
-                                            Enter Hub <ArrowRight className="w-3 h-3 group-hover/link:translate-x-1 transition-transform" />
-                                        </Link>
-                                    </motion.div>
-                                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }} className="md:col-span-8 p-10 md:p-14 rounded-3xl bg-white/[0.01] border border-white/[0.04] min-h-[380px] flex flex-col md:flex-row items-start md:items-center justify-between group hover:border-white/[0.08] transition-all">
-                                        <div className="max-w-sm">
-                                            <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-6">
-                                                <Shield className="w-5 h-5 text-zinc-400" />
-                                            </div>
-                                            <h3 className="text-3xl md:text-4xl font-black tracking-tight mb-4">Universal SDK</h3>
-                                            <p className="text-base text-zinc-500 leading-relaxed">Protect your entire portfolio with two lines of code.</p>
-                                        </div>
-                                        <div className="mt-8 md:mt-0 p-6 md:p-8 rounded-2xl bg-black/60 border border-white/[0.04] font-mono text-xs text-purple-400/50 leading-relaxed backdrop-blur-sm">
-                                            <pre className="whitespace-pre-wrap">{`const defense = await Cvber.init({\n  vault: "./assets/*",\n  autoReport: true,\n  monitor: true\n});`}</pre>
-                                        </div>
-                                    </motion.div>
+                                            {item.code && (
+                                                <div className="mt-8 p-6 md:p-8 rounded-2xl bg-black/60 border border-white/[0.04] font-mono text-xs text-purple-400/50 leading-relaxed backdrop-blur-sm">
+                                                    <pre className="whitespace-pre-wrap">{`const defense = await Cvber.init({\n  vault: "./assets/*",\n  autoReport: true,\n  monitor: true\n});`}</pre>
+                                                </div>
+                                            )}
+                                            {item.link && (
+                                                <Link href={item.link} className="mt-8 text-[10px] font-bold uppercase tracking-widest text-purple-500 flex items-center gap-2 group/link">
+                                                    {item.linkText} <ArrowRight className="w-3 h-3 group-hover/link:translate-x-1 transition-transform" />
+                                                </Link>
+                                            )}
+                                        </motion.div>
+                                    ))}
                                 </div>
                             </div>
                         </Section>
@@ -253,13 +392,13 @@ export default function Home() {
                                 <div className="relative z-10 flex flex-col items-center">
                                     <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase italic leading-none">Join the Resistance.</h2>
                                     <p className="text-base text-purple-100/60 max-w-xl mb-10">Reclaim your digital sovereignty today.</p>
-                                    <Link href="/register" className="px-10 py-5 bg-white text-black rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all flex items-center gap-3 active:scale-95 shadow-xl shadow-black/20">
+                                    <Link href="/onboarding" className="px-10 py-5 bg-white text-black rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all flex items-center gap-3 active:scale-95 shadow-xl shadow-black/20">
                                         Secure Your Creative Soul
                                         <ArrowRight className="w-4 h-4" />
                                     </Link>
                                 </div>
-                                <div className="absolute bottom-0 right-0 p-12 opacity-5 pointer-events-none">
-                                    <Logo size="xl" className="w-[300px] h-[300px] -mr-20 -mb-20" />
+                                <div className="absolute bottom-0 right-0 opacity-5 pointer-events-none">
+                                    <Shield className="w-[300px] h-[300px] -mr-20 -mb-20 text-white" />
                                 </div>
                             </div>
                         </Section>
@@ -284,5 +423,23 @@ export default function Home() {
                 )}
             </AnimatePresence>
         </>
+    );
+}
+
+// ─── Reusable scroll-reveal section ─────────────────────────────────
+
+function Section({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+    const sectionRef = useRef<HTMLDivElement>(null);
+    const inView = useInView(sectionRef, { once: true, margin: "-10%" });
+    return (
+        <motion.section
+            ref={sectionRef}
+            initial={{ opacity: 0, y: 50 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+            transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+            className={className}
+        >
+            {children}
+        </motion.section>
     );
 }
