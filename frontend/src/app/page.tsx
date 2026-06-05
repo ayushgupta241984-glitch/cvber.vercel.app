@@ -3,13 +3,10 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import dynamic from "next/dynamic";
 import { ArrowRight, Shield, ChevronDown, Menu, Zap, Search, BookOpen } from "lucide-react";
 import StructuredData from "@/components/seo/StructuredData";
 import Preloader from "@/components/Preloader";
 import Logo from "@/components/common/Logo";
-
-const Scene3D = dynamic(() => import("@/components/canvas/Scene3D"), { ssr: false });
 
 // ─── Reusable scroll-reveal section ─────────────────────────────────
 
@@ -48,8 +45,7 @@ export default function Home() {
                         transition={{ duration: 0.6 }}
                         className="relative min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 overflow-x-hidden font-sans"
                     >
-                        {/* 3D Background */}
-                        <Scene3D />
+                        {/* 3D Background — disabled */}
 
                         {/* ─── HEADER ─── */}
                         <motion.header
