@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Shield, ChevronDown, X, ArrowLeft, Check, Scan } from "lucide-react";
+import { ArrowRight, Shield, ChevronDown, X, ArrowLeft, Check, Scan, Upload, Globe, AlertTriangle, Lock, FileText, Eye, Zap } from "lucide-react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import StructuredData from "@/components/seo/StructuredData";
 import Preloader from "@/components/Preloader";
@@ -11,128 +11,6 @@ import SidebarNav from "@/components/nav/SidebarNav";
 
 if (typeof window !== "undefined") {
     gsap.registerPlugin(ScrollTrigger);
-}
-
-// ─── Custom Cursor ──────────────────────────────────
-
-function CustomCursor() {
-    const ringRef = useRef<HTMLDivElement>(null);
-    const dotRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const ring = ringRef.current;
-        const dot = dotRef.current;
-        if (!ring || !dot) return;
-
-        let mouseX = 0, mouseY = 0;
-        let ringX = 0, ringY = 0;
-
-        const onMove = (e: MouseEvent) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-            gsap.set(dot, { x: mouseX, y: mouseY, xPercent: -50, yPercent: -50 });
-        };
-
-        const onEnterLink = () => gsap.to(ring, { scale: 2.5, opacity: 0.3, duration: 0.3 });
-        const onLeaveLink = () => gsap.to(ring, { scale: 1, opacity: 1, duration: 0.3 });
-
-        document.addEventListener("mousemove", onMove as any);
-        document.querySelectorAll("a, button, [data-hover]").forEach((el) => {
-            el.addEventListener("mouseenter", onEnterLink);
-            el.addEventListener("mouseleave", onLeaveLink);
-        });
-
-        gsap.ticker.add(() => {
-            ringX += (mouseX - ringX) * 0.12;
-            ringY += (mouseY - ringY) * 0.12;
-            gsap.set(ring, { x: ringX, y: ringY, xPercent: -50, yPercent: -50 });
-        });
-
-        return () => {
-            document.removeEventListener("mousemove", onMove as any);
-            gsap.ticker.lagSmoothing(0);
-        };
-    }, []);
-
-    return (
-        <>
-            <div ref={ringRef} className="fixed top-0 left-0 w-8 h-8 rounded-full border border-white/40 pointer-events-none z-[9999] mix-blend-difference hidden md:block" style={{ willChange: "transform" }} />
-            <div ref={dotRef} className="fixed top-0 left-0 w-1.5 h-1.5 rounded-full bg-white pointer-events-none z-[9999] hidden md:block" style={{ willChange: "transform" }} />
-        </>
-    );
-}
-
-// ─── Sound Toggle ──────────────────────────────────
-
-function SoundToggle() {
-    const [muted, setMuted] = useState(true);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-        canvas.width = 24;
-        canvas.height = 24;
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 1.5;
-
-        const draw = () => {
-            ctx.clearRect(0, 0, 24, 24);
-            ctx.beginPath();
-            ctx.moveTo(4, 9);
-            ctx.lineTo(8, 9);
-            ctx.lineTo(13, 4);
-            ctx.lineTo(13, 20);
-            ctx.lineTo(8, 15);
-            ctx.lineTo(4, 15);
-            ctx.closePath();
-            ctx.stroke();
-            if (!muted) {
-                ctx.beginPath();
-                ctx.arc(18, 12, 4, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.arc(20, 12, 2, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-        };
-        draw();
-    }, [muted]);
-
-    return (
-        <button onClick={() => setMuted(!muted)} className="w-6 h-6 opacity-40 hover:opacity-100 transition-opacity">
-            <canvas ref={canvasRef} width="24" height="24" />
-        </button>
-    );
-}
-
-// ─── 3D Tilt Card ──────────────────────────────────
-
-function TiltCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-    const cardRef = useRef<HTMLDivElement>(null);
-
-    const onMouseMove = (e: React.MouseEvent) => {
-        const card = cardRef.current;
-        if (!card) return;
-        const rect = card.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width - 0.5;
-        const y = (e.clientY - rect.top) / rect.height - 0.5;
-        gsap.to(card, { rotateX: -y * 12, rotateY: x * 12, transformPerspective: 1000, duration: 0.4, ease: "power2.out" });
-    };
-
-    const onMouseLeave = () => {
-        const card = cardRef.current;
-        if (!card) return;
-        gsap.to(card, { rotateX: 0, rotateY: 0, duration: 0.4, ease: "power2.out" });
-    };
-
-    return (
-        <div ref={cardRef} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave} className={className} style={{ transformStyle: "preserve-3d" }}>
-            {children}
-        </div>
-    );
 }
 
 // ─── Hero ──────────────────────────────────────────
@@ -219,402 +97,43 @@ function Stats() {
     );
 }
 
-// ─── Lusion-style immersive 3D product demo (raw Three.js + GLSL) ─
+// ─── Product Walkthrough (scroll-driven, real UI) ──────
 
-const DEMO_STEPS = [
-    { label: "Your art. Protected.", sub: "Scroll to explore how CVBER works.", color: [1, 1, 1] },
-    { label: "Upload.", sub: "Drop any artwork — PSD, PNG, JPG, SVG.", color: [0.9, 0.9, 1] },
-    { label: "Analyze.", sub: "AI fingerprints every pixel of your work.", color: [0.3, 0.5, 1] },
-    { label: "Scan.", sub: "12.4M+ sites searched in real-time.", color: [1, 1, 1] },
-    { label: "Detect.", sub: "3 unauthorized copies found.", color: [1, 0.3, 0.3] },
-    { label: "Protect.", sub: "Takedowns filed. You're safe.", color: [0.3, 1, 0.5] },
+const WALKTHROUGH_STEPS = [
+    {
+        tag: "01 — UPLOAD",
+        title: "Drop your artwork.",
+        sub: "PSD, PNG, JPG, SVG — drag and drop or browse. CVBER accepts any format.",
+        color: "white",
+    },
+    {
+        tag: "02 — ANALYZE",
+        title: "AI fingerprints every pixel.",
+        sub: "Neural analysis maps your artwork's unique DNA — color, texture, composition, brushstrokes.",
+        color: "#60a5fa",
+    },
+    {
+        tag: "03 — SCAN",
+        title: "12.4M+ sites searched.",
+        sub: "Real-time deep scan across social platforms, marketplaces, AI training datasets, and the dark web.",
+        color: "#c084fc",
+    },
+    {
+        tag: "04 — DETECT",
+        title: "3 unauthorized copies found.",
+        sub: "Matches flagged with location, timestamp, and confidence score. See exactly where your work is being used.",
+        color: "#f87171",
+    },
+    {
+        tag: "05 — PROTECT",
+        title: "Takedowns filed. You're safe.",
+        sub: "C2PA certificate issued. Blockchain proof written. DMCA notices sent. 24/7 monitoring activated.",
+        color: "#4ade80",
+    },
 ];
 
-// GLSL — spiral particle shader
-const pVert = `
-    uniform float uTime;
-    uniform vec2 uMouse;
-    uniform float uSpread;
-    attribute float aAngle;
-    attribute float aRadius;
-    attribute float aSpeed;
-    varying float vAlpha;
-    varying float vDist;
-    void main() {
-        float angle = aAngle + uTime * aSpeed * 0.4;
-        float r = aRadius * uSpread * (0.7 + 0.3 * sin(uTime * aSpeed + aAngle * 2.0));
-        vec3 pos = vec3(cos(angle) * r, sin(angle) * r * 0.55, sin(angle) * r * 0.25);
-        vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-        vec2 sp = mv.xy / mv.z;
-        float md = length(sp - uMouse * 2.0);
-        pos.xy += normalize(sp - uMouse * 2.0) * smoothstep(1.2, 0.0, md) * 0.4;
-        mv = modelViewMatrix * vec4(pos, 1.0);
-        vDist = length(pos);
-        vAlpha = smoothstep(7.0, 1.5, vDist) * (0.35 + 0.25 * sin(uTime + aAngle));
-        gl_Position = projectionMatrix * mv;
-        gl_PointSize = (2.5 + 1.5 * sin(uTime * aSpeed)) * (250.0 / -mv.z);
-    }
-`;
-const pFrag = `
-    uniform vec3 uColor;
-    uniform float uTime;
-    varying float vAlpha;
-    varying float vDist;
-    void main() {
-        float d = length(gl_PointCoord - vec2(0.5));
-        if (d > 0.5) discard;
-        float glow = pow(1.0 - smoothstep(0.0, 0.5, d), 2.0);
-        float f = 0.8 + 0.2 * sin(uTime * 2.5 + vDist * 4.0);
-        gl_FragColor = vec4(uColor * f, glow * vAlpha);
-    }
-`;
-
-function LusionCanvas({ scrollProgress, mouseX, mouseY }: { scrollProgress: React.MutableRefObject<number>; mouseX: React.MutableRefObject<number>; mouseY: React.MutableRefObject<number> }) {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        let cleanup = false;
-
-        import("three").then((THREE) => {
-            if (cleanup) return;
-
-            const scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x000000, 0.1);
-            const camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-            camera.position.set(0, 0, 6);
-
-            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.1;
-
-            // ── Lights ──
-            scene.add(new THREE.AmbientLight(0xffffff, 0.35));
-            const key = new THREE.DirectionalLight(0xffffff, 1.2);
-            key.position.set(3, 4, 5);
-            scene.add(key);
-            const fill = new THREE.PointLight(0x4488ff, 0.4, 10);
-            fill.position.set(-3, 1, -2);
-            scene.add(fill);
-
-            // ══════════════════════════════════════
-            // SCENE ELEMENTS — each step has unique 3D
-            // ══════════════════════════════════════
-
-            // ── STEP 0/1: Artwork (icosahedron) ──
-            const artGroup = new THREE.Group();
-            const artGeo = new THREE.IcosahedronGeometry(0.7, 2);
-            const artMat = new THREE.MeshPhysicalMaterial({
-                color: 0xffffff, metalness: 0.4, roughness: 0.15,
-                emissive: 0xffffff, emissiveIntensity: 0.08,
-                clearcoat: 0.5,
-            });
-            const artMesh = new THREE.Mesh(artGeo, artMat);
-            artGroup.add(artMesh);
-            const wireGeo = new THREE.IcosahedronGeometry(0.73, 2);
-            const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.06 });
-            const wireMesh = new THREE.Mesh(wireGeo, wireMat);
-            artGroup.add(wireMesh);
-            scene.add(artGroup);
-
-            // ── STEP 2: Analysis — orbiting rings + inner core ──
-            const analysisGroup = new THREE.Group();
-            const coreGeo = new THREE.OctahedronGeometry(0.3, 0);
-            const coreMat = new THREE.MeshPhysicalMaterial({
-                color: 0x4488ff, emissive: 0x4488ff, emissiveIntensity: 0.4,
-                metalness: 0.6, roughness: 0.2, transparent: true, opacity: 0,
-            });
-            const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-            analysisGroup.add(coreMesh);
-            const analysisRings: any[] = [];
-            for (let i = 0; i < 5; i++) {
-                const rr = 0.5 + i * 0.25;
-                const rg = new THREE.TorusGeometry(rr, 0.004, 16, 80);
-                const rm = new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0 });
-                const ring = new THREE.Mesh(rg, rm);
-                ring.rotation.x = Math.PI / 2 + (i - 2) * 0.15;
-                ring.rotation.z = i * 0.3;
-                analysisRings.push({ mesh: ring, base: i * 0.3 });
-                analysisGroup.add(ring);
-            }
-            // Fingerprint lines
-            const fpLines: any[] = [];
-            for (let i = 0; i < 8; i++) {
-                const pts = [];
-                for (let j = 0; j < 30; j++) {
-                    const t = j / 29;
-                    const x = (t - 0.5) * 2;
-                    const y = Math.sin(t * Math.PI * 3 + i * 0.7) * 0.15 * (1 + i * 0.1);
-                    pts.push(new THREE.Vector3(x, y + (i - 3.5) * 0.12, 0));
-                }
-                const lg = new THREE.BufferGeometry().setFromPoints(pts);
-                const lm = new THREE.LineBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0 });
-                const line = new THREE.Line(lg, lm);
-                fpLines.push(line);
-                analysisGroup.add(line);
-            }
-            analysisGroup.visible = false;
-            scene.add(analysisGroup);
-
-            // ── STEP 3: Scan — expanding wave rings ──
-            const scanGroup = new THREE.Group();
-            const scanRings: any[] = [];
-            for (let i = 0; i < 6; i++) {
-                const sg = new THREE.RingGeometry(0.8 + i * 0.3, 0.82 + i * 0.3, 64);
-                const sm = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, side: THREE.DoubleSide });
-                const sMesh = new THREE.Mesh(sg, sm);
-                sMesh.rotation.x = -Math.PI / 2;
-                scanRings.push({ mesh: sMesh, delay: i * 0.15 });
-                scanGroup.add(sMesh);
-            }
-            // Scan lines (radial)
-            const scanLines: any[] = [];
-            for (let i = 0; i < 12; i++) {
-                const angle = (i / 12) * Math.PI * 2;
-                const pts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(Math.cos(angle) * 4, 0, Math.sin(angle) * 4)];
-                const slg = new THREE.BufferGeometry().setFromPoints(pts);
-                const slm = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
-                const sl = new THREE.Line(slg, slm);
-                scanLines.push(sl);
-                scanGroup.add(sl);
-            }
-            scanGroup.visible = false;
-            scene.add(scanGroup);
-
-            // ── STEP 4: Detect — red threat cubes ──
-            const detectGroup = new THREE.Group();
-            const threats: any[] = [];
-            for (let i = 0; i < 5; i++) {
-                const tg = new THREE.BoxGeometry(0.15, 0.15, 0.15);
-                const tm = new THREE.MeshPhysicalMaterial({
-                    color: 0xff3333, emissive: 0xff3333, emissiveIntensity: 0.5,
-                    transparent: true, opacity: 0, metalness: 0.5, roughness: 0.3,
-                });
-                const tMesh = new THREE.Mesh(tg, tm);
-                const a = (i / 5) * Math.PI * 2;
-                tMesh.position.set(Math.cos(a) * 2.5, Math.sin(a) * 1.5, Math.sin(a) * 0.8);
-                threats.push({ mesh: tMesh, angle: a, speed: 0.5 + Math.random() * 0.5 });
-                detectGroup.add(tMesh);
-            }
-            // Warning ring
-            const warnGeo = new THREE.TorusGeometry(1.8, 0.01, 8, 60);
-            const warnMat = new THREE.MeshBasicMaterial({ color: 0xff3333, transparent: true, opacity: 0 });
-            const warnRing = new THREE.Mesh(warnGeo, warnMat);
-            warnRing.rotation.x = Math.PI / 2;
-            detectGroup.add(warnRing);
-            detectGroup.visible = false;
-            scene.add(detectGroup);
-
-            // ── STEP 5: Protect — shield + green glow ──
-            const protectGroup = new THREE.Group();
-            const shieldGeo = new THREE.SphereGeometry(1.5, 32, 32);
-            const shieldMat = new THREE.MeshPhysicalMaterial({
-                color: 0x44ff88, transparent: true, opacity: 0,
-                emissive: 0x44ff88, emissiveIntensity: 0.15,
-                metalness: 0.2, roughness: 0.3, side: THREE.DoubleSide,
-            });
-            const shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
-            protectGroup.add(shieldMesh);
-            // Checkmark
-            const chkPts = [new THREE.Vector3(-0.3, 0, 0), new THREE.Vector3(-0.05, -0.25, 0), new THREE.Vector3(0.35, 0.3, 0)];
-            const chkGeo = new THREE.BufferGeometry().setFromPoints(chkPts);
-            const chkMat = new THREE.LineBasicMaterial({ color: 0x44ff88, transparent: true, opacity: 0, linewidth: 2 });
-            const chkLine = new THREE.Line(chkGeo, chkMat);
-            protectGroup.add(chkLine);
-            // Orbiting shield particles
-            const shieldParticles: any[] = [];
-            for (let i = 0; i < 20; i++) {
-                const sg2 = new THREE.SphereGeometry(0.03, 8, 8);
-                const sm2 = new THREE.MeshBasicMaterial({ color: 0x44ff88, transparent: true, opacity: 0 });
-                const sMesh2 = new THREE.Mesh(sg2, sm2);
-                const a = (i / 20) * Math.PI * 2;
-                sMesh2.position.set(Math.cos(a) * 1.6, Math.sin(a) * 1.6, 0);
-                shieldParticles.push({ mesh: sMesh2, angle: a });
-                protectGroup.add(sMesh2);
-            }
-            protectGroup.visible = false;
-            scene.add(protectGroup);
-
-            // ── Particles (GLSL) ──
-            const pCount = 800;
-            const pPos = new Float32Array(pCount * 3);
-            const pAng = new Float32Array(pCount);
-            const pRad = new Float32Array(pCount);
-            const pSpd = new Float32Array(pCount);
-            for (let i = 0; i < pCount; i++) {
-                pAng[i] = Math.random() * Math.PI * 2;
-                pRad[i] = 1.0 + Math.random() * 4.0;
-                pSpd[i] = 0.2 + Math.random() * 0.8;
-            }
-            const pGeo = new THREE.BufferGeometry();
-            pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
-            pGeo.setAttribute("aAngle", new THREE.BufferAttribute(pAng, 1));
-            pGeo.setAttribute("aRadius", new THREE.BufferAttribute(pRad, 1));
-            pGeo.setAttribute("aSpeed", new THREE.BufferAttribute(pSpd, 1));
-            const pMat = new THREE.ShaderMaterial({
-                uniforms: { uTime: { value: 0 }, uMouse: { value: new THREE.Vector2() }, uSpread: { value: 1 }, uColor: { value: new THREE.Color(1, 1, 1) } },
-                vertexShader: pVert, fragmentShader: pFrag,
-                transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-            });
-            scene.add(new THREE.Points(pGeo, pMat));
-
-            // ── Grid floor ──
-            const gridGeo = new THREE.PlaneGeometry(20, 20, 40, 40);
-            const gridMat = new THREE.ShaderMaterial({
-                uniforms: { uTime: { value: 0 }, uScroll: { value: 0 } },
-                vertexShader: `uniform float uTime; uniform float uScroll; varying float vA; void main(){vec3 p=pos;p.z+=sin(p.x*2.+uTime)*.04*uScroll;p.z+=cos(p.y*2.+uTime*.7)*.03*uScroll;vec4 mv=modelViewMatrix*vec4(p,1.);vA=smoothstep(18.,2.,length(p.xy))*.12*uScroll;gl_Position=projectionMatrix*mv;}`,
-                fragmentShader: `varying float vA;void main(){gl_FragColor=vec4(1.,1.,1.,vA);}`,
-                transparent: true, wireframe: true, depthWrite: false,
-            });
-            const grid = new THREE.Mesh(gridGeo, gridMat);
-            grid.rotation.x = -Math.PI / 2;
-            grid.position.y = -2;
-            scene.add(grid);
-
-            // ══════════════════════════════════════
-            // ANIMATION LOOP
-            // ══════════════════════════════════════
-            let time = 0;
-            const targetCol = new THREE.Color(1, 1, 1);
-
-            const anim = () => {
-                if (cleanup) return;
-                time += 0.016;
-                const sp = scrollProgress.current;
-                const mx = mouseX.current;
-                const my = mouseY.current;
-                const stepF = sp * (DEMO_STEPS.length - 1);
-                const step = Math.floor(stepF);
-                const blend = stepF - step;
-
-                // Camera — cinematic path
-                const camY = Math.sin(sp * Math.PI) * 0.6;
-                const camZ = 6 - sp * 1.2;
-                camera.position.x += (mx * 0.35 - camera.position.x) * 0.02;
-                camera.position.y += (camY - my * 0.15 - camera.position.y) * 0.02;
-                camera.position.z += (camZ - camera.position.z) * 0.02;
-                camera.lookAt(0, 0, 0);
-
-                // Color
-                const sc = DEMO_STEPS[Math.min(step, 5)].color;
-                const nc = DEMO_STEPS[Math.min(step + 1, 5)].color;
-                targetCol.setRGB(sc[0] + (nc[0] - sc[0]) * blend, sc[1] + (nc[1] - sc[1]) * blend, sc[2] + (nc[2] - sc[2]) * blend);
-                (pMat.uniforms.uColor as any).value.lerp(targetCol, 0.04);
-
-                // ── Show/hide scene groups based on step ──
-                artGroup.visible = step <= 1;
-                analysisGroup.visible = step === 2;
-                scanGroup.visible = step === 3;
-                detectGroup.visible = step === 4;
-                protectGroup.visible = step === 5;
-
-                // ── STEP 0/1: Artwork ──
-                if (artGroup.visible) {
-                    const artVis = step === 0 ? 1 - blend : step === 1 ? blend : 1;
-                    artMesh.visible = true;
-                    wireMesh.visible = true;
-                    artGroup.scale.setScalar(artVis);
-                    artMesh.rotation.x = time * 0.25 + sp * Math.PI;
-                    artMesh.rotation.y = time * 0.4 + sp * Math.PI * 0.5;
-                    wireMesh.rotation.copy(artMesh.rotation);
-                    artMat.emissiveIntensity = 0.08 + Math.sin(time * 2) * 0.03;
-                }
-
-                // ── STEP 2: Analysis ──
-                if (analysisGroup.visible) {
-                    coreMat.opacity = 0.8;
-                    coreMesh.rotation.x = time * 0.8;
-                    coreMesh.rotation.y = time * 1.2;
-                    coreMesh.scale.setScalar(0.8 + Math.sin(time * 3) * 0.15);
-                    analysisRings.forEach((r, i) => {
-                        (r.mesh.material as any).opacity = 0.25 + Math.sin(time * 2 + i) * 0.1;
-                        r.mesh.rotation.z = time * 0.5 * (i + 1) + r.base;
-                    });
-                    fpLines.forEach((l, i) => {
-                        (l.material as any).opacity = 0.3 + Math.sin(time * 2 + i * 0.5) * 0.15;
-                    });
-                }
-
-                // ── STEP 3: Scan ──
-                if (scanGroup.visible) {
-                    scanRings.forEach((r, i) => {
-                        const t = ((time * 0.8 + r.delay) % 2) / 2;
-                        const scale = 0.5 + t * 2;
-                        r.mesh.scale.set(scale, scale, 1);
-                        (r.material as any).opacity = (1 - t) * 0.3;
-                    });
-                    scanLines.forEach((l, i) => {
-                        (l.material as any).opacity = 0.15 + Math.sin(time * 3 + i) * 0.08;
-                    });
-                }
-
-                // ── STEP 4: Detect ──
-                if (detectGroup.visible) {
-                    threats.forEach((t, i) => {
-                        (t.mesh.material as any).opacity = 0.8;
-                        const a = t.angle + time * t.speed;
-                        t.mesh.position.x = Math.cos(a) * (2.0 + Math.sin(time * 2) * 0.3);
-                        t.mesh.position.y = Math.sin(a) * (1.2 + Math.cos(time * 1.5) * 0.2);
-                        t.mesh.position.z = Math.sin(a) * 0.6;
-                        t.mesh.rotation.x = time * 2;
-                        t.mesh.rotation.y = time * 1.5;
-                    });
-                    (warnMat as any).opacity = 0.3 + Math.sin(time * 4) * 0.15;
-                    warnRing.rotation.z = time * 0.5;
-                }
-
-                // ── STEP 5: Protect ──
-                if (protectGroup.visible) {
-                    (shieldMat as any).opacity = 0.1 + Math.sin(time * 1.5) * 0.04;
-                    shieldMesh.rotation.y = time * 0.15;
-                    shieldMesh.rotation.x = time * 0.1;
-                    (chkMat as any).opacity = 0.6 + Math.sin(time * 2) * 0.2;
-                    shieldParticles.forEach((sp2, i) => {
-                        (sp2.mesh.material as any).opacity = 0.6;
-                        const a = sp2.angle + time * 0.3;
-                        sp2.mesh.position.x = Math.cos(a) * 1.6;
-                        sp2.mesh.position.y = Math.sin(a) * 1.6;
-                        sp2.mesh.position.z = Math.sin(time + i) * 0.2;
-                    });
-                }
-
-                // Particles
-                (pMat.uniforms.uTime as any).value = time;
-                (pMat.uniforms.uMouse as any).value.set(mx, my);
-                (pMat.uniforms.uSpread as any).value = step === 3 ? 1.8 : step === 4 ? 0.6 : 1;
-
-                // Grid
-                (gridMat.uniforms.uTime as any).value = time;
-                (gridMat.uniforms.uScroll as any).value = sp;
-
-                renderer.render(scene, camera);
-                requestAnimationFrame(anim);
-            };
-            anim();
-
-            const ro = new ResizeObserver(() => {
-                camera.aspect = canvas.clientWidth / canvas.clientHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-            });
-            ro.observe(canvas);
-
-            return () => { cleanup = true; renderer.dispose(); ro.disconnect(); };
-        });
-        return () => { cleanup = true; };
-    }, []);
-
-    return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full" style={{ zIndex: 0 }} />;
-}
-
-function LusionDemo() {
+function ProductWalkthrough() {
     const containerRef = useRef<HTMLDivElement>(null);
-    const scrollProgress = useRef(0);
-    const mouseX = useRef(0);
-    const mouseY = useRef(0);
     const [activeStep, setActiveStep] = useState(0);
 
     useEffect(() => {
@@ -623,47 +142,84 @@ function LusionDemo() {
             if (!el) return;
             const rect = el.getBoundingClientRect();
             const h = el.offsetHeight - window.innerHeight;
+            if (h <= 0) return;
             const p = Math.max(0, Math.min(1, -rect.top / h));
-            scrollProgress.current = p;
-            setActiveStep(Math.min(DEMO_STEPS.length - 1, Math.floor(p * DEMO_STEPS.length)));
+            setActiveStep(Math.min(WALKTHROUGH_STEPS.length - 1, Math.floor(p * WALKTHROUGH_STEPS.length)));
         };
         window.addEventListener("scroll", onScroll, { passive: true });
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
-    useEffect(() => {
-        const onMove = (e: MouseEvent) => {
-            mouseX.current = (e.clientX / window.innerWidth - 0.5) * 2;
-            mouseY.current = (e.clientY / window.innerHeight - 0.5) * 2;
-        };
-        window.addEventListener("mousemove", onMove);
-        return () => window.removeEventListener("mousemove", onMove);
-    }, []);
-
     return (
-        <div ref={containerRef} className="relative" style={{ height: `${DEMO_STEPS.length * 100}vh` }}>
-            <div className="sticky top-0 h-screen w-full overflow-hidden">
-                <LusionCanvas scrollProgress={scrollProgress} mouseX={mouseX} mouseY={mouseY} />
+        <div ref={containerRef} className="relative" style={{ height: `${WALKTHROUGH_STEPS.length * 100}vh` }}>
+            <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+                {/* Background gradient that shifts per step */}
+                <div className="absolute inset-0 transition-all duration-1000" style={{
+                    background: activeStep === 4
+                        ? "radial-gradient(ellipse at center, rgba(74,222,128,0.06) 0%, transparent 60%)"
+                        : activeStep === 3
+                        ? "radial-gradient(ellipse at center, rgba(248,113,113,0.06) 0%, transparent 60%)"
+                        : activeStep === 2
+                        ? "radial-gradient(ellipse at center, rgba(192,132,252,0.06) 0%, transparent 60%)"
+                        : activeStep === 1
+                        ? "radial-gradient(ellipse at center, rgba(96,165,250,0.06) 0%, transparent 60%)"
+                        : "transparent",
+                }} />
 
-                {/* Text overlay */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={activeStep}
-                            initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-                            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                            exit={{ opacity: 0, y: -20, filter: "blur(8px)" }}
-                            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                            className="text-center px-6"
-                        >
-                            <h2 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[0.9] mb-4">
-                                {DEMO_STEPS[activeStep].label}
-                            </h2>
-                            <p className="text-sm md:text-base text-zinc-400 max-w-lg mx-auto leading-relaxed">
-                                {DEMO_STEPS[activeStep].sub}
-                            </p>
-                        </motion.div>
-                    </AnimatePresence>
+                <div className="relative z-10 w-full max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+                    {/* LEFT: Text */}
+                    <div>
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={activeStep}
+                                initial={{ opacity: 0, y: 40, filter: "blur(8px)" }}
+                                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                                exit={{ opacity: 0, y: -30, filter: "blur(6px)" }}
+                                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                            >
+                                <div className="text-[10px] font-bold uppercase tracking-[0.3em] mb-5" style={{ color: WALKTHROUGH_STEPS[activeStep].color }}>
+                                    {WALKTHROUGH_STEPS[activeStep].tag}
+                                </div>
+                                <h2 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-[0.9] mb-5">
+                                    {WALKTHROUGH_STEPS[activeStep].title}
+                                </h2>
+                                <p className="text-sm text-zinc-400 max-w-md leading-relaxed">
+                                    {WALKTHROUGH_STEPS[activeStep].sub}
+                                </p>
+                            </motion.div>
+                        </AnimatePresence>
+
+                        {/* Step dots */}
+                        <div className="flex items-center gap-3 mt-12">
+                            {WALKTHROUGH_STEPS.map((_, i) => (
+                                <div key={i} className="relative">
+                                    <div className={`w-2 h-2 rounded-full transition-all duration-500 ${i === activeStep ? "bg-white scale-125" : "bg-white/15"}`} />
+                                    {i === activeStep && (
+                                        <motion.div layoutId="walk-dot" className="absolute -inset-1.5 rounded-full border border-white/20" />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* RIGHT: Mock UI Panel */}
+                    <div className="relative">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={activeStep}
+                                initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: -15 }}
+                                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                            >
+                                {activeStep === 0 && <UploadPanel />}
+                                {activeStep === 1 && <AnalyzePanel />}
+                                {activeStep === 2 && <ScanPanel />}
+                                {activeStep === 3 && <DetectPanel />}
+                                {activeStep === 4 && <ProtectPanel />}
+                            </motion.div>
+                        </AnimatePresence>
+                    </div>
                 </div>
 
                 {/* Scroll hint */}
@@ -673,225 +229,222 @@ function LusionDemo() {
                         className="w-px h-10 bg-gradient-to-b from-white/30 to-transparent" />
                 </div>
 
-                {/* Step dots */}
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2.5 pointer-events-none z-10">
-                    {DEMO_STEPS.map((s, i) => (
-                        <div key={i} className="relative">
-                            <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${i === activeStep ? "bg-white scale-150" : "bg-white/15"}`} />
-                            {i === activeStep && <motion.div layoutId="dot" className="absolute -inset-1 rounded-full border border-white/20" />}
-                        </div>
-                    ))}
-                </div>
-
-                {/* Progress */}
+                {/* Progress bar */}
                 <div className="absolute bottom-0 left-0 right-0 h-px bg-white/5 z-10">
-                    <motion.div className="h-full bg-white/20" style={{ width: `${scrollProgress.current * 100}%` }} />
+                    <div className="h-full bg-white/20 transition-all duration-300" style={{ width: `${(activeStep / (WALKTHROUGH_STEPS.length - 1)) * 100}%` }} />
                 </div>
             </div>
         </div>
     );
 }
 
-// ─── Interactive Product Demo ──────────────────────
+// ── Mock UI Panels ──
 
-function ProductDemo() {
-    const [phase, setPhase] = useState<"idle" | "scanning" | "results" | "protecting" | "protected">("idle");
-    const [progress, setProgress] = useState(0);
-    const sectionRef = useRef<HTMLDivElement>(null);
-    const scanlineRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    const demoImage = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&h=600&fit=crop&q=80";
-
-    // Animated background grid
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-        canvas.width = 600;
-        canvas.height = 600;
-        let dots: { x: number; y: number; vx: number; vy: number }[] = [];
-        for (let i = 0; i < 60; i++) {
-            dots.push({ x: Math.random() * 600, y: Math.random() * 600, vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3 });
-        }
-        let frame: number;
-        const animate = () => {
-            ctx.clearRect(0, 0, 600, 600);
-            dots.forEach((d) => {
-                d.x += d.vx; d.y += d.vy;
-                if (d.x < 0) d.x = 600; if (d.x > 600) d.x = 0;
-                if (d.y < 0) d.y = 600; if (d.y > 600) d.y = 0;
-                ctx.beginPath();
-                ctx.arc(d.x, d.y, 1, 0, Math.PI * 2);
-                ctx.fillStyle = "rgba(255,255,255,0.15)";
-                ctx.fill();
-            });
-            frame = requestAnimationFrame(animate);
-        };
-        animate();
-        return () => cancelAnimationFrame(frame);
-    }, []);
-
-    // Scanline animation
-    useEffect(() => {
-        if (phase !== "scanning") return;
-        setProgress(0);
-        let start: number;
-        const duration = 2500;
-        const animate = (t: number) => {
-            if (!start) start = t;
-            const elapsed = t - start;
-            const p = Math.min(elapsed / duration, 1);
-            setProgress(p);
-            if (scanlineRef.current) {
-                scanlineRef.current.style.top = `${p * 100}%`;
-            }
-            if (p < 1) requestAnimationFrame(animate);
-        };
-        const raf = requestAnimationFrame(animate);
-        const timeout = setTimeout(() => setPhase("results"), duration + 300);
-        return () => { cancelAnimationFrame(raf); clearTimeout(timeout); };
-    }, [phase]);
-
-    const startScan = () => setPhase("scanning");
-    const startProtect = () => {
-        setPhase("protecting");
-        setTimeout(() => setPhase("protected"), 1800);
-    };
-    const reset = () => { setPhase("idle"); setProgress(0); };
-
+function PanelFrame({ children, glow }: { children: React.ReactNode; glow?: string }) {
     return (
-        <section ref={sectionRef} className="relative z-10 py-28 px-6 border-t border-white/[0.04] snap-start">
-            <div className="max-w-5xl mx-auto">
-                <div className="text-center mb-14">
-                    <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-4">Try It Yourself</div>
-                    <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">Scan an artwork.<br />See what CVBER finds.</h2>
+        <div className="relative rounded-2xl border border-white/[0.08] bg-[#0a0a0a] overflow-hidden shadow-2xl" style={glow ? { boxShadow: `0 0 60px ${glow}15, 0 0 120px ${glow}08` } : undefined}>
+            {/* Title bar */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]">
+                <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
                 </div>
-
-                <div className="grid md:grid-cols-2 gap-10 items-center">
-                    {/* LEFT: Artwork + Scanner */}
-                    <div className="relative aspect-square rounded-3xl overflow-hidden border border-white/[0.08] bg-[#0a0a0a]">
-                        <img src={demoImage} alt="Sample artwork" className="w-full h-full object-cover" />
-                        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
-                        {phase === "scanning" && (
-                            <div ref={scanlineRef} className="absolute left-0 right-0 h-[3px] z-10 pointer-events-none" style={{ top: "0%" }}>
-                                <div className="w-full h-full bg-gradient-to-r from-transparent via-white/60 to-transparent shadow-[0_0_20px_rgba(255,255,255,0.3)]" />
-                            </div>
-                        )}
-                        {phase === "protected" && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
-                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}>
-                                    <div className="w-24 h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
-                                        <Shield className="w-12 h-12 text-white" />
-                                    </div>
-                                </motion.div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* RIGHT: Controls + Results */}
-                    <div className="flex flex-col gap-6">
-                        {phase === "idle" && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
-                                <p className="text-zinc-400 text-sm leading-relaxed">
-                                    Upload any artwork to scan for AI vulnerabilities, missing C2PA certificates, and unprotected metadata.
-                                </p>
-                                <button onClick={startScan} data-hover className="px-8 py-4 bg-white text-black rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all active:scale-[0.97] self-start shadow-[0_0_30px_rgba(255,255,255,0.05)] hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] flex items-center gap-3">
-                                    <Scan className="w-4 h-4" /> Scan This Artwork
-                                </button>
-                            </motion.div>
-                        )}
-
-                        {phase === "scanning" && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
-                                <div className="flex items-center gap-3">
-                                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}>
-                                        <Scan className="w-5 h-5 text-white" />
-                                    </motion.div>
-                                    <span className="text-sm font-bold tracking-wider uppercase text-zinc-300">Scanning...</span>
-                                </div>
-                                <div className="h-px bg-white/[0.08] relative overflow-hidden rounded-full">
-                                    <motion.div className="absolute inset-y-0 left-0 bg-white" style={{ width: `${progress * 100}%` }} />
-                                </div>
-                                <p className="text-xs text-zinc-500">Analyzing metadata, C2PA signatures, blockchain records, and AI training datasets...</p>
-                            </motion.div>
-                        )}
-
-                        {phase === "results" && (
-                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
-                                <div className="text-sm font-bold tracking-wider uppercase text-zinc-300 mb-1">Scan Results</div>
-                                {[
-                                    { label: "C2PA Certificate", found: false, detail: "No cryptographic proof detected" },
-                                    { label: "Blockchain Record", found: false, detail: "No timestamp found" },
-                                    { label: "AI Training Data", found: true, detail: "Found in 3 datasets (LAION, CommonCrawl, WikiArt)" },
-                                    { label: "DMCA History", found: false, detail: "No prior takedowns" },
-                                ].map((r) => (
-                                    <div key={r.label} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${r.found ? "bg-red-500/20" : "bg-white/[0.06]"}`}>
-                                            <div className={`w-2 h-2 rounded-full ${r.found ? "bg-red-400" : "bg-zinc-500"}`} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="text-xs font-bold text-zinc-300">{r.label}</div>
-                                            <div className="text-[10px] text-zinc-600">{r.detail}</div>
-                                        </div>
-                                    </div>
-                                ))}
-                                <button onClick={startProtect} data-hover className="mt-2 px-8 py-4 bg-white text-black rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all active:scale-[0.97] self-start shadow-[0_0_30px_rgba(255,255,255,0.05)] hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] flex items-center gap-3">
-                                    <Shield className="w-4 h-4" /> Protect with CVBER
-                                </button>
-                            </motion.div>
-                        )}
-
-                        {phase === "protecting" && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
-                                <div className="flex items-center gap-3">
-                                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.8, repeat: Infinity }}>
-                                        <Shield className="w-5 h-5 text-white" />
-                                    </motion.div>
-                                    <span className="text-sm font-bold tracking-wider uppercase text-zinc-300">Applying Protection...</span>
-                                </div>
-                                <div className="flex flex-col gap-3">
-                                    {["Generating C2PA certificate", "Writing blockchain record", "Registering DMCA agent", "Adding monitoring watch"].map((s, i) => (
-                                        <motion.div key={s} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.4 }} className="flex items-center gap-3 text-xs text-zinc-400">
-                                            <motion.div animate={{ opacity: [0, 1] }} transition={{ delay: i * 0.4 + 0.2 }} className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center">
-                                                <Check className="w-2.5 h-2.5 text-white" />
-                                            </motion.div>
-                                            {s}
-                                        </motion.div>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {phase === "protected" && (
-                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-5">
-                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 10 }} className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
-                                        <Check className="w-5 h-5 text-white" />
-                                    </div>
-                                    <div>
-                                        <div className="text-sm font-bold text-white">Fully Protected</div>
-                                        <div className="text-[10px] text-zinc-500">C2PA + Blockchain + DMCA + Monitoring active</div>
-                                    </div>
-                                </motion.div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {["C2PA Certificate", "Blockchain Proof", "DMCA Agent", "24/7 Monitoring"].map((s) => (
-                                        <div key={s} className="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                                            <Check className="w-3 h-3 text-green-400 shrink-0" />
-                                            <span className="text-[10px] text-zinc-400">{s}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                <button onClick={reset} data-hover className="px-8 py-3 rounded-full text-xs uppercase tracking-[0.2em] text-zinc-400 hover:text-white border border-white/[0.08] hover:border-white/20 transition-all self-start">
-                                    Scan Another
-                                </button>
-                            </motion.div>
-                        )}
-                    </div>
+                <div className="flex-1 text-center">
+                    <div className="text-[9px] text-zinc-600 font-medium tracking-wider">CVBER Dashboard</div>
                 </div>
             </div>
-        </section>
+            <div className="p-6">{children}</div>
+        </div>
+    );
+}
+
+function UploadPanel() {
+    return (
+        <PanelFrame>
+            <div className="border-2 border-dashed border-white/10 rounded-xl p-10 flex flex-col items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
+                    <Upload className="w-6 h-6 text-zinc-500" />
+                </div>
+                <div className="text-center">
+                    <div className="text-sm font-bold text-zinc-300 mb-1">Drop artwork here</div>
+                    <div className="text-[10px] text-zinc-600">PSD, PNG, JPG, SVG — up to 50MB</div>
+                </div>
+                <div className="px-6 py-2.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                    Browse Files
+                </div>
+            </div>
+            <div className="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                <div className="w-10 h-10 rounded-lg bg-zinc-800 overflow-hidden shrink-0">
+                    <div className="w-full h-full bg-gradient-to-br from-purple-500/30 to-blue-500/30" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-zinc-300 truncate">sunset-painting-v3.psd</div>
+                    <div className="text-[10px] text-zinc-600">24.8 MB</div>
+                </div>
+                <div className="text-[10px] text-zinc-500">Ready</div>
+            </div>
+        </PanelFrame>
+    );
+}
+
+function AnalyzePanel() {
+    return (
+        <PanelFrame glow="#60a5fa">
+            <div className="flex items-center gap-3 mb-5">
+                <Eye className="w-4 h-4 text-blue-400" />
+                <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Neural Analysis</span>
+                <div className="ml-auto flex items-center gap-1.5">
+                    <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                    <span className="text-[10px] text-blue-400">Processing</span>
+                </div>
+            </div>
+            <div className="space-y-3">
+                {[
+                    { label: "Color fingerprint", pct: 98, color: "bg-blue-400" },
+                    { label: "Texture analysis", pct: 94, color: "bg-blue-400" },
+                    { label: "Composition map", pct: 87, color: "bg-blue-400" },
+                    { label: "Brushstroke DNA", pct: 76, color: "bg-blue-400/60" },
+                ].map((f) => (
+                    <div key={f.label}>
+                        <div className="flex justify-between mb-1">
+                            <span className="text-[10px] text-zinc-500 font-medium">{f.label}</span>
+                            <span className="text-[10px] text-zinc-400">{f.pct}%</span>
+                        </div>
+                        <div className="h-1 rounded-full bg-white/[0.04] overflow-hidden">
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${f.pct}%` }} transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.2 }} className={`h-full rounded-full ${f.color}`} />
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <div className="mt-5 p-3 rounded-xl bg-blue-500/[0.06] border border-blue-500/10">
+                <div className="text-[10px] text-blue-300 font-bold mb-1">Fingerprint ID</div>
+                <div className="font-mono text-[10px] text-zinc-500">CVB-a7f2-9e1d-4b8c-k2m5-np3q</div>
+            </div>
+        </PanelFrame>
+    );
+}
+
+function ScanPanel() {
+    return (
+        <PanelFrame glow="#c084fc">
+            <div className="flex items-center gap-3 mb-5">
+                <Globe className="w-4 h-4 text-purple-400" />
+                <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Global Scan</span>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mb-5">
+                {[
+                    { label: "Websites", count: "4.2M", icon: Globe },
+                    { label: "Social", count: "3.8M", icon: Eye },
+                    { label: "Datasets", count: "4.4M", icon: FileText },
+                ].map((s) => (
+                    <div key={s.label} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center">
+                        <s.icon className="w-4 h-4 text-zinc-500 mx-auto mb-2" />
+                        <div className="text-lg font-black text-white">{s.count}</div>
+                        <div className="text-[9px] text-zinc-600 uppercase tracking-wider">{s.label}</div>
+                    </div>
+                ))}
+            </div>
+            <div className="h-px bg-white/[0.04] mb-4" />
+            <div className="flex items-center gap-2">
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }}>
+                    <Scan className="w-3.5 h-3.5 text-purple-400" />
+                </motion.div>
+                <div className="flex-1 h-1 rounded-full bg-white/[0.04] overflow-hidden">
+                    <motion.div initial={{ width: "0%" }} animate={{ width: "72%" }} transition={{ duration: 3, ease: "linear" }} className="h-full bg-purple-400 rounded-full" />
+                </div>
+                <span className="text-[10px] text-zinc-500">72%</span>
+            </div>
+        </PanelFrame>
+    );
+}
+
+function DetectPanel() {
+    return (
+        <PanelFrame glow="#f87171">
+            <div className="flex items-center gap-3 mb-5">
+                <AlertTriangle className="w-4 h-4 text-red-400" />
+                <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Threats Found</span>
+                <span className="ml-auto px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-[10px] font-bold text-red-400">3 Matches</span>
+            </div>
+            <div className="space-y-3">
+                {[
+                    { site: "pinterest.com/pin/82947...", match: "98.2%", status: "AI Training" },
+                    { site: "deviantart.com/gallery/...", match: "94.7%", status: "Reposted" },
+                    { site: "commoncrawl.org/dataset/...", match: "91.3%", status: "Scraped" },
+                ].map((t, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-red-500/[0.04] border border-red-500/10">
+                        <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
+                            <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="text-[11px] font-bold text-zinc-300 truncate">{t.site}</div>
+                            <div className="text-[10px] text-zinc-600">{t.status}</div>
+                        </div>
+                        <div className="text-[10px] font-bold text-red-400">{t.match}</div>
+                    </div>
+                ))}
+            </div>
+        </PanelFrame>
+    );
+}
+
+function ProtectPanel() {
+    return (
+        <PanelFrame glow="#4ade80">
+            <div className="flex items-center gap-3 mb-5">
+                <Shield className="w-4 h-4 text-green-400" />
+                <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Protection Active</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-5">
+                {[
+                    { icon: Lock, label: "C2PA Certificate", status: "Issued", color: "text-green-400" },
+                    { icon: FileText, label: "Blockchain Proof", status: "Written", color: "text-green-400" },
+                    { icon: Zap, label: "DMCA Notices", status: "3 Sent", color: "text-green-400" },
+                    { icon: Eye, label: "24/7 Monitoring", status: "Active", color: "text-green-400" },
+                ].map((p) => (
+                    <div key={p.label} className="p-3 rounded-xl bg-green-500/[0.04] border border-green-500/10">
+                        <p.icon className={`w-4 h-4 ${p.color} mb-2`} />
+                        <div className="text-[11px] font-bold text-zinc-300">{p.label}</div>
+                        <div className="text-[10px] text-green-400 mt-0.5">{p.status}</div>
+                    </div>
+                ))}
+            </div>
+            <div className="p-4 rounded-xl bg-green-500/[0.06] border border-green-500/15 text-center">
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 15 }} className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-3">
+                    <Check className="w-6 h-6 text-green-400" />
+                </motion.div>
+                <div className="text-sm font-bold text-white">Fully Protected</div>
+                <div className="text-[10px] text-zinc-500 mt-1">Your artwork is now safe from AI theft</div>
+            </div>
+        </PanelFrame>
+    );
+}
+
+// ─── Tilt Card ──────────────────────────────────
+
+function TiltCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+    const cardRef = useRef<HTMLDivElement>(null);
+
+    const onMouseMove = (e: React.MouseEvent) => {
+        const card = cardRef.current;
+        if (!card) return;
+        const rect = card.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        gsap.to(card, { rotateX: -y * 12, rotateY: x * 12, transformPerspective: 1000, duration: 0.4, ease: "power2.out" });
+    };
+
+    const onMouseLeave = () => {
+        const card = cardRef.current;
+        if (!card) return;
+        gsap.to(card, { rotateX: 0, rotateY: 0, duration: 0.4, ease: "power2.out" });
+    };
+
+    return (
+        <div ref={cardRef} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave} className={className} style={{ transformStyle: "preserve-3d" }}>
+            {children}
+        </div>
     );
 }
 
@@ -1012,7 +565,6 @@ export default function Home() {
                 {loaded && (
                     <motion.div ref={mainRef} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative bg-[#050505] text-white overflow-x-hidden">
                         <div className="fixed inset-0 z-[1] pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-                        <CustomCursor />
                         <SidebarNav open={menuOpen} onClose={() => setMenuOpen(false)} onStartOnboarding={() => setOnboardingOpen(true)} />
                         <AnimatePresence>{onboardingOpen && <InlineOnboarding onComplete={() => setOnboardingOpen(false)} />}</AnimatePresence>
 
@@ -1023,7 +575,6 @@ export default function Home() {
                                 <span className="text-sm font-black tracking-tight uppercase italic">CVBER</span>
                             </Link>
                             <div className="flex items-center gap-8">
-                                <SoundToggle />
                                 <Link href="/login" className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity">Log In</Link>
                                 <button onClick={() => setOnboardingOpen(true)} className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity">Get Started</button>
                                 <button onClick={() => setMenuOpen(true)} className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity">Menu</button>
@@ -1036,11 +587,8 @@ export default function Home() {
                         {/* ─── STATS ─── */}
                         <Stats />
 
-                        {/* ─── LUSION-STYLE 3D DEMO ─── */}
-                        <LusionDemo />
-
-                        {/* ─── INTERACTIVE PRODUCT DEMO ─── */}
-                        <ProductDemo />
+                        {/* ─── PRODUCT WALKTHROUGH (scroll-driven) ─── */}
+                        <ProductWalkthrough />
 
                         {/* ─── PRODUCT GRID (horizontal scroll) ─── */}
                         <section className="grid-section relative z-10 h-screen overflow-hidden snap-start">
