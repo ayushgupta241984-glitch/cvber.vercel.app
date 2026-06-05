@@ -219,160 +219,277 @@ function Stats() {
     );
 }
 
-// ─── 3D Demo (raw Three.js, no R3F — works on Vercel) ─
+// ─── Interactive 3D Product Demo (raw Three.js, no R3F) ─
 
-function ThreeScene({ containerRef }: { containerRef: React.RefObject<HTMLDivElement | null> }) {
+type FeatureNode = {
+    id: string;
+    label: string;
+    desc: string;
+    angle: number;
+    height: number;
+    speed: number;
+    color: string;
+};
+
+const FEATURES: FeatureNode[] = [
+    { id: "scan", label: "Deep Scan", desc: "AI-powered content fingerprinting scans every pixel for unauthorized use.", angle: 0, height: 0.6, speed: 0.4, color: "#ffffff" },
+    { id: "protect", label: "Shield Core", desc: "Real-time protection blocks infringements before they spread.", angle: 1.57, height: -0.4, speed: 0.6, color: "#cccccc" },
+    { id: "monitor", label: "Live Monitor", desc: "Continuous web-wide surveillance of your creative works.", angle: 3.14, height: 0.8, speed: 0.5, color: "#aaaaaa" },
+    { id: "report", label: "Auto Report", desc: "Instant takedown notices and legal-grade evidence reports.", angle: 4.71, height: -0.7, speed: 0.7, color: "#999999" },
+];
+
+function ProductDemo3D({ containerRef, onFeatureClick }: { containerRef: React.RefObject<HTMLDivElement | null>; onFeatureClick: (f: FeatureNode) => void }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const sceneRef = useRef<{ scene: any; camera: any; renderer: any; mesh: any; particles: any; mouseX: number; mouseY: number } | null>(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-
-        let Three: any;
         let cleanup = false;
 
         import("three").then((THREE) => {
             if (cleanup) return;
-            Three = THREE;
 
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-            camera.position.z = 6;
+            camera.position.z = 7;
 
             const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
             renderer.setSize(canvas.clientWidth, canvas.clientHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-            // Main object — torus knot
-            const geo = new THREE.TorusKnotGeometry(1.2, 0.35, 180, 24);
-            const mat = new THREE.MeshPhysicalMaterial({
-                color: new THREE.Color("#ffffff"),
-                metalness: 0.3,
-                roughness: 0.1,
-                wireframe: false,
-                transparent: true,
-                opacity: 0.9,
-                emissive: new THREE.Color("#444444"),
-                emissiveIntensity: 0.1,
+            // ── Central Core ──
+            const coreGeo = new THREE.SphereGeometry(0.6, 32, 32);
+            const coreMat = new THREE.MeshPhysicalMaterial({
+                color: "#ffffff", metalness: 0.4, roughness: 0.2,
+                emissive: "#333333", emissiveIntensity: 0.3,
             });
-            const mesh = new THREE.Mesh(geo, mat);
-            scene.add(mesh);
+            const core = new THREE.Mesh(coreGeo, coreMat);
+            scene.add(core);
 
-            // Wireframe overlay
-            const wireMat = new THREE.MeshBasicMaterial({
-                color: new THREE.Color("#888888"),
-                wireframe: true,
-                transparent: true,
-                opacity: 0.15,
+            // Inner glow
+            const glowGeo = new THREE.SphereGeometry(0.7, 32, 32);
+            const glowMat = new THREE.MeshBasicMaterial({
+                color: "#ffffff", transparent: true, opacity: 0.06,
             });
-            const wireMesh = new THREE.Mesh(geo.clone(), wireMat);
-            scene.add(wireMesh);
+            const glow = new THREE.Mesh(glowGeo, glowMat);
+            scene.add(glow);
 
-            // Particles
-            const particleCount = 800;
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount * 3; i++) positions[i] = (Math.random() - 0.5) * 20;
-            const particleGeo = new THREE.BufferGeometry();
-            particleGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-            const particleMat = new THREE.PointsMaterial({
-                color: new THREE.Color("#aaaaaa"),
-                size: 0.03,
-                transparent: true,
-                opacity: 0.4,
+            // Ring 1 (horizontal)
+            const ring1Geo = new THREE.TorusGeometry(1.3, 0.02, 16, 80);
+            const ring1Mat = new THREE.MeshBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.3 });
+            const ring1 = new THREE.Mesh(ring1Geo, ring1Mat);
+            scene.add(ring1);
+
+            // Ring 2 (tilted)
+            const ring2Geo = new THREE.TorusGeometry(1.6, 0.015, 16, 80);
+            const ring2Mat = new THREE.MeshBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.15 });
+            const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+            ring2.rotation.x = 1.2;
+            ring2.rotation.z = 0.5;
+            scene.add(ring2);
+
+            // Ring 3 (vertical)
+            const ring3Geo = new THREE.TorusGeometry(1.0, 0.01, 16, 80);
+            const ring3Mat = new THREE.MeshBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.2 });
+            const ring3 = new THREE.Mesh(ring3Geo, ring3Mat);
+            ring3.rotation.x = 1.57;
+            scene.add(ring3);
+
+            // ── Feature Nodes ──
+            const nodeMeshes: any[] = [];
+            const nodeData: { mesh: any; feature: FeatureNode }[] = [];
+
+            FEATURES.forEach((f) => {
+                const size = 0.25;
+                const geo = new THREE.IcosahedronGeometry(size, 1);
+                const mat = new THREE.MeshPhysicalMaterial({
+                    color: f.color, metalness: 0.3, roughness: 0.2,
+                    emissive: f.color, emissiveIntensity: 0.1,
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.userData = { featureId: f.id };
+                scene.add(mesh);
+                nodeMeshes.push(mesh);
+                nodeData.push({ mesh, feature: f });
             });
-            const particles = new THREE.Points(particleGeo, particleMat);
+
+            // ── Particles ──
+            const count = 600;
+            const positions = new Float32Array(count * 3);
+            for (let i = 0; i < count * 3; i++) positions[i] = (Math.random() - 0.5) * 18;
+            const pGeo = new THREE.BufferGeometry();
+            pGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+            const pMat = new THREE.PointsMaterial({
+                color: "#888888", size: 0.025, transparent: true, opacity: 0.3,
+            });
+            const particles = new THREE.Points(pGeo, pMat);
             scene.add(particles);
 
-            const state = { scene, camera, renderer, mesh, wireMesh, particles, mouseX: 0, mouseY: 0 };
-            sceneRef.current = state;
+            // ── Raycaster for clicks ──
+            const raycaster = new THREE.Raycaster();
+            const pointer = new THREE.Vector2();
 
-            const animate = () => {
+            const onClick = (e: MouseEvent) => {
+                const rect = canvas.getBoundingClientRect();
+                pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                raycaster.setFromCamera(pointer, camera);
+                const intersects = raycaster.intersectObjects(nodeMeshes);
+                if (intersects.length > 0) {
+                    const hit = intersects[0].object;
+                    const found = nodeData.find((n) => n.mesh === hit);
+                    if (found) onFeatureClick(found.feature);
+                }
+            };
+            canvas.addEventListener("click", onClick);
+
+            // ── Drag rotation state ──
+            let isDragging = false;
+            let prevX = 0;
+            let prevY = 0;
+            let rotX = 0;
+            let rotY = 0;
+            let targetRotX = 0;
+            let targetRotY = 0;
+            let autoRotate = true;
+            const sceneGroup = new THREE.Group();
+            sceneGroup.add(core, glow, ring1, ring2, ring3, ...nodeMeshes, particles);
+            scene.add(sceneGroup);
+
+            const onPointerDown = (e: MouseEvent) => { isDragging = true; autoRotate = false; prevX = e.clientX; prevY = e.clientY; };
+            const onPointerUp = () => { isDragging = false; setTimeout(() => { autoRotate = true; }, 2000); };
+            const onPointerMove = (e: MouseEvent) => {
+                if (!isDragging) return;
+                const dx = e.clientX - prevX;
+                const dy = e.clientY - prevY;
+                targetRotY += dx * 0.005;
+                targetRotX += dy * 0.005;
+                targetRotX = Math.max(-1, Math.min(1, targetRotX));
+                prevX = e.clientX; prevY = e.clientY;
+            };
+            canvas.addEventListener("pointerdown", onPointerDown);
+            window.addEventListener("pointerup", onPointerUp);
+            window.addEventListener("pointermove", onPointerMove);
+
+            // ── Animate ──
+            let time = 0;
+            const anim = () => {
                 if (cleanup) return;
-                state.mesh.rotation.x += 0.005;
-                state.mesh.rotation.y += 0.008;
-                state.wireMesh.rotation.x = state.mesh.rotation.x;
-                state.wireMesh.rotation.y = state.mesh.rotation.y;
-                state.particles.rotation.y += 0.0005;
+                time += 0.01;
 
-                // Mouse follow
-                state.mesh.rotation.x += (state.mouseY - state.mesh.rotation.x) * 0.0005;
-                state.mesh.rotation.y += (state.mouseX - state.mesh.rotation.y) * 0.0005;
-                state.wireMesh.rotation.x = state.mesh.rotation.x;
-                state.wireMesh.rotation.y = state.mesh.rotation.y;
+                if (autoRotate) targetRotY += 0.003;
+                rotX += (targetRotX - rotX) * 0.05;
+                rotY += (targetRotY - rotY) * 0.05;
+                sceneGroup.rotation.x = rotX;
+                sceneGroup.rotation.y = rotY;
+
+                // Rotate rings
+                ring1.rotation.z += 0.005;
+                ring2.rotation.x += 0.003;
+                ring2.rotation.z += 0.004;
+                ring3.rotation.y += 0.006;
+
+                // Pulse glow
+                glow.scale.setScalar(1 + Math.sin(time * 2) * 0.02);
+
+                // Orbit nodes
+                nodeData.forEach((n, i) => {
+                    const orbitR = 2.2 + Math.sin(time * n.feature.speed + i) * 0.2;
+                    const a = n.feature.angle + time * n.feature.speed;
+                    n.mesh.position.x = Math.cos(a) * orbitR;
+                    n.mesh.position.z = Math.sin(a) * orbitR;
+                    n.mesh.position.y = n.feature.height + Math.sin(time * n.feature.speed + i) * 0.2;
+                    n.mesh.rotation.x += 0.02;
+                    n.mesh.rotation.y += 0.03;
+                });
+
+                particles.rotation.y += 0.0003;
 
                 renderer.render(scene, camera);
-                requestAnimationFrame(animate);
+                requestAnimationFrame(anim);
             };
-            animate();
+            anim();
+
+            // ── Resize ──
+            const ro = new ResizeObserver(() => {
+                const w = canvas.clientWidth, h = canvas.clientHeight;
+                camera.aspect = w / h; camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+            });
+            ro.observe(canvas.parentElement!);
+
+            return () => {
+                cleanup = true;
+                renderer.dispose();
+                canvas.removeEventListener("click", onClick);
+                canvas.removeEventListener("pointerdown", onPointerDown);
+                window.removeEventListener("pointerup", onPointerUp);
+                window.removeEventListener("pointermove", onPointerMove);
+                ro.disconnect();
+            };
         });
 
-        return () => { cleanup = true; if (sceneRef.current) sceneRef.current.renderer.dispose(); };
+        return () => { cleanup = true; };
     }, []);
-
-    useEffect(() => {
-        const el = containerRef.current;
-        if (!el || !sceneRef.current) return;
-
-        const onResize = () => {
-            const s = sceneRef.current;
-            if (!s) return;
-            const w = el.clientWidth;
-            const h = el.clientHeight;
-            s.camera.aspect = w / h;
-            s.camera.updateProjectionMatrix();
-            s.renderer.setSize(w, h);
-        };
-
-        const onMove = (e: MouseEvent) => {
-            const s = sceneRef.current;
-            if (!s) return;
-            const rect = el.getBoundingClientRect();
-            s.mouseX = (e.clientX - rect.left) / rect.width - 0.5;
-            s.mouseY = (e.clientY - rect.top) / rect.height - 0.5;
-        };
-
-        const ro = new ResizeObserver(onResize);
-        ro.observe(el);
-        window.addEventListener("resize", onResize);
-        el.addEventListener("mousemove", onMove);
-
-        return () => { ro.disconnect(); window.removeEventListener("resize", onResize); el.removeEventListener("mousemove", onMove); };
-    }, [containerRef]);
 
     return <canvas ref={canvasRef} className="w-full h-full" />;
 }
 
 function ThreeDemo() {
     const containerRef = useRef<HTMLDivElement>(null);
+    const [selectedFeature, setSelectedFeature] = useState<FeatureNode | null>(null);
 
     return (
-        <>
-            <section className="relative z-10 py-28 px-6 border-t border-white/[0.04] snap-start">
-                <div className="max-w-6xl mx-auto">
-                    <div className="text-center mb-10">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-4">CVBER Engine</div>
-                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">3D protection core.<br />Move your mouse.</h2>
-                    </div>
-                    <div
-                        data-hover
-                        ref={containerRef}
-                        className="relative aspect-video rounded-3xl overflow-hidden border border-white/[0.08] bg-[#0a0a0a] cursor-pointer group"
-                    >
-                        <ThreeScene containerRef={containerRef} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-                        <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none">
-                            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">Move mouse to rotate</div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
-                                <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                                <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
-                            </div>
+        <section className="relative z-10 py-28 px-6 border-t border-white/[0.04] snap-start">
+            <div className="max-w-6xl mx-auto">
+                <div className="text-center mb-10">
+                    <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-4">Product Demo</div>
+                    <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">Interactive 3D<br />protection engine.</h2>
+                </div>
+                <div
+                    data-hover
+                    ref={containerRef}
+                    className="relative aspect-video rounded-3xl overflow-hidden border border-white/[0.08] bg-[#0a0a0a] select-none"
+                >
+                    <ProductDemo3D containerRef={containerRef} onFeatureClick={setSelectedFeature} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">Drag to orbit &bull; Click a node</div>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
                         </div>
                     </div>
+
+                    <AnimatePresence>
+                        {selectedFeature && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="absolute top-6 left-6 right-6 md:left-auto md:right-6 md:w-72 bg-black/80 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-6 pointer-events-auto"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="text-[9px] font-bold uppercase tracking-[0.25em] text-zinc-500">{selectedFeature.label}</div>
+                                    <button onClick={() => setSelectedFeature(null)} className="text-white/40 hover:text-white/80 text-xs">&times;</button>
+                                </div>
+                                <p className="text-sm text-zinc-400 leading-relaxed">{selectedFeature.desc}</p>
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => setSelectedFeature(null)}
+                                    className="mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white border border-white/20 rounded-full px-5 py-2 hover:bg-white/5 transition-colors"
+                                >
+                                    Explore {selectedFeature.label}
+                                </motion.button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
-            </section>
-        </>
+            </div>
+        </section>
     );
 }
 
@@ -720,7 +837,7 @@ export default function Home() {
                         {/* ─── STATS ─── */}
                         <Stats />
 
-                        {/* ─── 3D DEMO ─── */}
+                        {/* ─── 3D PRODUCT DEMO ─── */}
                         <ThreeDemo />
 
                         {/* ─── INTERACTIVE PRODUCT DEMO ─── */}
