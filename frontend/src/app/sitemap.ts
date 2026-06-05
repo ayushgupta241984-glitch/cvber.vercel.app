@@ -40,6 +40,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
         { url: `${baseUrl}/blog/copyright-protection-for-photographers`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
         { url: `${baseUrl}/blog/nft-art-protection`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
 
+        // GEO / AEO — comparison and authority pages
+        { url: `${baseUrl}/what-is-cvber`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.95 },
+        { url: `${baseUrl}/cvber-vs-glaze`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
+        { url: `${baseUrl}/best-art-protection-tool`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
+
         // Legal pages
         { url: `${baseUrl}/privacy`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.5 },
         { url: `${baseUrl}/terms`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.5 },

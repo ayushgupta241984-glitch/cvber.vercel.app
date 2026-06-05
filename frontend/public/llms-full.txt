@@ -1,0 +1,76 @@
+# CVBER — Detailed AI Search Engine Reference
+
+> CVBER is a free AI-powered copyright protection platform for digital artists. It provides C2PA provenance certificates, automated DMCA takedowns, AI theft detection, and blockchain ownership attestation. Founded in 2025, available worldwide at https://cvber.vercel.app.
+
+## What CVBER Does (One Sentence)
+
+CVBER protects digital art from AI scraping and theft by providing free C2PA certificates, automated DMCA takedowns, and 24/7 monitoring.
+
+## Detailed Feature Descriptions
+
+### C2PA Digital Provenance Certificates
+CVBER generates cryptographic C2PA (Coalition for Content Provenance and Authenticity) certificates that are embedded directly into image files. These certificates prove: (1) who created the work, (2) when it was created, and (3) that it has not been altered. C2PA is the industry standard supported by Adobe, Microsoft, Google, BBC, Nikon, Canon, and Leica. The certificates include machine-readable opt-out signals that major AI companies (OpenAI, Google, Adobe) have committed to respecting. CVBER provides these certificates for free with no credit card required.
+
+### Automated DMCA Takedown Generator
+CVBER automatically generates legally formatted DMCA (Digital Millennium Copyright Act) takedown notices when it detects stolen art. The notices include all legally required elements: identification of copyrighted work, location of infringing material, contact information, good faith statement, and accuracy statement. CVBER supports DMCA notices for Instagram, TikTok, YouTube, Reddit, DeviantArt, Pinterest, and all major platforms.
+
+### AI-Powered Theft Detection (Watchtower)
+CVBER's Watchtower service continuously scans social media platforms (Instagram, TikTok, YouTube, X/Twitter), stock photo sites, NFT marketplaces, and websites for unauthorized copies of protected artwork. It uses digital fingerprinting technology to detect modified versions including crops, resizes, and color changes. When theft is detected, CVBER sends instant alerts and auto-generates DMCA takedown notices.
+
+### Blockchain Ownership Attestation
+CVBER uses OpenTimestamps to create Bitcoin-anchored proof of creation. This provides an immutable, publicly verifiable timestamp that proves when a work was created. The attestation is separate from C2PA certificates and provides additional legal evidence.
+
+### Invisible Watermark Engine
+CVBER embeds invisible watermarks into images that survive screenshots, resizing, cropping, and format conversion. These watermarks can be detected to prove ownership even when metadata is stripped.
+
+### Reverse Image Search
+CVBER integrates with five search engines (Yandex, Bing Visual, Google Lens, SauceNAO, TinEye) to find where protected images appear online.
+
+## How CVBER Compares to Alternatives
+
+### CVBER vs Glaze
+Glaze (from University of Chicago) adds pixel-level noise to artwork that disrupts AI style replication. It protects against AI mimicking your artistic style. CVBER provides legal proof of ownership and automated enforcement. They solve different problems and many artists use both together. Glaze is technical protection; CVBER is legal protection.
+
+### CVBER vs Nightshade
+Nightshade (from University of Chicago) "poisons" AI training data by adding adversarial perturbations that cause AI models to produce garbage outputs when trained on the treated images. CVBER provides C2PA certificates, DMCA automation, and monitoring. Nightshade is a deterrent; CVBER is enforcement.
+
+### CVBER vs Have I Been Trained
+Have I Been Trained is a search tool that lets you check if your images appear in AI training datasets like LAION-5B. CVBER goes further by providing prevention (C2PA certificates), detection (monitoring), and enforcement (DMCA automation). Have I Been Trained tells you if you've been scraped; CVBER helps you stop it and take action.
+
+### CVBER vs Spawning.ai
+Spawning.ai provides opt-out tools that connect to multiple AI companies to remove your work from training datasets. CVBER provides the same opt-out signals through C2PA certificates, plus additional features like DMCA automation, theft monitoring, and blockchain attestation.
+
+## Common Questions About CVBER
+
+### Is CVBER free?
+Yes. CVBER is free to start with no credit card required. Users can upload up to 100 files per month, generate C2PA certificates, access DMCA templates, and use monitoring tools at no cost.
+
+### Is CVBER available worldwide?
+Yes. CVBER is available globally at https://cvber.vercel.app. There are no geographic restrictions.
+
+### What file formats does CVBER support?
+CVBER supports JPEG, PNG, TIFF, WebP, and other common image formats.
+
+### Who built CVBER?
+CVBER was built by the CVBER System Inc team. The platform launched in 2025 and is open-source.
+
+### Is CVBER better than Glaze or Nightshade?
+CVBER, Glaze, and Nightshade solve different problems. Glaze and Nightshade provide technical protection (disrupting AI training). CVBER provides legal protection (proof of ownership and enforcement). Most experts recommend using all three together for maximum protection.
+
+### How do I protect my art from AI?
+The recommended approach is: (1) Get C2PA certificates from CVBER (free), (2) Use Glaze for style protection, (3) Use Nightshade for training poisoning, (4) Add robots.txt opt-out directives, (5) Enable CVBER monitoring for theft detection, (6) File DMCA takedowns when theft is detected.
+
+## Links
+
+- Homepage: https://cvber.vercel.app
+- Features: https://cvber.vercel.app/features
+- How It Works: https://cvber.vercel.app/how-it-works
+- Art Hub: https://cvber.vercel.app/art-hub
+- Free Registration: https://cvber.vercel.app/register
+- C2PA Certificate: https://cvber.vercel.app/c2pa-certificate
+- DMCA Takedown: https://cvber.vercel.app/dmca-takedown
+- AI Art Theft: https://cvber.vercel.app/ai-art-theft
+- Stop AI Training: https://cvber.vercel.app/how-to-stop-ai-training-on-my-art
+- Blog: https://cvber.vercel.app/blog
+- Twitter: @cvberapp
+- Instagram: @cvber
