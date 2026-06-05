@@ -219,23 +219,170 @@ function Stats() {
     );
 }
 
-// ─── Product Demo (animated product walkover) ───
+// ─── Product Demo (Apple-style clean interface walkthrough) ─
 
-const DEMO_STEPS = [
-    { label: "Upload", desc: "Artist uploads artwork to CVBER", icon: "⬆" },
-    { label: "Fingerprint", desc: "AI generates unique content fingerprint", icon: "🔍" },
-    { label: "Scan", desc: "CVBER scans 12M+ sites for matches", icon: "📡" },
-    { label: "Detect", desc: "Unauthorized use detected on 3 sites", icon: "⚠" },
-    { label: "Protect", desc: "Takedown notices filed automatically", icon: "🛡" },
-    { label: "Report", desc: "Legal-grade evidence report generated", icon: "📋" },
+const SCENES = [
+    {
+        id: "upload",
+        headline: "Upload your artwork.",
+        sub: "Drag & drop any image. CVBER supports PSD, PNG, JPG, SVG, and more.",
+        ui: "upload",
+    },
+    {
+        id: "fingerprint",
+        headline: "AI creates a unique fingerprint.",
+        sub: "Every pixel is analyzed. CVBER generates a cryptographic signature of your work.",
+        ui: "fingerprint",
+    },
+    {
+        id: "scanning",
+        headline: "Scanning 12.4M sites…",
+        sub: "Deep scan across the open web, social platforms, and AI training datasets.",
+        ui: "scanning",
+    },
+    {
+        id: "results",
+        headline: "3 matches found.",
+        sub: "Unauthorized use detected. One on DeviantArt, two in an AI training set.",
+        ui: "results",
+    },
+    {
+        id: "protected",
+        headline: "Protection active.",
+        sub: "Takedown notices filed. Evidence report generated. Your work is secure.",
+        ui: "protected",
+    },
 ];
 
+function SceneContent({ scene, expanded }: { scene: typeof SCENES[0]; expanded?: boolean }) {
+    const sz = expanded ? "text-lg" : "text-xs";
+    const hz = expanded ? "text-4xl md:text-5xl" : "text-xl md:text-3xl";
+
+    return (
+        <div className="absolute inset-0 flex flex-col">
+            {/* Minimal top bar */}
+            <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-white/[0.03]">
+                <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-md border border-white/10 flex items-center justify-center">
+                        <span className="text-[6px] font-bold tracking-widest text-white/40">C</span>
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-600">CVBER</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="w-14 h-4 rounded bg-zinc-800/60" />
+                    <div className="w-4 h-4 rounded-full bg-zinc-800/60" />
+                </div>
+            </div>
+
+            {/* Main content — Apple-style centered */}
+            <div className="flex-1 flex items-center justify-center px-6 md:px-12 relative overflow-hidden">
+                {/* Scanning beam (only for scanning scene) */}
+                {scene.id === "scanning" && (
+                    <motion.div
+                        animate={{ top: ["-10%", "110%"] }}
+                        transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+                        className="absolute left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none"
+                    />
+                )}
+
+                <motion.div
+                    key={scene.id}
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    className="text-center max-w-2xl"
+                >
+                    {/* Icon / visual */}
+                    <div className="mb-6 md:mb-8 flex justify-center">
+                        {scene.id === "upload" && (
+                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl border-2 border-dashed border-white/20 flex items-center justify-center">
+                                <svg className="w-6 h-6 md:w-8 md:h-8 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                            </div>
+                        )}
+                        {scene.id === "fingerprint" && (
+                            <div className="relative w-16 h-16 md:w-20 md:h-20">
+                                <div className="absolute inset-0 rounded-2xl border border-white/10" />
+                                <motion.div
+                                    animate={{ opacity: [0.2, 0.6, 0.2] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                    className="absolute inset-1 rounded-xl bg-white/5"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <svg className="w-6 h-6 md:w-8 md:h-8 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3M6.21 17.393A9.94 9.94 0 0012 21a9.94 9.94 0 005.79-1.607M21 11a9.94 9.94 0 01-3.21 7.393M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        )}
+                        {scene.id === "scanning" && (
+                            <div className="relative w-16 h-16 md:w-20 md:h-20">
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                    className="w-full h-full rounded-full border border-white/10 border-t-white/40"
+                                />
+                            </div>
+                        )}
+                        {scene.id === "results" && (
+                            <div className="flex items-center gap-2">
+                                {[0, 1, 2].map((i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: i * 0.15 }}
+                                        className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center"
+                                    >
+                                        <span className="text-red-400 text-[9px] font-bold">!</span>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+                        {scene.id === "protected" && (
+                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                                <svg className="w-6 h-6 md:w-8 md:h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                            </div>
+                        )}
+                    </div>
+
+                    <h3 className={`${hz} font-black tracking-tighter leading-[1.05] text-white mb-3`}>{scene.headline}</h3>
+                    <p className={`${sz} text-zinc-500 leading-relaxed max-w-md mx-auto`}>{scene.sub}</p>
+
+                    {/* Progress dots */}
+                    <div className="flex items-center justify-center gap-1.5 mt-6 md:mt-8">
+                        {SCENES.map((s, i) => (
+                            <div
+                                key={s.id}
+                                className={`h-0.5 rounded-full transition-all duration-700 ${SCENES.indexOf(scene) === i ? "w-6 bg-white/50" : "w-1.5 bg-white/10"}`}
+                            />
+                        ))}
+                    </div>
+                </motion.div>
+            </div>
+
+            {/* Bottom status bar */}
+            <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-t border-white/[0.03]">
+                <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    <span className="text-[8px] text-zinc-600 uppercase tracking-[0.15em]">System Active</span>
+                </div>
+                <div className="text-[8px] text-zinc-700">v2.4.1</div>
+            </div>
+        </div>
+    );
+}
+
 function ProductVideo() {
-    const [step, setStep] = useState(0);
+    const [sceneIdx, setSceneIdx] = useState(0);
     const [showOverlay, setShowOverlay] = useState(false);
 
     useEffect(() => {
-        const t = setInterval(() => setStep((s) => (s + 1) % DEMO_STEPS.length), 1500);
+        const t = setInterval(() => setSceneIdx((s) => (s + 1) % SCENES.length), 2200);
         return () => clearInterval(t);
     }, []);
 
@@ -252,100 +399,19 @@ function ProductVideo() {
                         data-hover
                         className="relative aspect-video rounded-3xl overflow-hidden border border-white/[0.08] bg-[#0a0a0a] cursor-pointer group"
                     >
-                        {/* Simulated screen recording */}
-                        <div className="absolute inset-0 flex flex-col">
-                            {/* Fake browser chrome */}
-                            <div className="flex items-center gap-2 px-4 py-3 bg-zinc-900/80 border-b border-white/[0.04]">
-                                <div className="flex gap-1.5">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-                                </div>
-                                <div className="flex-1 max-w-[60%] mx-auto bg-zinc-800 rounded-full py-1 px-4 text-[9px] text-zinc-500 text-center truncate tracking-wide">
-                                    app.cvber.art/dashboard
-                                </div>
-                            </div>
-                            {/* Fake dashboard content */}
-                            <div className="flex-1 flex flex-col p-4 md:p-6 gap-4">
-                                {/* Top bar */}
-                                <div className="flex items-center justify-between">
-                                    <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">Dashboard</div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-16 h-5 rounded bg-zinc-800/60" />
-                                        <div className="w-5 h-5 rounded-full bg-zinc-800/60" />
-                                    </div>
-                                </div>
-                                {/* Main content area */}
-                                <div className="flex-1 grid grid-cols-3 gap-3">
-                                    <div className="col-span-2 rounded-xl bg-zinc-800/30 border border-white/[0.04] p-4 flex flex-col justify-center items-center relative overflow-hidden">
-                                        <motion.div
-                                            key={DEMO_STEPS[step].label}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="text-center"
-                                        >
-                                            <div className="text-2xl mb-2">{DEMO_STEPS[step].icon}</div>
-                                            <div className="text-[11px] font-bold uppercase tracking-[0.25em] text-white mb-1">{DEMO_STEPS[step].label}</div>
-                                            <div className="text-[11px] text-zinc-500">{DEMO_STEPS[step].desc}</div>
-                                        </motion.div>
-                                        {/* Scanning line effect */}
-                                        <motion.div
-                                            animate={{ top: ["0%", "100%", "0%"] }}
-                                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                            className="absolute left-0 right-0 h-px bg-white/20"
-                                        />
-                                    </div>
-                                    <div className="rounded-xl bg-zinc-800/30 border border-white/[0.04] p-3 flex flex-col gap-2">
-                                        <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-600">Status</div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                                            <span className="text-[10px] text-zinc-400">Protected</span>
-                                        </div>
-                                        <div className="mt-auto flex flex-col gap-1.5">
-                                            {[80, 45, 12].map((v, i) => (
-                                                <div key={i} className="flex items-center gap-2">
-                                                    <div className="text-[8px] text-zinc-600 w-8">{["Scans", "Found", "Resolved"][i]}</div>
-                                                    <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-                                                        <motion.div
-                                                            initial={{ width: 0 }}
-                                                            animate={{ width: `${v}%` }}
-                                                            transition={{ duration: 1, delay: i * 0.2 }}
-                                                            className="h-full rounded-full bg-white/30"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                                {/* Bottom bar */}
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                                        <span className="text-[9px] text-zinc-600">Live</span>
-                                    </div>
-                                    <div className="text-[9px] text-zinc-700">v2.4.1</div>
-                                    <div className="ml-auto flex gap-2">
-                                        <motion.div
-                                            animate={{ opacity: [0.3, 1, 0.3] }}
-                                            transition={{ duration: 2, repeat: Infinity }}
-                                            className="text-[9px] text-zinc-600"
-                                        >
-                                            {DEMO_STEPS[step].label}...
-                                        </motion.div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="absolute inset-0">
+                            <AnimatePresence mode="wait">
+                                <SceneContent key={SCENES[sceneIdx].id} scene={SCENES[sceneIdx]} />
+                            </AnimatePresence>
                         </div>
-                        {/* Hover overlay */}
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-500" />
+                        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors duration-500 pointer-events-none" />
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <motion.div
                                 initial={{ scale: 1 }}
                                 whileHover={{ scale: 1.05 }}
-                                className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/[0.06] border border-white/10 backdrop-blur-sm flex items-center justify-center"
+                                className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-sm flex items-center justify-center"
                             >
-                                <svg className="w-6 h-6 md:w-8 md:h-8 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+                                <svg className="w-6 h-6 md:w-8 md:h-8 text-white/80 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M8 5v14l11-7z" />
                                 </svg>
                             </motion.div>
@@ -371,71 +437,14 @@ function ProductVideo() {
                         className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
                         onClick={() => setShowOverlay(false)}
                     >
-                        <div className="relative w-full h-full max-w-6xl max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
-                            <div className="w-full h-full rounded-2xl overflow-hidden border border-white/[0.06] bg-[#0a0a0a] flex flex-col">
-                                {/* Expanded browser chrome */}
-                                <div className="flex items-center gap-2 px-5 py-4 bg-zinc-900/80 border-b border-white/[0.04]">
-                                    <div className="flex gap-1.5">
-                                        <div className="w-3 h-3 rounded-full bg-red-500/60" />
-                                        <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-                                        <div className="w-3 h-3 rounded-full bg-green-500/60" />
-                                    </div>
-                                    <div className="flex-1 max-w-md mx-auto bg-zinc-800 rounded-full py-1.5 px-5 text-[11px] text-zinc-500 text-center truncate">
-                                        app.cvber.art/dashboard
-                                    </div>
-                                    <button onClick={() => setShowOverlay(false)} className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 hover:text-white/80">
-                                        CLOSE
-                                    </button>
-                                </div>
-                                {/* Content — same but larger */}
-                                <div className="flex-1 flex p-6 md:p-10 gap-4 md:gap-6">
-                                    <div className="flex-1 flex flex-col gap-4">
-                                        <div className="flex items-center justify-between">
-                                            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-600">Dashboard</div>
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-20 h-6 rounded bg-zinc-800/60" />
-                                                <div className="w-6 h-6 rounded-full bg-zinc-800/60" />
-                                            </div>
-                                        </div>
-                                        <div className="flex-1 rounded-2xl bg-zinc-800/20 border border-white/[0.04] flex flex-col items-center justify-center relative overflow-hidden">
-                                            <motion.div
-                                                key={`expanded-${step}`}
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                className="text-center"
-                                            >
-                                                <div className="text-4xl mb-4">{DEMO_STEPS[step].icon}</div>
-                                                <div className="text-lg font-bold uppercase tracking-[0.3em] text-white mb-2">{DEMO_STEPS[step].label}</div>
-                                                <div className="text-sm text-zinc-500">{DEMO_STEPS[step].desc}</div>
-                                            </motion.div>
-                                            <motion.div
-                                                animate={{ top: ["0%", "100%", "0%"] }}
-                                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                                className="absolute left-0 right-0 h-px bg-white/10"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="w-64 rounded-2xl bg-zinc-800/20 border border-white/[0.04] p-5 flex flex-col gap-3">
-                                        <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-600">Live Stats</div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
-                                            <span className="text-xs text-zinc-400">System Active</span>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3 mt-2">
-                                            {[
-                                                { label: "Scanned", value: "12.4M" },
-                                                { label: "Protected", value: "8,247" },
-                                                { label: "Found", value: "143" },
-                                                { label: "Resolved", value: "138" },
-                                            ].map((s) => (
-                                                <div key={s.label} className="rounded-lg bg-zinc-900/60 p-3">
-                                                    <div className="text-lg font-bold text-white">{s.value}</div>
-                                                    <div className="text-[9px] text-zinc-600 uppercase tracking-[0.15em]">{s.label}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
+                        <div className="relative w-full h-full max-w-6xl max-h-[80vh] mx-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="w-full h-full rounded-2xl overflow-hidden border border-white/[0.06] bg-[#0a0a0a] relative">
+                                <AnimatePresence mode="wait">
+                                    <SceneContent key={`exp-${SCENES[sceneIdx].id}`} scene={SCENES[sceneIdx]} expanded />
+                                </AnimatePresence>
+                                <button onClick={() => setShowOverlay(false)} className="absolute top-4 right-4 z-10 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 hover:text-white/80">
+                                    CLOSE
+                                </button>
                             </div>
                         </div>
                     </motion.div>
