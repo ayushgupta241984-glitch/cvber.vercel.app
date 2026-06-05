@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Shield, ChevronDown, X, ArrowLeft, Check, Scan } from "lucide-react";
@@ -219,43 +219,150 @@ function Stats() {
     );
 }
 
-// ─── Video Showcase ─────────────────────────────────
+// ─── 3D Demo (raw Three.js, no R3F — works on Vercel) ─
 
-const VIDEO_SRC = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4";
+function ThreeScene({ containerRef }: { containerRef: React.RefObject<HTMLDivElement | null> }) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const sceneRef = useRef<{ scene: any; camera: any; renderer: any; mesh: any; particles: any; mouseX: number; mouseY: number } | null>(null);
 
-function VideoSection() {
-    const [showOverlay, setShowOverlay] = useState(false);
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        let Three: any;
+        let cleanup = false;
+
+        import("three").then((THREE) => {
+            if (cleanup) return;
+            Three = THREE;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            camera.position.z = 6;
+
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            // Main object — torus knot
+            const geo = new THREE.TorusKnotGeometry(1.2, 0.35, 180, 24);
+            const mat = new THREE.MeshPhysicalMaterial({
+                color: new THREE.Color("#ffffff"),
+                metalness: 0.3,
+                roughness: 0.1,
+                wireframe: false,
+                transparent: true,
+                opacity: 0.9,
+                emissive: new THREE.Color("#444444"),
+                emissiveIntensity: 0.1,
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            scene.add(mesh);
+
+            // Wireframe overlay
+            const wireMat = new THREE.MeshBasicMaterial({
+                color: new THREE.Color("#888888"),
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15,
+            });
+            const wireMesh = new THREE.Mesh(geo.clone(), wireMat);
+            scene.add(wireMesh);
+
+            // Particles
+            const particleCount = 800;
+            const positions = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount * 3; i++) positions[i] = (Math.random() - 0.5) * 20;
+            const particleGeo = new THREE.BufferGeometry();
+            particleGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+            const particleMat = new THREE.PointsMaterial({
+                color: new THREE.Color("#aaaaaa"),
+                size: 0.03,
+                transparent: true,
+                opacity: 0.4,
+            });
+            const particles = new THREE.Points(particleGeo, particleMat);
+            scene.add(particles);
+
+            const state = { scene, camera, renderer, mesh, wireMesh, particles, mouseX: 0, mouseY: 0 };
+            sceneRef.current = state;
+
+            const animate = () => {
+                if (cleanup) return;
+                state.mesh.rotation.x += 0.005;
+                state.mesh.rotation.y += 0.008;
+                state.wireMesh.rotation.x = state.mesh.rotation.x;
+                state.wireMesh.rotation.y = state.mesh.rotation.y;
+                state.particles.rotation.y += 0.0005;
+
+                // Mouse follow
+                state.mesh.rotation.x += (state.mouseY - state.mesh.rotation.x) * 0.0005;
+                state.mesh.rotation.y += (state.mouseX - state.mesh.rotation.y) * 0.0005;
+                state.wireMesh.rotation.x = state.mesh.rotation.x;
+                state.wireMesh.rotation.y = state.mesh.rotation.y;
+
+                renderer.render(scene, camera);
+                requestAnimationFrame(animate);
+            };
+            animate();
+        });
+
+        return () => { cleanup = true; if (sceneRef.current) sceneRef.current.renderer.dispose(); };
+    }, []);
+
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el || !sceneRef.current) return;
+
+        const onResize = () => {
+            const s = sceneRef.current;
+            if (!s) return;
+            const w = el.clientWidth;
+            const h = el.clientHeight;
+            s.camera.aspect = w / h;
+            s.camera.updateProjectionMatrix();
+            s.renderer.setSize(w, h);
+        };
+
+        const onMove = (e: MouseEvent) => {
+            const s = sceneRef.current;
+            if (!s) return;
+            const rect = el.getBoundingClientRect();
+            s.mouseX = (e.clientX - rect.left) / rect.width - 0.5;
+            s.mouseY = (e.clientY - rect.top) / rect.height - 0.5;
+        };
+
+        const ro = new ResizeObserver(onResize);
+        ro.observe(el);
+        window.addEventListener("resize", onResize);
+        el.addEventListener("mousemove", onMove);
+
+        return () => { ro.disconnect(); window.removeEventListener("resize", onResize); el.removeEventListener("mousemove", onMove); };
+    }, [containerRef]);
+
+    return <canvas ref={canvasRef} className="w-full h-full" />;
+}
+
+function ThreeDemo() {
+    const containerRef = useRef<HTMLDivElement>(null);
 
     return (
         <>
             <section className="relative z-10 py-28 px-6 border-t border-white/[0.04] snap-start">
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-10">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-4">See It In Action</div>
-                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">Watch how CVBER<br />protects artists.</h2>
+                        <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-4">CVBER Engine</div>
+                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">3D protection core.<br />Move your mouse.</h2>
                     </div>
                     <div
-                        onClick={() => setShowOverlay(true)}
                         data-hover
+                        ref={containerRef}
                         className="relative aspect-video rounded-3xl overflow-hidden border border-white/[0.08] bg-[#0a0a0a] cursor-pointer group"
                     >
-                        <video className="w-full h-full object-cover" muted autoPlay loop playsInline>
-                            <source src={VIDEO_SRC} type="video/mp4" />
-                        </video>
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-500" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <motion.div
-                                initial={{ scale: 1 }}
-                                whileHover={{ scale: 1.05 }}
-                                className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/[0.08] border border-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/[0.12] transition-colors"
-                            >
-                                <svg className="w-8 h-8 md:w-10 md:h-10 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M8 5v14l11-7z" />
-                                </svg>
-                            </motion.div>
-                        </div>
-                        <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
-                            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">Click to expand</div>
+                        <ThreeScene containerRef={containerRef} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none">
+                            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">Move mouse to rotate</div>
                             <div className="flex items-center gap-1.5">
                                 <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
                                 <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
@@ -265,90 +372,7 @@ function VideoSection() {
                     </div>
                 </div>
             </section>
-
-            <AnimatePresence>
-                {showOverlay && <VideoOverlay src={VIDEO_SRC} onClose={() => setShowOverlay(false)} />}
-            </AnimatePresence>
         </>
-    );
-}
-
-function VideoOverlay({ src, onClose }: { src: string; onClose: () => void }) {
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const progressRef = useRef<HTMLDivElement>(null);
-    const [playing, setPlaying] = useState(true);
-    const [muted, setMuted] = useState(true);
-
-    useEffect(() => {
-        const v = videoRef.current;
-        if (!v) return;
-        v.muted = true;
-        v.play().catch(() => setPlaying(false));
-    }, []);
-
-    useEffect(() => {
-        const v = videoRef.current;
-        const p = progressRef.current;
-        if (!v || !p) return;
-        const update = () => { p.style.width = `${(v.currentTime / (v.duration || 1)) * 100}%`; };
-        v.addEventListener("timeupdate", update);
-        return () => v.removeEventListener("timeupdate", update);
-    }, []);
-
-    const togglePlay = useCallback(() => {
-        const v = videoRef.current;
-        if (!v) return;
-        if (playing) v.pause(); else v.play();
-        setPlaying(!playing);
-    }, [playing]);
-
-    const toggleMute = useCallback(() => {
-        const v = videoRef.current;
-        if (!v) return;
-        v.muted = !muted;
-        setMuted(!muted);
-    }, [muted]);
-
-    return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
-            onClick={onClose}
-        >
-            <div className="relative w-full h-full" onClick={(e) => e.stopPropagation()}>
-                <video ref={videoRef} className="w-full h-full object-contain" playsInline loop>
-                    <source src={src} type="video/mp4" />
-                </video>
-                {!playing && (
-                    <button onClick={togglePlay} className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-20 h-20 rounded-full bg-white/[0.08] border border-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <svg className="w-8 h-8 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M8 5v14l11-7z" />
-                            </svg>
-                        </div>
-                    </button>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 bg-gradient-to-t from-black/80 to-transparent">
-                    <div className="flex items-center gap-6 max-w-4xl mx-auto">
-                        <button onClick={togglePlay} className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/60 hover:text-white transition-colors">
-                            {playing ? "PAUSE" : "PLAY"}
-                        </button>
-                        <div className="flex-1 h-px bg-white/20 relative">
-                            <div ref={progressRef} className="absolute inset-y-0 left-0 bg-white w-0" />
-                        </div>
-                        <button onClick={toggleMute} className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/60 hover:text-white transition-colors">
-                            {muted ? "UNMUTE" : "MUTE"}
-                        </button>
-                        <button onClick={onClose} className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/60 hover:text-white transition-colors">
-                            CLOSE
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </motion.div>
     );
 }
 
@@ -696,8 +720,8 @@ export default function Home() {
                         {/* ─── STATS ─── */}
                         <Stats />
 
-                        {/* ─── VIDEO SHOWCASE ─── */}
-                        <VideoSection />
+                        {/* ─── 3D DEMO ─── */}
+                        <ThreeDemo />
 
                         {/* ─── INTERACTIVE PRODUCT DEMO ─── */}
                         <ProductDemo />
