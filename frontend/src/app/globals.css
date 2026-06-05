@@ -180,6 +180,11 @@
         100% { background-position: 200% 0; }
     }
 
+    @keyframes panelBorderSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
     /* ===== Gold text glow ===== */
     .gold-glow {
         text-shadow: 0 0 40px rgba(201,169,98,0.1);
