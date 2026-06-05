@@ -34,6 +34,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
         { url: `${baseUrl}/blog/how-to-protect-art-from-ai`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
         { url: `${baseUrl}/blog/c2pa-explained`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
         { url: `${baseUrl}/blog/dmca-guide-for-artists`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
+        { url: `${baseUrl}/blog/glaze-vs-nightshade`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
+        { url: `${baseUrl}/blog/best-free-art-protection-tools`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
+        { url: `${baseUrl}/blog/ai-training-opt-out`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
+        { url: `${baseUrl}/blog/copyright-protection-for-photographers`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
+        { url: `${baseUrl}/blog/nft-art-protection`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
 
         // Legal pages
         { url: `${baseUrl}/privacy`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.5 },
