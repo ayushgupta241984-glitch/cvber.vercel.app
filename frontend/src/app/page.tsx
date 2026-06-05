@@ -219,16 +219,68 @@ function Stats() {
     );
 }
 
-// ─── Lusion-style immersive 3D product demo (raw Three.js) ─
+// ─── Lusion-style immersive 3D product demo (raw Three.js + GLSL) ─
 
 const DEMO_STEPS = [
-    { label: "Your art. Protected.", sub: "Scroll to see how CVBER works." },
+    { label: "Your art. Protected.", sub: "Scroll to explore how CVBER works." },
     { label: "Upload.", sub: "Drop any artwork — PSD, PNG, JPG, SVG." },
     { label: "Analyze.", sub: "AI fingerprints every pixel of your work." },
     { label: "Scan.", sub: "12.4M+ sites searched in real-time." },
     { label: "Detect.", sub: "3 unauthorized copies found." },
     { label: "Protect.", sub: "Takedowns filed. Evidence generated. You're safe." },
 ];
+
+// GLSL particle shader — spiral galaxy with glow
+const particleVertexShader = `
+    uniform float uTime;
+    uniform float uScroll;
+    uniform vec2 uMouse;
+    attribute float aAngle;
+    attribute float aRadius;
+    attribute float aSpeed;
+    varying float vAlpha;
+    varying float vDist;
+
+    void main() {
+        float angle = aAngle + uTime * aSpeed * 0.5;
+        float r = aRadius * (0.6 + 0.4 * sin(uTime * aSpeed + aAngle * 3.0));
+
+        vec3 pos = vec3(
+            cos(angle) * r,
+            sin(angle) * r * 0.6 + sin(uTime * 0.3 + aAngle) * 0.15,
+            sin(angle) * r * 0.3 + cos(uTime * 0.2 + aAngle) * 0.1
+        );
+
+        // Mouse repulsion
+        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+        vec2 screenPos = mvPosition.xy / mvPosition.z;
+        float mouseDist = length(screenPos - uMouse * 2.0);
+        float repel = smoothstep(1.5, 0.0, mouseDist) * 0.5;
+        pos.xy += normalize(screenPos - uMouse * 2.0) * repel;
+
+        vDist = length(pos);
+        vAlpha = smoothstep(6.0, 1.0, vDist) * (0.4 + 0.3 * sin(uTime + aAngle));
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        gl_PointSize = (3.0 + 2.0 * sin(uTime * aSpeed)) * (300.0 / -mvPosition.z);
+    }
+`;
+
+const particleFragmentShader = `
+    uniform vec3 uColor;
+    uniform float uTime;
+    varying float vAlpha;
+    varying float vDist;
+
+    void main() {
+        float d = length(gl_PointCoord - vec2(0.5));
+        if (d > 0.5) discard;
+        float glow = 1.0 - smoothstep(0.0, 0.5, d);
+        glow = pow(glow, 2.0);
+        float flicker = 0.8 + 0.2 * sin(uTime * 3.0 + vDist * 5.0);
+        gl_FragColor = vec4(uColor * flicker, glow * vAlpha);
+    }
+`;
 
 function LusionCanvas({ scrollProgress, mouseX, mouseY }: { scrollProgress: React.MutableRefObject<number>; mouseX: React.MutableRefObject<number>; mouseY: React.MutableRefObject<number> }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -241,8 +293,9 @@ function LusionCanvas({ scrollProgress, mouseX, mouseY }: { scrollProgress: Reac
         import("three").then((THREE) => {
             if (cleanup) return;
 
+            // ── Scene ──
             const scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x000000, 0.15);
+            scene.fog = new THREE.FogExp2(0x000000, 0.12);
             const camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
             camera.position.set(0, 0, 6);
 
@@ -250,89 +303,180 @@ function LusionCanvas({ scrollProgress, mouseX, mouseY }: { scrollProgress: Reac
             renderer.setSize(canvas.clientWidth, canvas.clientHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-
-            // ── Central artwork object ──
-            const artGroup = new THREE.Group();
-
-            // Main artwork — icosahedron (represents a creative work)
-            const artGeo = new THREE.IcosahedronGeometry(0.8, 2);
-            const artMat = new THREE.MeshPhysicalMaterial({
-                color: 0xffffff, metalness: 0.3, roughness: 0.2,
-                emissive: 0xffffff, emissiveIntensity: 0.05,
-            });
-            const artMesh = new THREE.Mesh(artGeo, artMat);
-            artGroup.add(artMesh);
-
-            // Wireframe overlay
-            const wireGeo = new THREE.IcosahedronGeometry(0.82, 2);
-            const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.08 });
-            const wireMesh = new THREE.Mesh(wireGeo, wireMat);
-            artGroup.add(wireMesh);
-
-            // ── Scanning rings ──
-            const rings: any[] = [];
-            for (let i = 0; i < 3; i++) {
-                const rGeo = new THREE.TorusGeometry(1.3 + i * 0.4, 0.008, 16, 80);
-                const rMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12 });
-                const ring = new THREE.Mesh(rGeo, rMat);
-                ring.rotation.x = Math.PI / 2 + (i - 1) * 0.3;
-                ring.rotation.z = i * 0.5;
-                rings.push(ring);
-                artGroup.add(ring);
-            }
-
-            // ── Particles ──
-            const pCount = 600;
-            const pPos = new Float32Array(pCount * 3);
-            const pVel = new Float32Array(pCount * 3);
-            for (let i = 0; i < pCount * 3; i++) {
-                pPos[i] = (Math.random() - 0.5) * 10;
-                pVel[i] = (Math.random() - 0.5) * 0.01;
-            }
-            const pGeo = new THREE.BufferGeometry();
-            pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
-            const pMat = new THREE.PointsMaterial({ color: 0x666666, size: 0.02, transparent: true, opacity: 0.35 });
-            const particles = new THREE.Points(pGeo, pMat);
-
-            scene.add(artGroup);
-            scene.add(particles);
+            renderer.toneMappingExposure = 1.1;
 
             // ── Lights ──
             scene.add(new THREE.AmbientLight(0xffffff, 0.3));
             const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
             keyLight.position.set(3, 4, 5);
             scene.add(keyLight);
-            const fillLight = new THREE.PointLight(0x4488ff, 0.6, 10);
+            const fillLight = new THREE.PointLight(0x4488ff, 0.5, 10);
             fillLight.position.set(-3, 1, -2);
             scene.add(fillLight);
+            const rimLight = new THREE.PointLight(0xffffff, 0.3, 10);
+            rimLight.position.set(0, -2, -3);
+            scene.add(rimLight);
+
+            // ── Central artwork ──
+            const artGroup = new THREE.Group();
+
+            // Main icosahedron
+            const artGeo = new THREE.IcosahedronGeometry(0.7, 2);
+            const artMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff, metalness: 0.4, roughness: 0.15,
+                emissive: 0xffffff, emissiveIntensity: 0.08,
+                clearcoat: 0.5, clearcoatRoughness: 0.1,
+            });
+            const artMesh = new THREE.Mesh(artGeo, artMat);
+            artGroup.add(artMesh);
+
+            // Wireframe overlay
+            const wireGeo = new THREE.IcosahedronGeometry(0.73, 2);
+            const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.06 });
+            const wireMesh = new THREE.Mesh(wireGeo, wireMat);
+            artGroup.add(wireMesh);
+
+            // Shield sphere (hidden initially, appears on protect)
+            const shieldGeo = new THREE.SphereGeometry(1.4, 32, 32);
+            const shieldMat = new THREE.MeshPhysicalMaterial({
+                color: 0x44ff88, transparent: true, opacity: 0,
+                metalness: 0.2, roughness: 0.3,
+                emissive: 0x44ff88, emissiveIntensity: 0.15,
+                side: THREE.DoubleSide,
+            });
+            const shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
+            artGroup.add(shieldMesh);
+
+            // ── Scanning rings ──
+            const rings: any[] = [];
+            for (let i = 0; i < 4; i++) {
+                const rGeo = new THREE.TorusGeometry(1.1 + i * 0.35, 0.006, 16, 100);
+                const rMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+                const ring = new THREE.Mesh(rGeo, rMat);
+                ring.rotation.x = Math.PI / 2 + (i - 1.5) * 0.25;
+                ring.rotation.z = i * 0.4;
+                rings.push({ mesh: ring, baseRot: i * 0.4 });
+                artGroup.add(ring);
+            }
+
+            // ── Detection markers (red cubes that appear on detect) ──
+            const markers: any[] = [];
+            for (let i = 0; i < 3; i++) {
+                const mGeo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+                const mMat = new THREE.MeshBasicMaterial({ color: 0xff4444, transparent: true, opacity: 0 });
+                const marker = new THREE.Mesh(mGeo, mMat);
+                const a = (i / 3) * Math.PI * 2;
+                marker.position.set(Math.cos(a) * 1.8, Math.sin(a) * 1.2, Math.sin(a) * 0.5);
+                markers.push(marker);
+                artGroup.add(marker);
+            }
+
+            scene.add(artGroup);
+
+            // ── Particle system (GLSL shader) ──
+            const pCount = 800;
+            const pPositions = new Float32Array(pCount * 3);
+            const pAngles = new Float32Array(pCount);
+            const pRadii = new Float32Array(pCount);
+            const pSpeeds = new Float32Array(pCount);
+
+            for (let i = 0; i < pCount; i++) {
+                pAngles[i] = Math.random() * Math.PI * 2;
+                pRadii[i] = 1.0 + Math.random() * 4.0;
+                pSpeeds[i] = 0.2 + Math.random() * 0.8;
+                pPositions[i * 3] = 0;
+                pPositions[i * 3 + 1] = 0;
+                pPositions[i * 3 + 2] = 0;
+            }
+
+            const pGeo = new THREE.BufferGeometry();
+            pGeo.setAttribute("position", new THREE.BufferAttribute(pPositions, 3));
+            pGeo.setAttribute("aAngle", new THREE.BufferAttribute(pAngles, 1));
+            pGeo.setAttribute("aRadius", new THREE.BufferAttribute(pRadii, 1));
+            pGeo.setAttribute("aSpeed", new THREE.BufferAttribute(pSpeeds, 1));
+
+            const pMat = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uScroll: { value: 0 },
+                    uMouse: { value: new THREE.Vector2(0, 0) },
+                    uColor: { value: new THREE.Color(0xffffff) },
+                },
+                vertexShader: particleVertexShader,
+                fragmentShader: particleFragmentShader,
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending,
+            });
+
+            const particles = new THREE.Points(pGeo, pMat);
+            scene.add(particles);
+
+            // ── Grid floor ──
+            const gridGeo = new THREE.PlaneGeometry(20, 20, 40, 40);
+            const gridMat = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uScroll: { value: 0 },
+                },
+                vertexShader: `
+                    uniform float uTime;
+                    uniform float uScroll;
+                    varying float vAlpha;
+                    void main() {
+                        vec3 pos = position;
+                        pos.z += sin(pos.x * 2.0 + uTime) * 0.05 * uScroll;
+                        pos.z += cos(pos.y * 2.0 + uTime * 0.7) * 0.03 * uScroll;
+                        vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
+                        vAlpha = smoothstep(20.0, 2.0, length(pos.xy)) * 0.15 * uScroll;
+                        gl_Position = projectionMatrix * mvPos;
+                    }
+                `,
+                fragmentShader: `
+                    varying float vAlpha;
+                    void main() {
+                        gl_FragColor = vec4(1.0, 1.0, 1.0, vAlpha);
+                    }
+                `,
+                transparent: true,
+                wireframe: true,
+                depthWrite: false,
+            });
+            const grid = new THREE.Mesh(gridGeo, gridMat);
+            grid.rotation.x = -Math.PI / 2;
+            grid.position.y = -2;
+            scene.add(grid);
 
             // ── Animate ──
             let time = 0;
+            const targetColor = new THREE.Color(0xffffff);
+
             const anim = () => {
                 if (cleanup) return;
-                time += 0.01;
+                time += 0.016;
 
                 const sp = scrollProgress.current;
                 const mx = mouseX.current;
                 const my = mouseY.current;
-
-                // Camera follows mouse (parallax)
-                camera.position.x += (mx * 0.5 - camera.position.x) * 0.03;
-                camera.position.y += (-my * 0.3 - camera.position.y) * 0.03;
-                camera.lookAt(0, 0, 0);
-
-                // Scroll drives scene
                 const stepF = sp * (DEMO_STEPS.length - 1);
                 const step = Math.floor(stepF);
                 const blend = stepF - step;
 
-                // Art object rotation
-                artMesh.rotation.x = time * 0.3 + sp * Math.PI * 2;
-                artMesh.rotation.y = time * 0.5 + sp * Math.PI;
+                // Camera — smooth cinematic path
+                const camY = Math.sin(sp * Math.PI) * 0.8;
+                const camZ = 6 - sp * 1.5;
+                camera.position.x += (mx * 0.4 - camera.position.x) * 0.02;
+                camera.position.y += (camY - my * 0.2 - camera.position.y) * 0.02;
+                camera.position.z += (camZ - camera.position.z) * 0.02;
+                camera.lookAt(0, 0, 0);
+
+                // Art rotation
+                artMesh.rotation.x = time * 0.25 + sp * Math.PI * 1.5;
+                artMesh.rotation.y = time * 0.4 + sp * Math.PI;
                 wireMesh.rotation.copy(artMesh.rotation);
 
-                // Color transitions based on step
-                const colors = [
+                // Color per step
+                const stepColors = [
                     new THREE.Color(0xffffff), // intro
                     new THREE.Color(0xffffff), // upload
                     new THREE.Color(0x4488ff), // analyze
@@ -340,37 +484,54 @@ function LusionCanvas({ scrollProgress, mouseX, mouseY }: { scrollProgress: Reac
                     new THREE.Color(0xff4444), // detect
                     new THREE.Color(0x44ff88), // protect
                 ];
-                const fromColor = colors[Math.min(step, colors.length - 1)];
-                const toColor = colors[Math.min(step + 1, colors.length - 1)];
-                const c = fromColor.clone().lerp(toColor, blend);
-                artMat.color.copy(c);
-                artMat.emissive.copy(c);
-                artMat.emissiveIntensity = 0.05 + Math.sin(time * 2) * 0.02;
+                targetColor.copy(stepColors[Math.min(step, stepColors.length - 1)])
+                    .lerp(stepColors[Math.min(step + 1, stepColors.length - 1)], blend);
+                artMat.color.lerp(targetColor, 0.05);
+                artMat.emissive.lerp(targetColor, 0.05);
+                artMat.emissiveIntensity = 0.08 + Math.sin(time * 2) * 0.03;
+
+                // Scale pulse on detect
+                const pulse = step === 4 ? 1 + Math.sin(time * 5) * 0.06 : 1;
+                artGroup.scale.lerp(new THREE.Vector3(pulse, pulse, pulse), 0.1);
 
                 // Rings
                 rings.forEach((r, i) => {
-                    r.rotation.z += 0.005 * (i + 1);
-                    const ringOpacity = step >= 2 ? 0.15 + Math.sin(time * 3 + i) * 0.05 : 0.06;
-                    (r.material as any).opacity = ringOpacity;
-                    r.visible = step >= 1;
+                    r.mesh.rotation.z = time * 0.3 * (i + 1) + r.baseRot;
+                    r.mesh.rotation.x = Math.PI / 2 + Math.sin(time * 0.5 + i) * 0.2;
+                    const visible = step >= 2;
+                    const targetOpacity = visible ? (step === 2 ? 0.2 : step === 3 ? 0.15 : 0.08) : 0;
+                    (r.mesh.material as any).opacity += (targetOpacity - (r.mesh.material as any).opacity) * 0.05;
+                    r.mesh.visible = (r.mesh.material as any).opacity > 0.01;
                 });
 
-                // Art scale (pulses on detect)
-                const pulse = step === 4 ? 1 + Math.sin(time * 6) * 0.05 : 1;
-                artGroup.scale.setScalar(pulse);
+                // Shield
+                const shieldOpacity = step >= 5 ? 0.12 + Math.sin(time * 2) * 0.03 : 0;
+                (shieldMat as any).opacity += (shieldOpacity - (shieldMat as any).opacity) * 0.03;
+                shieldMesh.rotation.y = time * 0.2;
+                shieldMesh.rotation.x = time * 0.15;
+                shieldMesh.visible = (shieldMat as any).opacity > 0.01;
 
-                // Particles — drift, glow on scan
-                const pAttr = pGeo.attributes.position as any;
-                for (let i = 0; i < pCount; i++) {
-                    pAttr.array[i * 3] += pVel[i * 3] + Math.sin(time + i) * 0.0003;
-                    pAttr.array[i * 3 + 1] += pVel[i * 3 + 1] + Math.cos(time + i) * 0.0003;
-                    pAttr.array[i * 3 + 2] += pVel[i * 3 + 2];
-                    if (Math.abs(pAttr.array[i * 3]) > 5) pAttr.array[i * 3] *= -0.5;
-                    if (Math.abs(pAttr.array[i * 3 + 1]) > 5) pAttr.array[i * 3 + 1] *= -0.5;
-                    if (Math.abs(pAttr.array[i * 3 + 2]) > 5) pAttr.array[i * 3 + 2] *= -0.5;
-                }
-                pAttr.needsUpdate = true;
-                pMat.opacity = step >= 3 ? 0.5 : 0.25;
+                // Detection markers
+                markers.forEach((m, i) => {
+                    const targetMOpacity = step >= 4 ? 0.8 : 0;
+                    (m.material as any).opacity += (targetMOpacity - (m.material as any).opacity) * 0.05;
+                    m.visible = (m.material as any).opacity > 0.01;
+                    if (step >= 4) {
+                        m.position.y += Math.sin(time * 3 + i * 2) * 0.002;
+                        m.rotation.x = time * 2;
+                        m.rotation.y = time * 1.5;
+                    }
+                });
+
+                // Grid
+                (gridMat.uniforms.uTime as any).value = time;
+                (gridMat.uniforms.uScroll as any).value = sp;
+
+                // Particles
+                (pMat.uniforms.uTime as any).value = time;
+                (pMat.uniforms.uScroll as any).value = sp;
+                (pMat.uniforms.uMouse as any).value.set(mx, my);
+                (pMat.uniforms.uColor as any).value.lerp(targetColor, 0.03);
 
                 renderer.render(scene, camera);
                 requestAnimationFrame(anim);
@@ -399,7 +560,6 @@ function LusionDemo() {
     const mouseY = useRef(0);
     const [activeStep, setActiveStep] = useState(0);
 
-    // Scroll progress
     useEffect(() => {
         const onScroll = () => {
             const el = containerRef.current;
@@ -414,7 +574,6 @@ function LusionDemo() {
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
-    // Mouse
     useEffect(() => {
         const onMove = (e: MouseEvent) => {
             mouseX.current = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -426,7 +585,6 @@ function LusionDemo() {
 
     return (
         <div ref={containerRef} className="relative" style={{ height: `${DEMO_STEPS.length * 100}vh` }}>
-            {/* Full-viewport 3D canvas (sticky) */}
             <div className="sticky top-0 h-screen w-full overflow-hidden">
                 <LusionCanvas scrollProgress={scrollProgress} mouseX={mouseX} mouseY={mouseY} />
 
@@ -435,16 +593,16 @@ function LusionDemo() {
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeStep}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.5 }}
+                            initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
+                            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                            exit={{ opacity: 0, y: -20, filter: "blur(6px)" }}
+                            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                             className="text-center px-6"
                         >
-                            <h2 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter text-white leading-[0.95] mb-3">
+                            <h2 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[0.9] mb-4">
                                 {DEMO_STEPS[activeStep].label}
                             </h2>
-                            <p className="text-sm md:text-base text-zinc-400 max-w-md mx-auto">
+                            <p className="text-sm md:text-base text-zinc-400 max-w-lg mx-auto leading-relaxed">
                                 {DEMO_STEPS[activeStep].sub}
                             </p>
                         </motion.div>
@@ -455,20 +613,33 @@ function LusionDemo() {
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none z-10">
                     <div className="text-[8px] font-bold uppercase tracking-[0.3em] text-white/30">Scroll</div>
                     <motion.div
-                        animate={{ y: [0, 6, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                        className="w-px h-8 bg-gradient-to-b from-white/30 to-transparent"
+                        animate={{ y: [0, 8, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        className="w-px h-10 bg-gradient-to-b from-white/30 to-transparent"
                     />
                 </div>
 
                 {/* Step dots */}
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 pointer-events-none z-10">
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2.5 pointer-events-none z-10">
                     {DEMO_STEPS.map((_, i) => (
-                        <div
-                            key={i}
-                            className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${i === activeStep ? "bg-white scale-125" : "bg-white/20"}`}
-                        />
+                        <div key={i} className="relative">
+                            <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${i === activeStep ? "bg-white scale-150" : "bg-white/15"}`} />
+                            {i === activeStep && (
+                                <motion.div
+                                    layoutId="activeDot"
+                                    className="absolute -inset-1 rounded-full border border-white/20"
+                                />
+                            )}
+                        </div>
                     ))}
+                </div>
+
+                {/* Progress bar */}
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-white/5 z-10">
+                    <motion.div
+                        className="h-full bg-white/20"
+                        style={{ width: `${scrollProgress.current * 100}%` }}
+                    />
                 </div>
             </div>
         </div>
