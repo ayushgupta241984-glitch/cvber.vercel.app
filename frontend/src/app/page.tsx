@@ -311,32 +311,6 @@ export default function Home() {
                 <ScrollIndicator />
             </section>
 
-            {/* ─── STATS ─── */}
-            <Section className="relative z-10 py-24 border-t border-white/[0.04]">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-                        {[
-                            { num: "10,000+", label: "Protected Assets" },
-                            { num: "24%", label: "Theft Reduction" },
-                            { num: "99.9%", label: "Detection Accuracy" },
-                            { num: "C2PA", label: "Proven Protocol" },
-                        ].map((stat, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.6, delay: i * 0.1 }}
-                                className="flex flex-col items-center text-center"
-                            >
-                                <span className="text-3xl md:text-4xl font-black tracking-tighter mb-1">{stat.num}</span>
-                                <span className="text-[9px] text-zinc-600 uppercase font-bold tracking-[0.25em]">{stat.label}</span>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </Section>
-
             {/* ─── HOW IT WORKS ─── */}
             <Section className="relative z-10 py-32 px-6">
                 <div className="max-w-6xl mx-auto">
