@@ -219,277 +219,229 @@ function Stats() {
     );
 }
 
-// ─── Interactive 3D Product Demo (raw Three.js, no R3F) ─
+// ─── Product Demo (animated product walkover) ───
 
-type FeatureNode = {
-    id: string;
-    label: string;
-    desc: string;
-    angle: number;
-    height: number;
-    speed: number;
-    color: string;
-};
-
-const FEATURES: FeatureNode[] = [
-    { id: "scan", label: "Deep Scan", desc: "AI-powered content fingerprinting scans every pixel for unauthorized use.", angle: 0, height: 0.6, speed: 0.4, color: "#ffffff" },
-    { id: "protect", label: "Shield Core", desc: "Real-time protection blocks infringements before they spread.", angle: 1.57, height: -0.4, speed: 0.6, color: "#cccccc" },
-    { id: "monitor", label: "Live Monitor", desc: "Continuous web-wide surveillance of your creative works.", angle: 3.14, height: 0.8, speed: 0.5, color: "#aaaaaa" },
-    { id: "report", label: "Auto Report", desc: "Instant takedown notices and legal-grade evidence reports.", angle: 4.71, height: -0.7, speed: 0.7, color: "#999999" },
+const DEMO_STEPS = [
+    { label: "Upload", desc: "Artist uploads artwork to CVBER", icon: "⬆" },
+    { label: "Fingerprint", desc: "AI generates unique content fingerprint", icon: "🔍" },
+    { label: "Scan", desc: "CVBER scans 12M+ sites for matches", icon: "📡" },
+    { label: "Detect", desc: "Unauthorized use detected on 3 sites", icon: "⚠" },
+    { label: "Protect", desc: "Takedown notices filed automatically", icon: "🛡" },
+    { label: "Report", desc: "Legal-grade evidence report generated", icon: "📋" },
 ];
 
-function ProductDemo3D({ containerRef, onFeatureClick }: { containerRef: React.RefObject<HTMLDivElement | null>; onFeatureClick: (f: FeatureNode) => void }) {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+function ProductVideo() {
+    const [step, setStep] = useState(0);
+    const [showOverlay, setShowOverlay] = useState(false);
 
     useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        let cleanup = false;
-
-        import("three").then((THREE) => {
-            if (cleanup) return;
-
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-            camera.position.z = 7;
-
-            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-            // ── Central Core ──
-            const coreGeo = new THREE.SphereGeometry(0.6, 32, 32);
-            const coreMat = new THREE.MeshPhysicalMaterial({
-                color: "#ffffff", metalness: 0.4, roughness: 0.2,
-                emissive: "#333333", emissiveIntensity: 0.3,
-            });
-            const core = new THREE.Mesh(coreGeo, coreMat);
-            scene.add(core);
-
-            // Inner glow
-            const glowGeo = new THREE.SphereGeometry(0.7, 32, 32);
-            const glowMat = new THREE.MeshBasicMaterial({
-                color: "#ffffff", transparent: true, opacity: 0.06,
-            });
-            const glow = new THREE.Mesh(glowGeo, glowMat);
-            scene.add(glow);
-
-            // Ring 1 (horizontal)
-            const ring1Geo = new THREE.TorusGeometry(1.3, 0.02, 16, 80);
-            const ring1Mat = new THREE.MeshBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.3 });
-            const ring1 = new THREE.Mesh(ring1Geo, ring1Mat);
-            scene.add(ring1);
-
-            // Ring 2 (tilted)
-            const ring2Geo = new THREE.TorusGeometry(1.6, 0.015, 16, 80);
-            const ring2Mat = new THREE.MeshBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.15 });
-            const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
-            ring2.rotation.x = 1.2;
-            ring2.rotation.z = 0.5;
-            scene.add(ring2);
-
-            // Ring 3 (vertical)
-            const ring3Geo = new THREE.TorusGeometry(1.0, 0.01, 16, 80);
-            const ring3Mat = new THREE.MeshBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.2 });
-            const ring3 = new THREE.Mesh(ring3Geo, ring3Mat);
-            ring3.rotation.x = 1.57;
-            scene.add(ring3);
-
-            // ── Feature Nodes ──
-            const nodeMeshes: any[] = [];
-            const nodeData: { mesh: any; feature: FeatureNode }[] = [];
-
-            FEATURES.forEach((f) => {
-                const size = 0.25;
-                const geo = new THREE.IcosahedronGeometry(size, 1);
-                const mat = new THREE.MeshPhysicalMaterial({
-                    color: f.color, metalness: 0.3, roughness: 0.2,
-                    emissive: f.color, emissiveIntensity: 0.1,
-                });
-                const mesh = new THREE.Mesh(geo, mat);
-                mesh.userData = { featureId: f.id };
-                scene.add(mesh);
-                nodeMeshes.push(mesh);
-                nodeData.push({ mesh, feature: f });
-            });
-
-            // ── Particles ──
-            const count = 600;
-            const positions = new Float32Array(count * 3);
-            for (let i = 0; i < count * 3; i++) positions[i] = (Math.random() - 0.5) * 18;
-            const pGeo = new THREE.BufferGeometry();
-            pGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-            const pMat = new THREE.PointsMaterial({
-                color: "#888888", size: 0.025, transparent: true, opacity: 0.3,
-            });
-            const particles = new THREE.Points(pGeo, pMat);
-            scene.add(particles);
-
-            // ── Raycaster for clicks ──
-            const raycaster = new THREE.Raycaster();
-            const pointer = new THREE.Vector2();
-
-            const onClick = (e: MouseEvent) => {
-                const rect = canvas.getBoundingClientRect();
-                pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-                pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-                raycaster.setFromCamera(pointer, camera);
-                const intersects = raycaster.intersectObjects(nodeMeshes);
-                if (intersects.length > 0) {
-                    const hit = intersects[0].object;
-                    const found = nodeData.find((n) => n.mesh === hit);
-                    if (found) onFeatureClick(found.feature);
-                }
-            };
-            canvas.addEventListener("click", onClick);
-
-            // ── Drag rotation state ──
-            let isDragging = false;
-            let prevX = 0;
-            let prevY = 0;
-            let rotX = 0;
-            let rotY = 0;
-            let targetRotX = 0;
-            let targetRotY = 0;
-            let autoRotate = true;
-            const sceneGroup = new THREE.Group();
-            sceneGroup.add(core, glow, ring1, ring2, ring3, ...nodeMeshes, particles);
-            scene.add(sceneGroup);
-
-            const onPointerDown = (e: MouseEvent) => { isDragging = true; autoRotate = false; prevX = e.clientX; prevY = e.clientY; };
-            const onPointerUp = () => { isDragging = false; setTimeout(() => { autoRotate = true; }, 2000); };
-            const onPointerMove = (e: MouseEvent) => {
-                if (!isDragging) return;
-                const dx = e.clientX - prevX;
-                const dy = e.clientY - prevY;
-                targetRotY += dx * 0.005;
-                targetRotX += dy * 0.005;
-                targetRotX = Math.max(-1, Math.min(1, targetRotX));
-                prevX = e.clientX; prevY = e.clientY;
-            };
-            canvas.addEventListener("pointerdown", onPointerDown);
-            window.addEventListener("pointerup", onPointerUp);
-            window.addEventListener("pointermove", onPointerMove);
-
-            // ── Animate ──
-            let time = 0;
-            const anim = () => {
-                if (cleanup) return;
-                time += 0.01;
-
-                if (autoRotate) targetRotY += 0.003;
-                rotX += (targetRotX - rotX) * 0.05;
-                rotY += (targetRotY - rotY) * 0.05;
-                sceneGroup.rotation.x = rotX;
-                sceneGroup.rotation.y = rotY;
-
-                // Rotate rings
-                ring1.rotation.z += 0.005;
-                ring2.rotation.x += 0.003;
-                ring2.rotation.z += 0.004;
-                ring3.rotation.y += 0.006;
-
-                // Pulse glow
-                glow.scale.setScalar(1 + Math.sin(time * 2) * 0.02);
-
-                // Orbit nodes
-                nodeData.forEach((n, i) => {
-                    const orbitR = 2.2 + Math.sin(time * n.feature.speed + i) * 0.2;
-                    const a = n.feature.angle + time * n.feature.speed;
-                    n.mesh.position.x = Math.cos(a) * orbitR;
-                    n.mesh.position.z = Math.sin(a) * orbitR;
-                    n.mesh.position.y = n.feature.height + Math.sin(time * n.feature.speed + i) * 0.2;
-                    n.mesh.rotation.x += 0.02;
-                    n.mesh.rotation.y += 0.03;
-                });
-
-                particles.rotation.y += 0.0003;
-
-                renderer.render(scene, camera);
-                requestAnimationFrame(anim);
-            };
-            anim();
-
-            // ── Resize ──
-            const ro = new ResizeObserver(() => {
-                const w = canvas.clientWidth, h = canvas.clientHeight;
-                camera.aspect = w / h; camera.updateProjectionMatrix();
-                renderer.setSize(w, h);
-            });
-            ro.observe(canvas.parentElement!);
-
-            return () => {
-                cleanup = true;
-                renderer.dispose();
-                canvas.removeEventListener("click", onClick);
-                canvas.removeEventListener("pointerdown", onPointerDown);
-                window.removeEventListener("pointerup", onPointerUp);
-                window.removeEventListener("pointermove", onPointerMove);
-                ro.disconnect();
-            };
-        });
-
-        return () => { cleanup = true; };
+        const t = setInterval(() => setStep((s) => (s + 1) % DEMO_STEPS.length), 1500);
+        return () => clearInterval(t);
     }, []);
 
-    return <canvas ref={canvasRef} className="w-full h-full" />;
-}
-
-function ThreeDemo() {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [selectedFeature, setSelectedFeature] = useState<FeatureNode | null>(null);
-
     return (
-        <section className="relative z-10 py-28 px-6 border-t border-white/[0.04] snap-start">
-            <div className="max-w-6xl mx-auto">
-                <div className="text-center mb-10">
-                    <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-4">Product Demo</div>
-                    <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">Interactive 3D<br />protection engine.</h2>
-                </div>
-                <div
-                    data-hover
-                    ref={containerRef}
-                    className="relative aspect-video rounded-3xl overflow-hidden border border-white/[0.08] bg-[#0a0a0a] select-none"
-                >
-                    <ProductDemo3D containerRef={containerRef} onFeatureClick={setSelectedFeature} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">Drag to orbit &bull; Click a node</div>
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
-                            <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                            <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+        <>
+            <section className="relative z-10 py-28 px-6 border-t border-white/[0.04] snap-start">
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-10">
+                        <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-4">Product Demo</div>
+                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">See CVBER<br />in action.</h2>
+                    </div>
+                    <div
+                        onClick={() => setShowOverlay(true)}
+                        data-hover
+                        className="relative aspect-video rounded-3xl overflow-hidden border border-white/[0.08] bg-[#0a0a0a] cursor-pointer group"
+                    >
+                        {/* Simulated screen recording */}
+                        <div className="absolute inset-0 flex flex-col">
+                            {/* Fake browser chrome */}
+                            <div className="flex items-center gap-2 px-4 py-3 bg-zinc-900/80 border-b border-white/[0.04]">
+                                <div className="flex gap-1.5">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+                                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+                                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+                                </div>
+                                <div className="flex-1 max-w-[60%] mx-auto bg-zinc-800 rounded-full py-1 px-4 text-[9px] text-zinc-500 text-center truncate tracking-wide">
+                                    app.cvber.art/dashboard
+                                </div>
+                            </div>
+                            {/* Fake dashboard content */}
+                            <div className="flex-1 flex flex-col p-4 md:p-6 gap-4">
+                                {/* Top bar */}
+                                <div className="flex items-center justify-between">
+                                    <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">Dashboard</div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-16 h-5 rounded bg-zinc-800/60" />
+                                        <div className="w-5 h-5 rounded-full bg-zinc-800/60" />
+                                    </div>
+                                </div>
+                                {/* Main content area */}
+                                <div className="flex-1 grid grid-cols-3 gap-3">
+                                    <div className="col-span-2 rounded-xl bg-zinc-800/30 border border-white/[0.04] p-4 flex flex-col justify-center items-center relative overflow-hidden">
+                                        <motion.div
+                                            key={DEMO_STEPS[step].label}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="text-center"
+                                        >
+                                            <div className="text-2xl mb-2">{DEMO_STEPS[step].icon}</div>
+                                            <div className="text-[11px] font-bold uppercase tracking-[0.25em] text-white mb-1">{DEMO_STEPS[step].label}</div>
+                                            <div className="text-[11px] text-zinc-500">{DEMO_STEPS[step].desc}</div>
+                                        </motion.div>
+                                        {/* Scanning line effect */}
+                                        <motion.div
+                                            animate={{ top: ["0%", "100%", "0%"] }}
+                                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                            className="absolute left-0 right-0 h-px bg-white/20"
+                                        />
+                                    </div>
+                                    <div className="rounded-xl bg-zinc-800/30 border border-white/[0.04] p-3 flex flex-col gap-2">
+                                        <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-600">Status</div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                                            <span className="text-[10px] text-zinc-400">Protected</span>
+                                        </div>
+                                        <div className="mt-auto flex flex-col gap-1.5">
+                                            {[80, 45, 12].map((v, i) => (
+                                                <div key={i} className="flex items-center gap-2">
+                                                    <div className="text-[8px] text-zinc-600 w-8">{["Scans", "Found", "Resolved"][i]}</div>
+                                                    <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${v}%` }}
+                                                            transition={{ duration: 1, delay: i * 0.2 }}
+                                                            className="h-full rounded-full bg-white/30"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Bottom bar */}
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                                        <span className="text-[9px] text-zinc-600">Live</span>
+                                    </div>
+                                    <div className="text-[9px] text-zinc-700">v2.4.1</div>
+                                    <div className="ml-auto flex gap-2">
+                                        <motion.div
+                                            animate={{ opacity: [0.3, 1, 0.3] }}
+                                            transition={{ duration: 2, repeat: Infinity }}
+                                            className="text-[9px] text-zinc-600"
+                                        >
+                                            {DEMO_STEPS[step].label}...
+                                        </motion.div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-500" />
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <motion.div
+                                initial={{ scale: 1 }}
+                                whileHover={{ scale: 1.05 }}
+                                className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/[0.06] border border-white/10 backdrop-blur-sm flex items-center justify-center"
+                            >
+                                <svg className="w-6 h-6 md:w-8 md:h-8 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                            </motion.div>
+                        </div>
+                        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+                            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/50">Click to expand</div>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                            </div>
                         </div>
                     </div>
-
-                    <AnimatePresence>
-                        {selectedFeature && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 10 }}
-                                className="absolute top-6 left-6 right-6 md:left-auto md:right-6 md:w-72 bg-black/80 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-6 pointer-events-auto"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="text-[9px] font-bold uppercase tracking-[0.25em] text-zinc-500">{selectedFeature.label}</div>
-                                    <button onClick={() => setSelectedFeature(null)} className="text-white/40 hover:text-white/80 text-xs">&times;</button>
-                                </div>
-                                <p className="text-sm text-zinc-400 leading-relaxed">{selectedFeature.desc}</p>
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={() => setSelectedFeature(null)}
-                                    className="mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white border border-white/20 rounded-full px-5 py-2 hover:bg-white/5 transition-colors"
-                                >
-                                    Explore {selectedFeature.label}
-                                </motion.button>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
                 </div>
-            </div>
-        </section>
+            </section>
+
+            <AnimatePresence>
+                {showOverlay && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
+                        onClick={() => setShowOverlay(false)}
+                    >
+                        <div className="relative w-full h-full max-w-6xl max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
+                            <div className="w-full h-full rounded-2xl overflow-hidden border border-white/[0.06] bg-[#0a0a0a] flex flex-col">
+                                {/* Expanded browser chrome */}
+                                <div className="flex items-center gap-2 px-5 py-4 bg-zinc-900/80 border-b border-white/[0.04]">
+                                    <div className="flex gap-1.5">
+                                        <div className="w-3 h-3 rounded-full bg-red-500/60" />
+                                        <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+                                        <div className="w-3 h-3 rounded-full bg-green-500/60" />
+                                    </div>
+                                    <div className="flex-1 max-w-md mx-auto bg-zinc-800 rounded-full py-1.5 px-5 text-[11px] text-zinc-500 text-center truncate">
+                                        app.cvber.art/dashboard
+                                    </div>
+                                    <button onClick={() => setShowOverlay(false)} className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 hover:text-white/80">
+                                        CLOSE
+                                    </button>
+                                </div>
+                                {/* Content — same but larger */}
+                                <div className="flex-1 flex p-6 md:p-10 gap-4 md:gap-6">
+                                    <div className="flex-1 flex flex-col gap-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-600">Dashboard</div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-20 h-6 rounded bg-zinc-800/60" />
+                                                <div className="w-6 h-6 rounded-full bg-zinc-800/60" />
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 rounded-2xl bg-zinc-800/20 border border-white/[0.04] flex flex-col items-center justify-center relative overflow-hidden">
+                                            <motion.div
+                                                key={`expanded-${step}`}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="text-center"
+                                            >
+                                                <div className="text-4xl mb-4">{DEMO_STEPS[step].icon}</div>
+                                                <div className="text-lg font-bold uppercase tracking-[0.3em] text-white mb-2">{DEMO_STEPS[step].label}</div>
+                                                <div className="text-sm text-zinc-500">{DEMO_STEPS[step].desc}</div>
+                                            </motion.div>
+                                            <motion.div
+                                                animate={{ top: ["0%", "100%", "0%"] }}
+                                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                                className="absolute left-0 right-0 h-px bg-white/10"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="w-64 rounded-2xl bg-zinc-800/20 border border-white/[0.04] p-5 flex flex-col gap-3">
+                                        <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-600">Live Stats</div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
+                                            <span className="text-xs text-zinc-400">System Active</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3 mt-2">
+                                            {[
+                                                { label: "Scanned", value: "12.4M" },
+                                                { label: "Protected", value: "8,247" },
+                                                { label: "Found", value: "143" },
+                                                { label: "Resolved", value: "138" },
+                                            ].map((s) => (
+                                                <div key={s.label} className="rounded-lg bg-zinc-900/60 p-3">
+                                                    <div className="text-lg font-bold text-white">{s.value}</div>
+                                                    <div className="text-[9px] text-zinc-600 uppercase tracking-[0.15em]">{s.label}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </>
     );
 }
 
@@ -837,8 +789,8 @@ export default function Home() {
                         {/* ─── STATS ─── */}
                         <Stats />
 
-                        {/* ─── 3D PRODUCT DEMO ─── */}
-                        <ThreeDemo />
+                        {/* ─── PRODUCT DEMO ─── */}
+                        <ProductVideo />
 
                         {/* ─── INTERACTIVE PRODUCT DEMO ─── */}
                         <ProductDemo />
