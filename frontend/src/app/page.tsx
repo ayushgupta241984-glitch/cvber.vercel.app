@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Shield, ChevronDown, X, ArrowLeft, Check, Scan, FileCheck, Lock, Eye } from "lucide-react";
+import { ArrowRight, Shield, ChevronDown, X, ArrowLeft, Check, Scan } from "lucide-react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import StructuredData from "@/components/seo/StructuredData";
 import Preloader from "@/components/Preloader";
@@ -219,51 +219,336 @@ function Stats() {
     );
 }
 
-// ─── Interactive Product Demo ──────────────────────
+// ─── Video Showcase ─────────────────────────────────
 
-function InteractiveDemo() {
-    const [step, setStep] = useState(0);
-    const sectionRef = useRef<HTMLDivElement>(null);
+const VIDEO_SRC = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4";
 
-    useEffect(() => {
-        gsap.from(".demo-card", { opacity: 0, y: 30, duration: 0.8, stagger: 0.15, ease: "power3.out", scrollTrigger: { trigger: sectionRef.current, start: "top 75%", toggleActions: "play none none none" } });
-    }, []);
-
-    const steps = [
-        { icon: <Eye className="w-5 h-5" />, title: "AI Detection", desc: "Our neural scanner detects when your art is being scraped by AI models across the web." },
-        { icon: <Scan className="w-5 h-5" />, title: "C2PA Certification", desc: "Cryptographic proof of ownership is embedded directly into your file metadata." },
-        { icon: <FileCheck className="w-5 h-5" />, title: "DMCA Enforcement", desc: "Automated takedown notices are sent to every platform hosting unauthorized copies." },
-        { icon: <Lock className="w-5 h-5" />, title: "Blockchain Record", desc: "A permanent, tamper-proof timestamp is recorded on-chain for legal evidence." },
-    ];
+function VideoSection() {
+    const [showOverlay, setShowOverlay] = useState(false);
 
     return (
-        <section ref={sectionRef} className="relative z-10 py-32 px-6 border-t border-white/[0.04] snap-start">
-            <div className="max-w-6xl mx-auto">
-                <div className="text-center mb-16">
-                    <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-4">How It Works</div>
-                    <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">Your art goes through<br />a four-stage shield.</h2>
-                </div>
-                <div className="grid md:grid-cols-4 gap-4">
-                    {steps.map((s, i) => (
-                        <div
-                            key={s.title}
-                            data-hover
-                            onMouseEnter={() => setStep(i)}
-                            className={`demo-card relative p-8 rounded-2xl border cursor-pointer transition-all duration-500 ${step === i ? "border-white/20 bg-white/[0.03] shadow-[0_0_40px_rgba(255,255,255,0.03)]" : "border-white/[0.06] bg-transparent hover:border-white/10"}`}
-                        >
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${step === i ? "bg-white text-black" : "bg-white/[0.06] text-zinc-400"}`}>
-                                    {s.icon}
-                                </div>
-                                <div className="text-[11px] font-mono text-zinc-600">0{i + 1}</div>
-                            </div>
-                            <h3 className={`text-lg font-bold mb-3 transition-colors ${step === i ? "text-white" : "text-zinc-400"}`}>{s.title}</h3>
-                            <p className="text-xs text-zinc-500 leading-relaxed">{s.desc}</p>
-                            {i < steps.length - 1 && (
-                                <div className="hidden md:block absolute top-1/2 -right-3 text-zinc-700 text-xs">→</div>
-                            )}
+        <>
+            <section className="relative z-10 py-28 px-6 border-t border-white/[0.04] snap-start">
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-10">
+                        <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-4">See It In Action</div>
+                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">Watch how CVBER<br />protects artists.</h2>
+                    </div>
+                    <div
+                        onClick={() => setShowOverlay(true)}
+                        data-hover
+                        className="relative aspect-video rounded-3xl overflow-hidden border border-white/[0.08] bg-[#0a0a0a] cursor-pointer group"
+                    >
+                        <video className="w-full h-full object-cover" muted autoPlay loop playsInline>
+                            <source src={VIDEO_SRC} type="video/mp4" />
+                        </video>
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-500" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <motion.div
+                                initial={{ scale: 1 }}
+                                whileHover={{ scale: 1.05 }}
+                                className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/[0.08] border border-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/[0.12] transition-colors"
+                            >
+                                <svg className="w-8 h-8 md:w-10 md:h-10 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                            </motion.div>
                         </div>
-                    ))}
+                        <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
+                            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">Click to expand</div>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <AnimatePresence>
+                {showOverlay && <VideoOverlay src={VIDEO_SRC} onClose={() => setShowOverlay(false)} />}
+            </AnimatePresence>
+        </>
+    );
+}
+
+function VideoOverlay({ src, onClose }: { src: string; onClose: () => void }) {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const progressRef = useRef<HTMLDivElement>(null);
+    const [playing, setPlaying] = useState(true);
+    const [muted, setMuted] = useState(true);
+
+    useEffect(() => {
+        const v = videoRef.current;
+        if (!v) return;
+        v.muted = true;
+        v.play().catch(() => setPlaying(false));
+    }, []);
+
+    useEffect(() => {
+        const v = videoRef.current;
+        const p = progressRef.current;
+        if (!v || !p) return;
+        const update = () => { p.style.width = `${(v.currentTime / (v.duration || 1)) * 100}%`; };
+        v.addEventListener("timeupdate", update);
+        return () => v.removeEventListener("timeupdate", update);
+    }, []);
+
+    const togglePlay = useCallback(() => {
+        const v = videoRef.current;
+        if (!v) return;
+        if (playing) v.pause(); else v.play();
+        setPlaying(!playing);
+    }, [playing]);
+
+    const toggleMute = useCallback(() => {
+        const v = videoRef.current;
+        if (!v) return;
+        v.muted = !muted;
+        setMuted(!muted);
+    }, [muted]);
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
+            onClick={onClose}
+        >
+            <div className="relative w-full h-full" onClick={(e) => e.stopPropagation()}>
+                <video ref={videoRef} className="w-full h-full object-contain" playsInline loop>
+                    <source src={src} type="video/mp4" />
+                </video>
+                {!playing && (
+                    <button onClick={togglePlay} className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-20 h-20 rounded-full bg-white/[0.08] border border-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <svg className="w-8 h-8 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                        </div>
+                    </button>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 bg-gradient-to-t from-black/80 to-transparent">
+                    <div className="flex items-center gap-6 max-w-4xl mx-auto">
+                        <button onClick={togglePlay} className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/60 hover:text-white transition-colors">
+                            {playing ? "PAUSE" : "PLAY"}
+                        </button>
+                        <div className="flex-1 h-px bg-white/20 relative">
+                            <div ref={progressRef} className="absolute inset-y-0 left-0 bg-white w-0" />
+                        </div>
+                        <button onClick={toggleMute} className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/60 hover:text-white transition-colors">
+                            {muted ? "UNMUTE" : "MUTE"}
+                        </button>
+                        <button onClick={onClose} className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/60 hover:text-white transition-colors">
+                            CLOSE
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+}
+
+// ─── Interactive Product Demo ──────────────────────
+
+function ProductDemo() {
+    const [phase, setPhase] = useState<"idle" | "scanning" | "results" | "protecting" | "protected">("idle");
+    const [progress, setProgress] = useState(0);
+    const sectionRef = useRef<HTMLDivElement>(null);
+    const scanlineRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    const demoImage = "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&h=600&fit=crop&q=80";
+
+    // Animated background grid
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        canvas.width = 600;
+        canvas.height = 600;
+        let dots: { x: number; y: number; vx: number; vy: number }[] = [];
+        for (let i = 0; i < 60; i++) {
+            dots.push({ x: Math.random() * 600, y: Math.random() * 600, vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3 });
+        }
+        let frame: number;
+        const animate = () => {
+            ctx.clearRect(0, 0, 600, 600);
+            dots.forEach((d) => {
+                d.x += d.vx; d.y += d.vy;
+                if (d.x < 0) d.x = 600; if (d.x > 600) d.x = 0;
+                if (d.y < 0) d.y = 600; if (d.y > 600) d.y = 0;
+                ctx.beginPath();
+                ctx.arc(d.x, d.y, 1, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(255,255,255,0.15)";
+                ctx.fill();
+            });
+            frame = requestAnimationFrame(animate);
+        };
+        animate();
+        return () => cancelAnimationFrame(frame);
+    }, []);
+
+    // Scanline animation
+    useEffect(() => {
+        if (phase !== "scanning") return;
+        setProgress(0);
+        let start: number;
+        const duration = 2500;
+        const animate = (t: number) => {
+            if (!start) start = t;
+            const elapsed = t - start;
+            const p = Math.min(elapsed / duration, 1);
+            setProgress(p);
+            if (scanlineRef.current) {
+                scanlineRef.current.style.top = `${p * 100}%`;
+            }
+            if (p < 1) requestAnimationFrame(animate);
+        };
+        const raf = requestAnimationFrame(animate);
+        const timeout = setTimeout(() => setPhase("results"), duration + 300);
+        return () => { cancelAnimationFrame(raf); clearTimeout(timeout); };
+    }, [phase]);
+
+    const startScan = () => setPhase("scanning");
+    const startProtect = () => {
+        setPhase("protecting");
+        setTimeout(() => setPhase("protected"), 1800);
+    };
+    const reset = () => { setPhase("idle"); setProgress(0); };
+
+    return (
+        <section ref={sectionRef} className="relative z-10 py-28 px-6 border-t border-white/[0.04] snap-start">
+            <div className="max-w-5xl mx-auto">
+                <div className="text-center mb-14">
+                    <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-4">Try It Yourself</div>
+                    <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">Scan an artwork.<br />See what CVBER finds.</h2>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-10 items-center">
+                    {/* LEFT: Artwork + Scanner */}
+                    <div className="relative aspect-square rounded-3xl overflow-hidden border border-white/[0.08] bg-[#0a0a0a]">
+                        <img src={demoImage} alt="Sample artwork" className="w-full h-full object-cover" />
+                        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+                        {phase === "scanning" && (
+                            <div ref={scanlineRef} className="absolute left-0 right-0 h-[3px] z-10 pointer-events-none" style={{ top: "0%" }}>
+                                <div className="w-full h-full bg-gradient-to-r from-transparent via-white/60 to-transparent shadow-[0_0_20px_rgba(255,255,255,0.3)]" />
+                            </div>
+                        )}
+                        {phase === "protected" && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
+                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}>
+                                    <div className="w-24 h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                                        <Shield className="w-12 h-12 text-white" />
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* RIGHT: Controls + Results */}
+                    <div className="flex flex-col gap-6">
+                        {phase === "idle" && (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
+                                <p className="text-zinc-400 text-sm leading-relaxed">
+                                    Upload any artwork to scan for AI vulnerabilities, missing C2PA certificates, and unprotected metadata.
+                                </p>
+                                <button onClick={startScan} data-hover className="px-8 py-4 bg-white text-black rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all active:scale-[0.97] self-start shadow-[0_0_30px_rgba(255,255,255,0.05)] hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] flex items-center gap-3">
+                                    <Scan className="w-4 h-4" /> Scan This Artwork
+                                </button>
+                            </motion.div>
+                        )}
+
+                        {phase === "scanning" && (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
+                                <div className="flex items-center gap-3">
+                                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}>
+                                        <Scan className="w-5 h-5 text-white" />
+                                    </motion.div>
+                                    <span className="text-sm font-bold tracking-wider uppercase text-zinc-300">Scanning...</span>
+                                </div>
+                                <div className="h-px bg-white/[0.08] relative overflow-hidden rounded-full">
+                                    <motion.div className="absolute inset-y-0 left-0 bg-white" style={{ width: `${progress * 100}%` }} />
+                                </div>
+                                <p className="text-xs text-zinc-500">Analyzing metadata, C2PA signatures, blockchain records, and AI training datasets...</p>
+                            </motion.div>
+                        )}
+
+                        {phase === "results" && (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
+                                <div className="text-sm font-bold tracking-wider uppercase text-zinc-300 mb-1">Scan Results</div>
+                                {[
+                                    { label: "C2PA Certificate", found: false, detail: "No cryptographic proof detected" },
+                                    { label: "Blockchain Record", found: false, detail: "No timestamp found" },
+                                    { label: "AI Training Data", found: true, detail: "Found in 3 datasets (LAION, CommonCrawl, WikiArt)" },
+                                    { label: "DMCA History", found: false, detail: "No prior takedowns" },
+                                ].map((r) => (
+                                    <div key={r.label} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${r.found ? "bg-red-500/20" : "bg-white/[0.06]"}`}>
+                                            <div className={`w-2 h-2 rounded-full ${r.found ? "bg-red-400" : "bg-zinc-500"}`} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-xs font-bold text-zinc-300">{r.label}</div>
+                                            <div className="text-[10px] text-zinc-600">{r.detail}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                                <button onClick={startProtect} data-hover className="mt-2 px-8 py-4 bg-white text-black rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all active:scale-[0.97] self-start shadow-[0_0_30px_rgba(255,255,255,0.05)] hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] flex items-center gap-3">
+                                    <Shield className="w-4 h-4" /> Protect with CVBER
+                                </button>
+                            </motion.div>
+                        )}
+
+                        {phase === "protecting" && (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
+                                <div className="flex items-center gap-3">
+                                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.8, repeat: Infinity }}>
+                                        <Shield className="w-5 h-5 text-white" />
+                                    </motion.div>
+                                    <span className="text-sm font-bold tracking-wider uppercase text-zinc-300">Applying Protection...</span>
+                                </div>
+                                <div className="flex flex-col gap-3">
+                                    {["Generating C2PA certificate", "Writing blockchain record", "Registering DMCA agent", "Adding monitoring watch"].map((s, i) => (
+                                        <motion.div key={s} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.4 }} className="flex items-center gap-3 text-xs text-zinc-400">
+                                            <motion.div animate={{ opacity: [0, 1] }} transition={{ delay: i * 0.4 + 0.2 }} className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center">
+                                                <Check className="w-2.5 h-2.5 text-white" />
+                                            </motion.div>
+                                            {s}
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {phase === "protected" && (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-5">
+                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 10 }} className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                                        <Check className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-bold text-white">Fully Protected</div>
+                                        <div className="text-[10px] text-zinc-500">C2PA + Blockchain + DMCA + Monitoring active</div>
+                                    </div>
+                                </motion.div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {["C2PA Certificate", "Blockchain Proof", "DMCA Agent", "24/7 Monitoring"].map((s) => (
+                                        <div key={s} className="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                                            <Check className="w-3 h-3 text-green-400 shrink-0" />
+                                            <span className="text-[10px] text-zinc-400">{s}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button onClick={reset} data-hover className="px-8 py-3 rounded-full text-xs uppercase tracking-[0.2em] text-zinc-400 hover:text-white border border-white/[0.08] hover:border-white/20 transition-all self-start">
+                                    Scan Another
+                                </button>
+                            </motion.div>
+                        )}
+                    </div>
                 </div>
             </div>
         </section>
@@ -411,8 +696,11 @@ export default function Home() {
                         {/* ─── STATS ─── */}
                         <Stats />
 
-                        {/* ─── INTERACTIVE DEMO ─── */}
-                        <InteractiveDemo />
+                        {/* ─── VIDEO SHOWCASE ─── */}
+                        <VideoSection />
+
+                        {/* ─── INTERACTIVE PRODUCT DEMO ─── */}
+                        <ProductDemo />
 
                         {/* ─── PRODUCT GRID (horizontal scroll) ─── */}
                         <section className="grid-section relative z-10 h-screen overflow-hidden snap-start">
