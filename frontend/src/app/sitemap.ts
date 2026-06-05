@@ -45,6 +45,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
         { url: `${baseUrl}/cvber-vs-glaze`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
         { url: `${baseUrl}/best-art-protection-tool`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
 
+        // Lead magnet
+        { url: `${baseUrl}/free-guide`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.8 },
+
         // Legal pages
         { url: `${baseUrl}/privacy`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.5 },
         { url: `${baseUrl}/terms`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.5 },

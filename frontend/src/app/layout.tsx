@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Playfair_Display, Plus_Jakarta_Sans, Geist } from "next/font/google";
 import "./globals.css";
 import LenisProvider from "@/providers/LenisProvider";
@@ -48,13 +49,13 @@ export const metadata: Metadata = {
         siteName: "Cvber",
         title: "How to Protect Your Art Online | CVBER — AI-Powered Art Security & DMCA",
         description: "Protect your art from AI theft. Generate certificates of origin, detect scraping, and automate DMCA takedowns with blockchain-backed security.",
-        images: [{ url: `${siteUrl}/og-image.png`, width: 1200, height: 630, alt: "Cvber - Digital Content Protection Platform" }],
+        images: [{ url: `${siteUrl}/og-image.svg`, width: 1200, height: 630, alt: "Cvber - Digital Content Protection Platform" }],
     },
     twitter: {
         card: "summary_large_image",
         title: "How to Protect Your Art Online | CVBER — AI Art Protection Tool",
         description: "AI-powered content protection with C2PA signatures, theft monitoring, and DMCA automation.",
-        images: [`${siteUrl}/og-image.png`],
+        images: [`${siteUrl}/og-image.svg`],
         creator: "@cvberapp",
     },
     robots: {
@@ -88,6 +89,13 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" className={cn(playfair.variable, jakarta.variable, "font-sans", geist.variable)}>
+            <head>
+                <Script
+                    data-domain="cvber.vercel.app"
+                    src="https://plausible.io/js/script.tagged-events.js"
+                    strategy="afterInteractive"
+                />
+            </head>
             <body className="font-sans antialiased">
                 <LenisProvider>
                     <Navbar />

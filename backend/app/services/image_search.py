@@ -1,6 +1,7 @@
 import io
 import math
 import logging
+import urllib.parse
 from uuid import uuid4
 from typing import Optional
 
@@ -175,6 +176,21 @@ def get_temp_image(scan_id: str) -> Optional[bytes]:
     return _temp_store.get(scan_id)
 
 
+def generate_search_links(scan_id: str, site_url: str = "https://cvber.vercel.app") -> dict:
+    """Generate search engine links for the uploaded image."""
+    image_url = f"{site_url}/api/search/temp/{scan_id}"
+    encoded_url = urllib.parse.quote(image_url, safe="")
+
+    return {
+        "image_url": image_url,
+        "yandex": f"https://yandex.com/images/search?rpt=imageview&url={encoded_url}",
+        "bing": f"https://www.bing.com/images/search?view=detailv2&iss=sbi&form=SBIVSP&sbisrc=UrlPaste&q=imgurl:{encoded_url}",
+        "google_lens": f"https://lens.google.com/uploadbyurl?url={encoded_url}",
+        "tineye": f"https://tineye.com/search?url={encoded_url}",
+        "saurcenao": f"https://saucenao.com/search.php?url={encoded_url}",
+    }
+
+
 async def search_image(image_bytes: bytes, user_id: Optional[str] = None) -> dict:
     hashes = compute_hashes(image_bytes)
     scan_id = store_temp_image(image_bytes)
@@ -184,10 +200,13 @@ async def search_image(image_bytes: bytes, user_id: Optional[str] = None) -> dic
     if user_id:
         similar_files = find_similar_multi(hashes, user_id, min_confidence=50.0)
 
+    search_links = generate_search_links(scan_id) if scan_id else {}
+
     return {
         "scan_id": scan_id,
         "hashes": hashes,
         "similar_files": similar_files,
+        "search_links": search_links,
         "hash_methods": ["dhash", "ahash", "color_hist"],
-        "message": "Image processed. Use scan_id to search on Yandex, Bing, Google Lens, SauceNAO, or TinEye.",
+        "message": "Image processed. Use search_links to find where this image appears online.",
     }
