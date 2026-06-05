@@ -97,7 +97,8 @@ export default function Navbar() {
     };
 
     const isDashboard = pathname.startsWith("/dashboard");
-    if (isDashboard) return null;
+    const isHomepage = pathname === "/";
+    if (isDashboard || isHomepage) return null;
 
     return (
         <>
