@@ -219,223 +219,259 @@ function Stats() {
     );
 }
 
-// ─── Product Demo (interface workflow) ─
+// ─── Lusion-style immersive 3D product demo (raw Three.js) ─
 
-const DEMO_PHASES = [
-    {
-        id: "upload",
-        label: "Upload your artwork",
-        desc: "Drag & drop any image file — PSD, PNG, JPG, SVG. CVBER accepts all formats.",
-        action: "Drop file here",
-        icon: "\u2191",
-    },
-    {
-        id: "fingerprint",
-        label: "AI analyzes every pixel",
-        desc: "A cryptographic fingerprint is generated from your work's unique visual features.",
-        action: "Analyzing...",
-        icon: "\u25CB",
-    },
-    {
-        id: "scanning",
-        label: "Scanning the web for copies",
-        desc: "Checking 12.4M+ sites, social platforms, and AI training datasets for matches.",
-        action: "Scanning...",
-        icon: "\u25CF",
-    },
-    {
-        id: "results",
-        label: "3 unauthorized uses found",
-        desc: "DeviantArt — AI training dataset — Pinterest. All confirmed as unlicensed copies.",
-        action: "View matches",
-        icon: "\u26A0",
-    },
-    {
-        id: "protecting",
-        label: "Filing takedown notices...",
-        desc: "CVBER automatically submits DMCA takedowns and generates legal-grade evidence.",
-        action: "Protecting...",
-        icon: "\u25A0",
-    },
-    {
-        id: "protected",
-        label: "Your work is protected",
-        desc: "Takedowns served. Evidence archived. CVBER continues monitoring 24/7.",
-        action: "Dashboard",
-        icon: "\u2713",
-    },
+const DEMO_STEPS = [
+    { label: "Your art. Protected.", sub: "Scroll to see how CVBER works." },
+    { label: "Upload.", sub: "Drop any artwork — PSD, PNG, JPG, SVG." },
+    { label: "Analyze.", sub: "AI fingerprints every pixel of your work." },
+    { label: "Scan.", sub: "12.4M+ sites searched in real-time." },
+    { label: "Detect.", sub: "3 unauthorized copies found." },
+    { label: "Protect.", sub: "Takedowns filed. Evidence generated. You're safe." },
 ];
 
-function ProductDemoContent({ phase, expanded }: { phase: typeof DEMO_PHASES[0]; expanded?: boolean }) {
-    const [progress, setProgress] = useState(0);
+function LusionCanvas({ scrollProgress, mouseX, mouseY }: { scrollProgress: React.MutableRefObject<number>; mouseX: React.MutableRefObject<number>; mouseY: React.MutableRefObject<number> }) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
-        if (phase.id === "protected") { setProgress(100); return; }
-        const t = setInterval(() => setProgress((p) => Math.min(p + 2, 95)), 60);
-        return () => clearInterval(t);
-    }, [phase.id]);
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        let cleanup = false;
 
-    const sz = expanded ? "text-base" : "text-sm";
-    const hz = expanded ? "text-3xl md:text-5xl" : "text-xl md:text-3xl";
+        import("three").then((THREE) => {
+            if (cleanup) return;
 
-    return (
-        <div className="absolute inset-0 flex items-center justify-center px-6 md:px-12">
-            <motion.div
-                key={phase.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-lg"
-            >
-                {/* Dashboard-like panel */}
-                <div className="rounded-2xl border border-white/[0.06] bg-[#0c0c0c] overflow-hidden">
-                    {/* Title bar */}
-                    <div className="flex items-center justify-between px-4 md:px-5 py-3 border-b border-white/[0.04]">
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded border border-white/10 flex items-center justify-center">
-                                <span className="text-[5px] font-bold text-white/40">C</span>
-                            </div>
-                            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-600">CVBER — Protect</span>
-                        </div>
-                        <span className={`text-[7px] font-mono px-2 py-0.5 rounded-full border ${phase.id === "protected" ? "bg-green-500/10 border-green-500/20 text-green-400" : phase.id === "results" ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-zinc-800 border-zinc-700 text-zinc-500"}`}>
-                            {phase.id === "protected" ? "ACTIVE" : phase.id === "results" ? "3 FOUND" : "RUNNING"}
-                        </span>
-                    </div>
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.15);
+            const camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+            camera.position.set(0, 0, 6);
 
-                    {/* Body */}
-                    <div className="p-4 md:p-6">
-                        {/* Phase animation area */}
-                        <div className="mb-5 flex items-center justify-center">
-                            <div className={`w-14 h-14 md:w-16 md:h-16 rounded-xl flex items-center justify-center text-xl md:text-2xl ${phase.id === "results" ? "bg-red-500/10 text-red-400" : phase.id === "protected" ? "bg-green-500/10 text-green-400" : "bg-white/5 text-white/60"}`}>
-                                {phase.icon}
-                            </div>
-                        </div>
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-                        <h3 className={`${hz} font-bold tracking-tight text-white mb-1.5 text-center`}>{phase.label}</h3>
-                        <p className={`${sz} text-zinc-500 leading-relaxed text-center mb-5 max-w-sm mx-auto`}>{phase.desc}</p>
+            // ── Central artwork object ──
+            const artGroup = new THREE.Group();
 
-                        {/* Progress bar */}
-                        <div className="h-1 rounded-full bg-zinc-800 overflow-hidden mb-4">
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                                className={`h-full rounded-full ${phase.id === "protected" ? "bg-green-500" : phase.id === "results" ? "bg-red-500" : phase.id === "upload" ? "bg-blue-500" : "bg-white/40"}`}
-                            />
-                        </div>
+            // Main artwork — icosahedron (represents a creative work)
+            const artGeo = new THREE.IcosahedronGeometry(0.8, 2);
+            const artMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff, metalness: 0.3, roughness: 0.2,
+                emissive: 0xffffff, emissiveIntensity: 0.05,
+            });
+            const artMesh = new THREE.Mesh(artGeo, artMat);
+            artGroup.add(artMesh);
 
-                        {/* Action button */}
-                        {phase.id === "results" && (
-                            <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="w-full text-[9px] font-bold uppercase tracking-[0.2em] text-white bg-red-500/20 border border-red-500/30 rounded-xl py-2.5 hover:bg-red-500/30 transition-colors"
-                            >
-                                {phase.action}
-                            </motion.button>
-                        )}
-                        {phase.id === "protected" && (
-                            <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="w-full text-[9px] font-bold uppercase tracking-[0.2em] text-white bg-green-500/20 border border-green-500/30 rounded-xl py-2.5 hover:bg-green-500/30 transition-colors"
-                            >
-                                {phase.action}
-                            </motion.button>
-                        )}
-                        {(phase.id === "upload" || phase.id === "fingerprint" || phase.id === "scanning" || phase.id === "protecting") && (
-                            <div className="w-full text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-600 bg-zinc-800/50 rounded-xl py-2.5 text-center">
-                                {phase.action}
-                            </div>
-                        )}
-                    </div>
-                </div>
+            // Wireframe overlay
+            const wireGeo = new THREE.IcosahedronGeometry(0.82, 2);
+            const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.08 });
+            const wireMesh = new THREE.Mesh(wireGeo, wireMat);
+            artGroup.add(wireMesh);
 
-                {/* Step indicator */}
-                <div className="flex items-center justify-center gap-1.5 mt-4">
-                    {DEMO_PHASES.map((p, i) => (
-                        <div key={p.id}
-                            className={`h-0.5 rounded-full transition-all duration-700 ${DEMO_PHASES.indexOf(phase) === i ? "w-5 bg-white/50" : p.id === "protected" ? "w-1.5 bg-green-500/30" : "w-1.5 bg-white/10"}`}
-                        />
-                    ))}
-                </div>
-            </motion.div>
-        </div>
-    );
+            // ── Scanning rings ──
+            const rings: any[] = [];
+            for (let i = 0; i < 3; i++) {
+                const rGeo = new THREE.TorusGeometry(1.3 + i * 0.4, 0.008, 16, 80);
+                const rMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12 });
+                const ring = new THREE.Mesh(rGeo, rMat);
+                ring.rotation.x = Math.PI / 2 + (i - 1) * 0.3;
+                ring.rotation.z = i * 0.5;
+                rings.push(ring);
+                artGroup.add(ring);
+            }
+
+            // ── Particles ──
+            const pCount = 600;
+            const pPos = new Float32Array(pCount * 3);
+            const pVel = new Float32Array(pCount * 3);
+            for (let i = 0; i < pCount * 3; i++) {
+                pPos[i] = (Math.random() - 0.5) * 10;
+                pVel[i] = (Math.random() - 0.5) * 0.01;
+            }
+            const pGeo = new THREE.BufferGeometry();
+            pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
+            const pMat = new THREE.PointsMaterial({ color: 0x666666, size: 0.02, transparent: true, opacity: 0.35 });
+            const particles = new THREE.Points(pGeo, pMat);
+
+            scene.add(artGroup);
+            scene.add(particles);
+
+            // ── Lights ──
+            scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+            const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            keyLight.position.set(3, 4, 5);
+            scene.add(keyLight);
+            const fillLight = new THREE.PointLight(0x4488ff, 0.6, 10);
+            fillLight.position.set(-3, 1, -2);
+            scene.add(fillLight);
+
+            // ── Animate ──
+            let time = 0;
+            const anim = () => {
+                if (cleanup) return;
+                time += 0.01;
+
+                const sp = scrollProgress.current;
+                const mx = mouseX.current;
+                const my = mouseY.current;
+
+                // Camera follows mouse (parallax)
+                camera.position.x += (mx * 0.5 - camera.position.x) * 0.03;
+                camera.position.y += (-my * 0.3 - camera.position.y) * 0.03;
+                camera.lookAt(0, 0, 0);
+
+                // Scroll drives scene
+                const stepF = sp * (DEMO_STEPS.length - 1);
+                const step = Math.floor(stepF);
+                const blend = stepF - step;
+
+                // Art object rotation
+                artMesh.rotation.x = time * 0.3 + sp * Math.PI * 2;
+                artMesh.rotation.y = time * 0.5 + sp * Math.PI;
+                wireMesh.rotation.copy(artMesh.rotation);
+
+                // Color transitions based on step
+                const colors = [
+                    new THREE.Color(0xffffff), // intro
+                    new THREE.Color(0xffffff), // upload
+                    new THREE.Color(0x4488ff), // analyze
+                    new THREE.Color(0xffffff), // scan
+                    new THREE.Color(0xff4444), // detect
+                    new THREE.Color(0x44ff88), // protect
+                ];
+                const fromColor = colors[Math.min(step, colors.length - 1)];
+                const toColor = colors[Math.min(step + 1, colors.length - 1)];
+                const c = fromColor.clone().lerp(toColor, blend);
+                artMat.color.copy(c);
+                artMat.emissive.copy(c);
+                artMat.emissiveIntensity = 0.05 + Math.sin(time * 2) * 0.02;
+
+                // Rings
+                rings.forEach((r, i) => {
+                    r.rotation.z += 0.005 * (i + 1);
+                    const ringOpacity = step >= 2 ? 0.15 + Math.sin(time * 3 + i) * 0.05 : 0.06;
+                    (r.material as any).opacity = ringOpacity;
+                    r.visible = step >= 1;
+                });
+
+                // Art scale (pulses on detect)
+                const pulse = step === 4 ? 1 + Math.sin(time * 6) * 0.05 : 1;
+                artGroup.scale.setScalar(pulse);
+
+                // Particles — drift, glow on scan
+                const pAttr = pGeo.attributes.position as any;
+                for (let i = 0; i < pCount; i++) {
+                    pAttr.array[i * 3] += pVel[i * 3] + Math.sin(time + i) * 0.0003;
+                    pAttr.array[i * 3 + 1] += pVel[i * 3 + 1] + Math.cos(time + i) * 0.0003;
+                    pAttr.array[i * 3 + 2] += pVel[i * 3 + 2];
+                    if (Math.abs(pAttr.array[i * 3]) > 5) pAttr.array[i * 3] *= -0.5;
+                    if (Math.abs(pAttr.array[i * 3 + 1]) > 5) pAttr.array[i * 3 + 1] *= -0.5;
+                    if (Math.abs(pAttr.array[i * 3 + 2]) > 5) pAttr.array[i * 3 + 2] *= -0.5;
+                }
+                pAttr.needsUpdate = true;
+                pMat.opacity = step >= 3 ? 0.5 : 0.25;
+
+                renderer.render(scene, camera);
+                requestAnimationFrame(anim);
+            };
+            anim();
+
+            const ro = new ResizeObserver(() => {
+                const w = canvas.clientWidth, h = canvas.clientHeight;
+                camera.aspect = w / h; camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+            });
+            ro.observe(canvas);
+
+            return () => { cleanup = true; renderer.dispose(); ro.disconnect(); };
+        });
+        return () => { cleanup = true; };
+    }, []);
+
+    return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full" style={{ zIndex: 0 }} />;
 }
 
-function ProductVideo() {
-    const [phaseIdx, setPhaseIdx] = useState(0);
-    const [showOverlay, setShowOverlay] = useState(false);
+function LusionDemo() {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const scrollProgress = useRef(0);
+    const mouseX = useRef(0);
+    const mouseY = useRef(0);
+    const [activeStep, setActiveStep] = useState(0);
 
+    // Scroll progress
     useEffect(() => {
-        const t = setInterval(() => setPhaseIdx((s) => (s + 1) % DEMO_PHASES.length), 3000);
-        return () => clearInterval(t);
+        const onScroll = () => {
+            const el = containerRef.current;
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            const h = el.offsetHeight - window.innerHeight;
+            const p = Math.max(0, Math.min(1, -rect.top / h));
+            scrollProgress.current = p;
+            setActiveStep(Math.min(DEMO_STEPS.length - 1, Math.floor(p * DEMO_STEPS.length)));
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
+    }, []);
+
+    // Mouse
+    useEffect(() => {
+        const onMove = (e: MouseEvent) => {
+            mouseX.current = (e.clientX / window.innerWidth - 0.5) * 2;
+            mouseY.current = (e.clientY / window.innerHeight - 0.5) * 2;
+        };
+        window.addEventListener("mousemove", onMove);
+        return () => window.removeEventListener("mousemove", onMove);
     }, []);
 
     return (
-        <>
-            <section className="relative z-10 py-28 px-6 border-t border-white/[0.04] snap-start">
-                <div className="max-w-6xl mx-auto">
-                    <div className="text-center mb-10">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-4">Product Demo</div>
-                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">How CVBER works.<br />See it in action.</h2>
-                    </div>
-                    <div
-                        onClick={() => setShowOverlay(true)}
-                        data-hover
-                        className="relative aspect-video rounded-3xl overflow-hidden border border-white/[0.08] bg-[#0a0a0a] cursor-pointer group"
-                    >
-                        <div className="absolute inset-0">
-                            <AnimatePresence mode="wait">
-                                <ProductDemoContent key={DEMO_PHASES[phaseIdx].id} phase={DEMO_PHASES[phaseIdx]} />
-                            </AnimatePresence>
-                        </div>
-                        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors duration-500 pointer-events-none" />
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <motion.div
-                                initial={{ scale: 1 }}
-                                whileHover={{ scale: 1.05 }}
-                                className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-sm flex items-center justify-center"
-                            >
-                                <svg className="w-6 h-6 md:w-8 md:h-8 text-white/80 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M8 5v14l11-7z" />
-                                </svg>
-                            </motion.div>
-                        </div>
-                        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-                            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/50">Click to expand</div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
-                                <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                                <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <div ref={containerRef} className="relative" style={{ height: `${DEMO_STEPS.length * 100}vh` }}>
+            {/* Full-viewport 3D canvas (sticky) */}
+            <div className="sticky top-0 h-screen w-full overflow-hidden">
+                <LusionCanvas scrollProgress={scrollProgress} mouseX={mouseX} mouseY={mouseY} />
 
-            <AnimatePresence>
-                {showOverlay && (
+                {/* Text overlay */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeStep}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.5 }}
+                            className="text-center px-6"
+                        >
+                            <h2 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter text-white leading-[0.95] mb-3">
+                                {DEMO_STEPS[activeStep].label}
+                            </h2>
+                            <p className="text-sm md:text-base text-zinc-400 max-w-md mx-auto">
+                                {DEMO_STEPS[activeStep].sub}
+                            </p>
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+
+                {/* Scroll hint */}
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none z-10">
+                    <div className="text-[8px] font-bold uppercase tracking-[0.3em] text-white/30">Scroll</div>
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
-                        onClick={() => setShowOverlay(false)}
-                    >
-                        <div className="relative w-full h-full max-w-2xl mx-4" onClick={(e) => e.stopPropagation()}>
-                            <div className="w-full aspect-video rounded-2xl overflow-hidden border border-white/[0.06] bg-[#0a0a0a] relative">
-                                <AnimatePresence mode="wait">
-                                    <ProductDemoContent key={`exp-${DEMO_PHASES[phaseIdx].id}`} phase={DEMO_PHASES[phaseIdx]} expanded />
-                                </AnimatePresence>
-                                <button onClick={() => setShowOverlay(false)} className="absolute top-3 right-3 z-10 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 hover:text-white/80">
-                                    CLOSE
-                                </button>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </>
+                        animate={{ y: [0, 6, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        className="w-px h-8 bg-gradient-to-b from-white/30 to-transparent"
+                    />
+                </div>
+
+                {/* Step dots */}
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 pointer-events-none z-10">
+                    {DEMO_STEPS.map((_, i) => (
+                        <div
+                            key={i}
+                            className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${i === activeStep ? "bg-white scale-125" : "bg-white/20"}`}
+                        />
+                    ))}
+                </div>
+            </div>
+        </div>
     );
 }
 
@@ -783,8 +819,8 @@ export default function Home() {
                         {/* ─── STATS ─── */}
                         <Stats />
 
-                        {/* ─── PRODUCT DEMO ─── */}
-                        <ProductVideo />
+                        {/* ─── LUSION-STYLE 3D DEMO ─── */}
+                        <LusionDemo />
 
                         {/* ─── INTERACTIVE PRODUCT DEMO ─── */}
                         <ProductDemo />
