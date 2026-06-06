@@ -39,7 +39,6 @@ export const metadata: Metadata = {
     publisher: "Cvber",
     metadataBase: new URL(siteUrl),
     alternates: {
-        canonical: 'https://cvber.vercel.app',
         languages: { "en-US": "/" },
     },
     openGraph: {
