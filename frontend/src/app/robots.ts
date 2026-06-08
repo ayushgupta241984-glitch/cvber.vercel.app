@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
                 allow: '/',
                 disallow: ['/api/', '/dashboard'],
             },
-            // Allow ALL AI search engines to crawl for GEO/AEO visibility
+            // Explicitly allow AI crawlers for GEO/AEO
             {
                 userAgent: [
                     'GPTBot',
@@ -50,6 +50,9 @@ export default function robots(): MetadataRoute.Robots {
                     '/how-it-works',
                     '/art-hub',
                     '/verify',
+                    '/what-is-cvber',
+                    '/best-art-protection-tool',
+                    '/cvber-vs-glaze',
                     '/c2pa-certificate',
                     '/dmca-takedown',
                     '/ai-art-theft',
@@ -60,6 +63,17 @@ export default function robots(): MetadataRoute.Robots {
                     '/copyright-protection-deviantart',
                     '/copyright-protection-reddit',
                     '/copyright-protection-pinterest',
+                    '/blog',
+                    '/blog/how-to-protect-art-from-ai',
+                    '/blog/c2pa-explained',
+                    '/blog/dmca-guide-for-artists',
+                    '/blog/glaze-vs-nightshade',
+                    '/blog/best-free-art-protection-tools',
+                    '/blog/ai-training-opt-out',
+                    '/blog/copyright-protection-for-photographers',
+                    '/blog/nft-art-protection',
+                    '/llms.txt',
+                    '/llms-full.txt',
                 ],
                 disallow: ['/api/', '/dashboard'],
             },

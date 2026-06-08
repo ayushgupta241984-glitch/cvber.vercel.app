@@ -241,13 +241,12 @@ function ProductWalkthrough() {
 // ── Mock UI Panels ──
 
 function PanelFrame({ children, glow }: { children: React.ReactNode; glow?: string }) {
+    const color = glow || "rgba(255,255,255,0.15)";
     return (
-        <div className="relative rounded-2xl bg-[#0a0a0a] overflow-hidden" style={{ boxShadow: glow ? `0 0 60px ${glow}18, 0 0 120px ${glow}0a` : "0 25px 60px rgba(0,0,0,0.5)" }}>
-            {/* Animated gradient border */}
-            <div className="absolute inset-0 rounded-2xl p-px" style={{ background: glow ? `conic-gradient(from 0deg, transparent 0%, ${glow}40 25%, transparent 50%, ${glow}20 75%, transparent 100%)` : "conic-gradient(from 0deg, transparent 0%, rgba(255,255,255,0.06) 25%, transparent 50%, rgba(255,255,255,0.03) 75%, transparent 100%)", animation: "panelBorderSpin 6s linear infinite" }}>
-                <div className="w-full h-full rounded-2xl bg-[#0a0a0a]" />
-            </div>
-            <div className="relative z-10">
+        <div className="relative rounded-2xl p-px overflow-hidden" style={{ background: `conic-gradient(from 0deg, transparent, ${color}, transparent, ${color}, transparent)` , animation: "panelBorderSpin 4s linear infinite" }}>
+            <div className="rounded-2xl bg-[#0a0a0a] overflow-hidden relative">
+                {/* Animated glow pulse behind content */}
+                {glow && <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(ellipse at 50% 0%, ${glow}12 0%, transparent 70%)`, animation: "glowPulse 3s ease-in-out infinite" }} />}
                 {/* Title bar */}
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]">
                     <div className="flex gap-1.5">
@@ -258,9 +257,9 @@ function PanelFrame({ children, glow }: { children: React.ReactNode; glow?: stri
                     <div className="flex-1 text-center">
                         <div className="text-[9px] text-zinc-600 font-medium tracking-wider">CVBER Dashboard</div>
                     </div>
-                    {glow && <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: glow }} />}
+                    {glow && <motion.div className="w-2 h-2 rounded-full" style={{ background: glow }} animate={{ scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] }} transition={{ duration: 1.5, repeat: Infinity }} />}
                 </div>
-                <div className="p-6">{children}</div>
+                <div className="p-6 relative z-10">{children}</div>
             </div>
         </div>
     );
@@ -270,33 +269,33 @@ function UploadPanel() {
     return (
         <PanelFrame>
             <div className="relative border-2 border-dashed border-white/10 rounded-xl p-10 flex flex-col items-center gap-4 overflow-hidden">
-                {/* Floating particles */}
-                {[...Array(6)].map((_, i) => (
-                    <motion.div key={i} className="absolute w-1 h-1 rounded-full bg-white/20" style={{ left: `${15 + i * 14}%`, top: `${20 + (i % 3) * 25}%` }} animate={{ y: [-8, 8, -8], opacity: [0.1, 0.4, 0.1] }} transition={{ duration: 3 + i * 0.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.4 }} />
+                {/* Big sweeping scan beam */}
+                <motion.div className="absolute left-0 right-0 h-24 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent, rgba(255,255,255,0.06), transparent)" }} animate={{ top: ["-20%", "120%"] }} transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }} />
+                {/* Floating dots */}
+                {[...Array(8)].map((_, i) => (
+                    <motion.div key={i} className="absolute rounded-full bg-white/30" style={{ left: `${10 + i * 10}%`, top: `${15 + (i % 4) * 20}%`, width: 3 + (i % 3), height: 3 + (i % 3) }} animate={{ y: [-12, 12, -12], opacity: [0.15, 0.6, 0.15] }} transition={{ duration: 2 + i * 0.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }} />
                 ))}
-                {/* Scan beam sweeping */}
-                <motion.div className="absolute left-0 right-0 h-16 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent, rgba(255,255,255,0.03), transparent)" }} animate={{ top: ["-10%", "110%"] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} />
-                <motion.div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center" animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}>
-                    <Upload className="w-6 h-6 text-zinc-400" />
+                <motion.div className="w-16 h-16 rounded-2xl bg-white/[0.06] border border-white/[0.12] flex items-center justify-center" animate={{ scale: [1, 1.1, 1], rotate: [0, 3, -3, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
+                    <Upload className="w-7 h-7 text-zinc-300" />
                 </motion.div>
                 <div className="text-center">
                     <div className="text-sm font-bold text-zinc-300 mb-1">Drop artwork here</div>
                     <div className="text-[10px] text-zinc-600">PSD, PNG, JPG, SVG — up to 50MB</div>
                 </div>
-                <motion.div className="px-6 py-2.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-[10px] font-bold text-zinc-400 uppercase tracking-wider" whileHover={{ scale: 1.05, borderColor: "rgba(255,255,255,0.2)" }} whileTap={{ scale: 0.97 }}>
+                <motion.div className="px-6 py-2.5 rounded-full bg-white/[0.08] border border-white/[0.15] text-[10px] font-bold text-zinc-300 uppercase tracking-wider" whileHover={{ scale: 1.06, backgroundColor: "rgba(255,255,255,0.12)" }} whileTap={{ scale: 0.96 }}>
                     Browse Files
                 </motion.div>
             </div>
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4, duration: 0.6 }} className="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.5 }} className="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
                 <div className="w-10 h-10 rounded-lg bg-zinc-800 overflow-hidden shrink-0 relative">
-                    <div className="w-full h-full bg-gradient-to-br from-purple-500/30 to-blue-500/30" />
-                    <motion.div className="absolute inset-0 bg-white/10" animate={{ opacity: [0, 0.3, 0] }} transition={{ duration: 1.5, repeat: Infinity }} />
+                    <div className="w-full h-full bg-gradient-to-br from-purple-500/40 to-blue-500/40" />
+                    <motion.div className="absolute inset-0 bg-white/20" animate={{ opacity: [0, 0.4, 0] }} transition={{ duration: 1.5, repeat: Infinity }} />
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="text-xs font-bold text-zinc-300 truncate">sunset-painting-v3.psd</div>
                     <div className="text-[10px] text-zinc-600">24.8 MB</div>
                 </div>
-                <motion.div className="text-[10px] text-zinc-500" animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }}>Ready</motion.div>
+                <motion.div className="text-[10px] text-zinc-400 font-medium" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.5, repeat: Infinity }}>Ready</motion.div>
             </motion.div>
         </PanelFrame>
     );
@@ -318,16 +317,16 @@ function AnalyzePanel() {
 
     return (
         <PanelFrame glow="#60a5fa">
-            {/* Scanning beam overlay */}
-            <motion.div className="absolute left-0 right-0 h-32 pointer-events-none z-20" style={{ background: "linear-gradient(to bottom, transparent, rgba(96,165,250,0.06), transparent)" }} animate={{ top: ["-15%", "115%"] }} transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }} />
+            {/* Big scanning beam */}
+            <motion.div className="absolute left-0 right-0 h-40 pointer-events-none z-20" style={{ background: "linear-gradient(to bottom, transparent, rgba(96,165,250,0.1), transparent)" }} animate={{ top: ["-20%", "120%"] }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} />
             <div className="flex items-center gap-3 mb-5">
-                <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }}>
-                    <Eye className="w-4 h-4 text-blue-400" />
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }}>
+                    <Eye className="w-5 h-5 text-blue-400" />
                 </motion.div>
                 <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Neural Analysis</span>
                 <div className="ml-auto flex items-center gap-1.5">
-                    <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                    <span className="text-[10px] text-blue-400">Processing</span>
+                    <motion.div className="w-2 h-2 rounded-full bg-blue-400" animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }} transition={{ duration: 1, repeat: Infinity }} />
+                    <span className="text-[10px] text-blue-400 font-bold">Processing</span>
                 </div>
             </div>
             <div className="space-y-3">
@@ -337,23 +336,22 @@ function AnalyzePanel() {
                     { label: "Composition map", pct: 87, color: "bg-blue-400" },
                     { label: "Brushstroke DNA", pct: 76, color: "bg-blue-400/60" },
                 ].map((f, i) => (
-                    <motion.div key={f.label} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.12, duration: 0.5 }}>
+                    <motion.div key={f.label} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1, duration: 0.4 }}>
                         <div className="flex justify-between mb-1">
                             <span className="text-[10px] text-zinc-500 font-medium">{f.label}</span>
-                            <span className="text-[10px] text-zinc-400">{f.pct}%</span>
+                            <span className="text-[10px] text-zinc-300 font-bold">{f.pct}%</span>
                         </div>
-                        <div className="h-1 rounded-full bg-white/[0.04] overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${f.pct}%` }} transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.3 + i * 0.15 }} className={`h-full rounded-full ${f.color}`} />
+                        <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${f.pct}%` }} transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 + i * 0.12 }} className={`h-full rounded-full ${f.color}`} />
                         </div>
                     </motion.div>
                 ))}
             </div>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.5 }} className="mt-5 p-3 rounded-xl bg-blue-500/[0.06] border border-blue-500/10 relative overflow-hidden">
-                {/* Hex grid overlay */}
-                <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='28' height='49' viewBox='0 0 28 49' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%2360a5fa' fill-opacity='1'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.4 }} className="mt-5 p-3 rounded-xl bg-blue-500/[0.08] border border-blue-500/15 relative overflow-hidden">
+                <motion.div className="absolute inset-0 bg-blue-400/5" animate={{ opacity: [0, 0.15, 0] }} transition={{ duration: 2, repeat: Infinity }} />
                 <div className="relative z-10">
                     <div className="text-[10px] text-blue-300 font-bold mb-1">Fingerprint ID</div>
-                    <div className="font-mono text-[10px] text-zinc-500">{fingerprint}<motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.6, repeat: Infinity }}>|</motion.span></div>
+                    <div className="font-mono text-[10px] text-zinc-400">{fingerprint}<motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}>|</motion.span></div>
                 </div>
             </motion.div>
         </PanelFrame>
@@ -365,7 +363,7 @@ function ScanPanel() {
         <PanelFrame glow="#c084fc">
             <div className="flex items-center gap-3 mb-5">
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
-                    <Globe className="w-4 h-4 text-purple-400" />
+                    <Globe className="w-5 h-5 text-purple-400" />
                 </motion.div>
                 <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Global Scan</span>
             </div>
@@ -375,46 +373,40 @@ function ScanPanel() {
                     { label: "Social", count: "3.8M", icon: Eye },
                     { label: "Datasets", count: "4.4M", icon: FileText },
                 ].map((s, i) => (
-                    <motion.div key={s.label} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.15, type: "spring", stiffness: 200, damping: 15 }} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center relative overflow-hidden">
-                        {/* Radar pulse */}
-                        <motion.div className="absolute inset-0 rounded-xl border border-purple-400/20" animate={{ scale: [1, 1.3], opacity: [0.3, 0] }} transition={{ duration: 2, repeat: Infinity, delay: i * 0.5 }} />
-                        <s.icon className="w-4 h-4 text-zinc-500 mx-auto mb-2" />
-                        <motion.div className="text-lg font-black text-white" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + i * 0.15 }}>{s.count}</motion.div>
-                        <div className="text-[9px] text-zinc-600 uppercase tracking-wider">{s.label}</div>
+                    <motion.div key={s.label} initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.12, type: "spring", stiffness: 200, damping: 12 }} className="p-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-center relative overflow-hidden">
+                        <motion.div className="absolute inset-0 rounded-xl border-2 border-purple-400/20" animate={{ scale: [1, 1.4], opacity: [0.5, 0] }} transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.4 }} />
+                        <s.icon className="w-4 h-4 text-zinc-400 mx-auto mb-2" />
+                        <div className="text-lg font-black text-white">{s.count}</div>
+                        <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-bold">{s.label}</div>
                     </motion.div>
                 ))}
             </div>
-            <div className="h-px bg-white/[0.04] mb-4 relative overflow-hidden">
-                <motion.div className="absolute inset-y-0 w-20 bg-gradient-to-r from-transparent via-purple-400/30 to-transparent" animate={{ left: ["-20%", "120%"] }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} />
-            </div>
-            {/* Radar sweep visual */}
-            <div className="relative h-24 mb-4 rounded-xl bg-white/[0.02] border border-white/[0.04] overflow-hidden flex items-center justify-center">
-                {/* Radar rings */}
-                {[1, 2, 3].map((r) => (
-                    <motion.div key={r} className="absolute rounded-full border border-purple-400/10" style={{ width: r * 30, height: r * 30 }} animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.05, 0.15] }} transition={{ duration: 3, repeat: Infinity, delay: r * 0.3 }} />
+            {/* Radar visualization */}
+            <div className="relative h-28 mb-4 rounded-xl bg-white/[0.03] border border-white/[0.06] overflow-hidden flex items-center justify-center">
+                {[1, 2, 3, 4].map((r) => (
+                    <motion.div key={r} className="absolute rounded-full border border-purple-400/15" style={{ width: r * 24, height: r * 24 }} animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.05, 0.2] }} transition={{ duration: 2.5, repeat: Infinity, delay: r * 0.25 }} />
                 ))}
-                {/* Sweep line */}
-                <motion.div className="absolute w-24 h-px bg-gradient-to-r from-purple-400/40 to-transparent origin-left" style={{ top: "50%", left: "50%" }} animate={{ rotate: [0, 360] }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }} />
-                {/* Found dots */}
+                <motion.div className="absolute w-28 h-0.5 bg-gradient-to-r from-purple-400/60 to-transparent origin-left" style={{ top: "50%", left: "50%" }} animate={{ rotate: [0, 360] }} transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }} />
                 {[
-                    { x: 30, y: 25, delay: 1.2 },
-                    { x: 65, y: 40, delay: 1.8 },
-                    { x: 45, y: 70, delay: 2.4 },
+                    { x: 28, y: 22, delay: 0.8 },
+                    { x: 62, y: 38, delay: 1.3 },
+                    { x: 42, y: 68, delay: 1.8 },
+                    { x: 75, y: 60, delay: 2.2 },
                 ].map((dot, i) => (
-                    <motion.div key={i} className="absolute w-2 h-2 rounded-full bg-purple-400" style={{ left: `${dot.x}%`, top: `${dot.y}%` }} initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 1.5, 1], opacity: [0, 1, 0.6] }} transition={{ delay: dot.delay, duration: 0.5 }} />
+                    <motion.div key={i} className="absolute w-2.5 h-2.5 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.6)]" style={{ left: `${dot.x}%`, top: `${dot.y}%` }} initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 1.8, 1], opacity: [0, 1, 0.7] }} transition={{ delay: dot.delay, duration: 0.4 }} />
                 ))}
-                <span className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider relative z-10">Scanning...</span>
+                <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider relative z-10">Scanning 12.4M+ sources...</span>
             </div>
             <div className="flex items-center gap-2">
-                <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }}>
-                    <Scan className="w-3.5 h-3.5 text-purple-400" />
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
+                    <Scan className="w-4 h-4 text-purple-400" />
                 </motion.div>
-                <div className="flex-1 h-1 rounded-full bg-white/[0.04] overflow-hidden">
-                    <motion.div initial={{ width: "0%" }} animate={{ width: "72%" }} transition={{ duration: 3, ease: "linear" }} className="h-full bg-purple-400 rounded-full relative">
-                        <motion.div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-purple-400/60 blur-sm" animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 0.8, repeat: Infinity }} />
+                <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                    <motion.div initial={{ width: "0%" }} animate={{ width: "72%" }} transition={{ duration: 2.5, ease: "linear" }} className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full relative">
+                        <motion.div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-purple-400/50 blur-sm" animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 0.6, repeat: Infinity }} />
                     </motion.div>
                 </div>
-                <motion.span className="text-[10px] text-zinc-500" animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }}>72%</motion.span>
+                <motion.span className="text-[10px] text-zinc-400 font-bold" animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1, repeat: Infinity }}>72%</motion.span>
             </div>
         </PanelFrame>
     );

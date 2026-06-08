@@ -67,6 +67,55 @@ export default function SEOLandingPage({
         ]
     };
 
+    const softwareSchema = {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "CVBER",
+        "applicationCategory": "SecurityApplication",
+        "operatingSystem": "Web",
+        "url": "https://cvber.vercel.app",
+        "description": "Free AI-powered art protection platform. Get C2PA provenance certificates, automated DMCA takedowns, AI theft detection, and blockchain ownership proof.",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock"
+        },
+        "featureList": [
+            "C2PA Digital Provenance Certificates",
+            "Automated DMCA Takedown Generator",
+            "AI-Powered Theft Detection",
+            "Blockchain Ownership Attestation",
+            "Invisible Watermark Engine",
+            "Real-time Web Monitoring",
+            "Reverse Image Search"
+        ]
+    };
+
+    const organizationSchema = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "CVBER",
+        "url": "https://cvber.vercel.app",
+        "logo": "https://cvber.vercel.app/icon.png",
+        "description": "CVBER builds AI-powered content protection tools for digital creators.",
+        "sameAs": [
+            "https://twitter.com/cvberapp",
+            "https://instagram.com/cvber"
+        ]
+    };
+
+    const speakableSchema = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": `${h1} | CVBER`,
+        "url": canonical,
+        "speakable": {
+            "@type": "SpeakableSpecification",
+            "cssSelector": ["h1", "h2"]
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#050505] text-white">
             <script
@@ -76,6 +125,18 @@ export default function SEOLandingPage({
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(speakableSchema) }}
             />
 
             {/* Hero */}
