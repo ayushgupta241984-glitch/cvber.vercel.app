@@ -5,6 +5,100 @@
 
 ## How This Research Was Conducted
 
+### Why This Isn't a "Yes Man" — How AI Research Challenges Assumptions
+
+Most founders use AI to validate their ideas. We used AI to **attack** ours. Here's how this methodology is fundamentally different from asking ChatGPT "is my idea good?":
+
+#### 1. The Engine Is Designed to Find Problems, Not Confirm Them
+
+The cognitive behavioral interview engine doesn't ask "would you use this?" — it asks "what would stop you from using this?" Every persona is programmed with:
+
+- **Skepticism bias** — Assume the product is garbage until proven otherwise
+- **Loss aversion** — Focus on what they could lose (time, money, privacy), not what they gain
+- **Status quo bias** — Prefer doing nothing over trying something new
+- **Trust barriers** — Actively look for reasons NOT to trust the platform
+
+**Example:** When we asked "Would you upload your art to CVBER?", the engine didn't just record "yes." It modeled the persona thinking: "Free? What's the catch? They're probably selling my data. Or they'll paywall the good features later. Or they'll get hacked and my originals leak."
+
+**Result:** 78% of interviews flagged "free = suspicious" as a concern. A yes man would have said "great, free is attractive!"
+
+#### 2. Negative Findings Are Treated as Successes, Not Failures
+
+The engine is explicitly told: **finding problems is the goal.** If every interview comes back positive, the methodology is broken.
+
+**Negative findings we surfaced:**
+- Kill Switch feature scored 6.2/10 — **we learned it needs to be renamed or removed**
+- C2PA Certificate scored 6.9/10 — **we learned the UX is too technical**
+- Style Embeddings scored 7.1/10 — **we learned artists don't understand "CLIP vectors"**
+- AI-Assisted Creators scored 6.7/10 — **we learned to avoid this segment for now**
+- Adoption scored 6.5/10 — **we learned the risk is trust, not demand**
+
+A yes man would have highlighted the 8.8/10 theft monitoring score and ignored the 6.2/10 kill switch score. We did the opposite.
+
+#### 3. Behavioral Triggers Test What People DO, Not What They SAY
+
+Traditional surveys ask: "Would you pay $12/month for this?"
+People say: "Yes, absolutely."
+People do: Nothing.
+
+Our engine tests **behavioral triggers** — the actual conditions under which someone would take action:
+
+- **What specific event** would make you sign up? (Not "would you sign up?")
+- **What would you Google** right now if your art was stolen? (Not "do you know about DMCA?")
+- **Who would you ask** for advice before trying a new tool? (Not "do you trust AI?")
+- **What would make you churn** after 3 months? (Not "would you stay?")
+
+**Result:** We learned that artists don't sign up because of features. They sign up because of **proof** — seeing someone they respect successfully use it. This changed our entire go-to-market strategy.
+
+#### 4. Emotional Arcs Are Modeled, Not Just Stated Preferences
+
+When we ask "how does art theft make you feel?", a yes man records "sad." Our engine models the **full emotional arc**:
+
+```
+Discovery → Shock → Anger → Helplessness → Grief → Resignation
+```
+
+And then models what happens when CVBER enters the picture:
+
+```
+Discovery → Shock → Anger → Hope → "Let me try this" → Cautious optimism → Trust (if it works)
+```
+
+**Result:** 62% of interviews said emotional cost > financial cost. We learned to lead with "your art matters" not "our features are great."
+
+#### 5. The Engine Argues Against Itself
+
+Each interview includes **counter-arguments** — the persona actively thinks about why the product might NOT work:
+
+- "I've tried protection tools before. They never work."
+- "AI companies don't care about C2PA. They'll ignore it."
+- "DMCA takedowns are useless — the art just comes back."
+- "Open source means anyone can copy this. What's the moat?"
+
+**Result:** We identified 5 major trust barriers and 10 actionable findings. A yes man would have produced zero counter-arguments.
+
+#### 6. We Included Segments That Might FAIL
+
+We didn't just interview people who would love CVBER. We included:
+- **AI-Assisted Creators** (6.7/10 fit) — because they're conflicted about AI ethics
+- **Photographers** (6.9/10 fit) — because they have high trust barriers
+- **Graphic Designers** (6.9/10 fit) — because template theft isn't addressed yet
+
+**Result:** We learned to **avoid** AI-Assisted Creators as a beachhead market. A yes man would have included only friendly segments.
+
+#### 7. The Methodology Is Auditable
+
+Every finding is backed by:
+- **Exact percentages** (68%, 91%, 78%, etc.)
+- **Exact counts** (816/1,200, 1,092/1,200, etc.)
+- **Direct quotes** from simulated interviews
+- **Segment breakdowns** (which segments cited what)
+- **Actionable implications** (what to do about each finding)
+
+A yes man gives you vague praise. We give you data you can challenge.
+
+---
+
 ### Methodology
 
 We built a **cognitive behavioral interview engine** that simulates deep human conversations using behavioral science frameworks:
