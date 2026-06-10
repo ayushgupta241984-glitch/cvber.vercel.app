@@ -16,6 +16,14 @@ import re
 import logging
 
 logger = logging.getLogger(__name__)
+
+_IMAGE_ERROR_PATTERNS = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model", "model does not support", "not a vision model"]
+
+def _strip_image_error(msg: str) -> str:
+    lines = msg.split("\n")
+    cleaned = [l for l in lines if not any(p in l.lower() for p in _IMAGE_ERROR_PATTERNS)]
+    result = "\n".join(cleaned).strip()
+    return result if result else "Image analysis unavailable."
 router = APIRouter(prefix="/scan", tags=["scan"])
 
 supabase = get_supabase()
@@ -435,7 +443,8 @@ async def scan_file(
                 supabase.table("audit_logs").insert(error_log).execute()
             except Exception as log_error:
                 logger.warning(f"Failed to log scan error: {log_error}")
-        raise HTTPException(status_code=500, detail=f"Scan failed: {str(e)}")
+        clean_msg = _strip_image_error(str(e))
+        raise HTTPException(status_code=500, detail=f"Scan failed: {clean_msg}")
 
 
 @router.post("/verify", response_model=VerifyResponse)
@@ -525,7 +534,8 @@ async def verify_file(
         raise
     except Exception as e:
         logger.error(f"Verification failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
+        clean_msg = _strip_image_error(str(e))
+        raise HTTPException(status_code=500, detail=f"Verification failed: {clean_msg}")
 
 
 @router.get("/history")
