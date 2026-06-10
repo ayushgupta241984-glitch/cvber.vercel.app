@@ -29,55 +29,53 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
     const [color, setColor] = useState<WatermarkColor>('white');
 
     const grabCanvasImage = useCallback(async (previewUrl: string, fileId?: string): Promise<HTMLCanvasElement> => {
-        const tryDom = (): HTMLCanvasElement | null => {
-            const candidates = document.querySelectorAll<HTMLImageElement>('img[src*="supabase"]');
-            for (const img of candidates) {
-                if (!img.complete || img.naturalWidth === 0) continue;
-                const c = document.createElement('canvas');
-                c.width = img.naturalWidth;
-                c.height = img.naturalHeight;
-                const ctx = c.getContext('2d');
-                if (!ctx) continue;
-                ctx.drawImage(img, 0, 0);
-                return c;
-            }
-            return null;
-        };
-
-        const proxyFetch = async (query: string): Promise<HTMLCanvasElement> => {
-            const resp = await fetch(`/api/proxy-image?${query}`, { signal: AbortSignal.timeout(30000) });
-            if (!resp.ok) throw new Error(`Proxy ${resp.status}`);
-            const blob = await resp.blob();
-            const dataUrl = await new Promise<string>((resolve, reject) => {
-                const r = new FileReader();
-                r.onload = () => resolve(r.result as string);
-                r.onerror = () => reject(new Error('FileReader'));
-                r.readAsDataURL(blob);
-            });
-            const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-                const el = new Image();
-                el.onload = () => resolve(el);
-                el.onerror = () => reject(new Error('Decode'));
-                el.src = dataUrl;
-            });
+        const imageToCanvas = (img: HTMLImageElement): HTMLCanvasElement => {
             const c = document.createElement('canvas');
-            c.width = img.width;
-            c.height = img.height;
+            c.width = img.naturalWidth;
+            c.height = img.naturalHeight;
             c.getContext('2d')!.drawImage(img, 0, 0);
             return c;
         };
 
-        const domResult = tryDom();
+        const domResult = ((): HTMLCanvasElement | null => {
+            const candidates = document.querySelectorAll<HTMLImageElement>('img[src]');
+            for (const img of candidates) {
+                if (!img.complete || img.naturalWidth === 0) continue;
+                return imageToCanvas(img);
+            }
+            return null;
+        })();
         if (domResult) return domResult;
+
+        const fetchAsCanvas = async (fetchUrl: string): Promise<HTMLCanvasElement> => {
+            const resp = await fetch(fetchUrl, { signal: AbortSignal.timeout(30000) });
+            if (!resp.ok) throw new Error(`Fetch failed (${resp.status})`);
+            const blob = await resp.blob();
+            const el = await new Promise<HTMLImageElement>((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error('Decode'));
+                img.src = URL.createObjectURL(blob);
+            });
+            return imageToCanvas(el);
+        };
 
         const token = localStorage.getItem('access_token');
         if (fileId && token) {
             try {
-                return await proxyFetch(`fileId=${encodeURIComponent(fileId)}&token=${encodeURIComponent(token)}`);
+                return await fetchAsCanvas(`/api/proxy-image?fileId=${encodeURIComponent(fileId)}&token=${encodeURIComponent(token)}`);
             } catch {}
         }
 
-        return await proxyFetch(`url=${encodeURIComponent(previewUrl)}`);
+        try {
+            return await fetchAsCanvas(`/api/proxy-image?url=${encodeURIComponent(previewUrl)}`);
+        } catch {}
+
+        try {
+            return await fetchAsCanvas(previewUrl);
+        } catch {}
+
+        throw new Error('Could not load image. Try refreshing the page.');
     }, []);
 
     const drawWatermark = useCallback(async () => {
@@ -168,7 +166,7 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
             setIsProcessing(false);
         } catch (e: any) {
             console.error('Watermark error:', e);
-            setError(e?.message || 'Failed to load image — try again');
+            setError('Could not load image. Try refreshing and opening the watermark again.');
             setIsProcessing(false);
         }
     }, [file, text, style, opacity, color, grabCanvasImage]);

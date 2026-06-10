@@ -11,39 +11,76 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Missing url or fileId param' }, { status: 400 });
     }
 
-    try {
-        let resp: Response;
+    let lastError: string = '';
 
-        if (fileId && token) {
-            resp = await fetch(`${BACKEND_URL}/vault/files/${fileId}/download`, {
+    // Strategy 1: fileId + token → backend download
+    if (fileId && token) {
+        try {
+            const resp = await fetch(`${BACKEND_URL}/vault/files/${fileId}/download`, {
                 headers: { 'Authorization': `Bearer ${token}` },
                 signal: AbortSignal.timeout(15000),
             });
-        } else if (url) {
-            resp = await fetch(url, {
-                headers: { Accept: 'image/*' },
-                signal: AbortSignal.timeout(15000),
-            });
-        } else {
-            return NextResponse.json({ error: 'Invalid params' }, { status: 400 });
+            if (resp.ok) {
+                const contentType = resp.headers.get('content-type') || 'application/octet-stream';
+                const body = await resp.arrayBuffer();
+                return new NextResponse(body, {
+                    status: 200,
+                    headers: {
+                        'Content-Type': contentType,
+                        'Access-Control-Allow-Origin': '*',
+                        'Cache-Control': 'public, max-age=3600',
+                    },
+                });
+            }
+            lastError = `Backend ${resp.status}`;
+        } catch (e: any) {
+            lastError = e?.message || 'fetch failed';
         }
-
-        if (!resp.ok) {
-            return NextResponse.json({ error: `Upstream ${resp.status}` }, { status: resp.status });
-        }
-
-        const contentType = resp.headers.get('content-type') || 'application/octet-stream';
-        const body = await resp.arrayBuffer();
-
-        return new NextResponse(body, {
-            status: 200,
-            headers: {
-                'Content-Type': contentType,
-                'Access-Control-Allow-Origin': '*',
-                'Cache-Control': 'public, max-age=3600',
-            },
-        });
-    } catch (e) {
-        return NextResponse.json({ error: 'Proxy fetch failed' }, { status: 502 });
     }
+
+    // Strategy 2: direct URL proxy
+    if (url) {
+        try {
+            const resp = await fetch(url, {
+                headers: { Accept: 'image/*' },
+                signal: AbortSignal.timeout(20000),
+            });
+            if (resp.ok) {
+                const contentType = resp.headers.get('content-type') || 'application/octet-stream';
+                const body = await resp.arrayBuffer();
+                return new NextResponse(body, {
+                    status: 200,
+                    headers: {
+                        'Content-Type': contentType,
+                        'Access-Control-Allow-Origin': '*',
+                        'Cache-Control': 'public, max-age=3600',
+                    },
+                });
+            }
+            lastError = `URL ${resp.status}`;
+        } catch (e: any) {
+            lastError = e?.message || 'url fetch failed';
+        }
+    }
+
+    // Strategy 3: try backend storage URL directly (no auth)
+    if (url && url.includes('supabase')) {
+        try {
+            const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+            if (resp.ok) {
+                const contentType = resp.headers.get('content-type') || 'application/octet-stream';
+                const body = await resp.arrayBuffer();
+                return new NextResponse(body, {
+                    status: 200,
+                    headers: {
+                        'Content-Type': contentType,
+                        'Access-Control-Allow-Origin': '*',
+                        'Cache-Control': 'public, max-age=3600',
+                    },
+                });
+            }
+        } catch {}
+    }
+
+    return NextResponse.json({ error: `Proxy failed: ${lastError}` }, { status: 502 });
 }

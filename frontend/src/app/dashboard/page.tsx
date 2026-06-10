@@ -455,10 +455,13 @@ function DashboardInner() {
         try {
             const urlResp = await apiClient.getVaultFileUrl(file.id);
             if (urlResp?.url) file.previewUrl = urlResp.url;
-        } catch (err) {
-            console.error("Failed to refresh URL for watermark:", err);
+        } catch {
+            try {
+                const proofs = await apiClient.getVaultFileWithProofs(file.id);
+                if (proofs?.file?.storage_url) file.previewUrl = proofs.file.storage_url;
+            } catch {}
         }
-        setSelectedFile(file);
+        setSelectedFile({ ...file });
         setIsWatermarkOpen(true);
         if (window.innerWidth < 1024) setIsSidebarOpen(false);
     };
