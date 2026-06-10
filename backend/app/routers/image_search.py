@@ -155,7 +155,13 @@ async def deep_image_search(
 
     api_key = settings.nvidia_nim_api_key or os.getenv("NVIDIA_NIM_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=503, detail="NVIDIA NIM API key not configured")
+        return {
+            "results": [],
+            "total_found": 0,
+            "description": "AI deep search requires NVIDIA NIM API key. Using basic hash search instead.",
+            "queries_used": [],
+            "images_searched": 0,
+        }
 
     try:
         from app.services.deep_search import deep_search
@@ -181,7 +187,13 @@ async def deep_image_search_tv(
 
     api_key = settings.nvidia_nim_api_key or os.getenv("NVIDIA_NIM_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=503, detail="NVIDIA NIM API key not configured")
+        async def no_nim_stream():
+            yield f"event: error\ndata: {json.dumps({'message': 'NVIDIA NIM API key not configured. Deep search unavailable.'})}\n\n"
+        return StreamingResponse(
+            no_nim_stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+        )
 
     async def event_stream():
         try:

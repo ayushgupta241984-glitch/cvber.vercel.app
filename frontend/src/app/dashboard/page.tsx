@@ -576,15 +576,13 @@ function DashboardInner() {
     };
 
     const handleDeepSearch = async (fileBlob: Blob, fileName: string) => {
-        setSearchError(null);
-
         try {
             const file = new File([fileBlob], fileName, { type: fileBlob.type || 'image/jpeg' });
             const result = await apiClient.deepImageSearch(file);
             setSearchResults((prev: any) => ({ ...(prev || {}), _deepResults: result }));
         } catch (err: any) {
-            setSearchError(err?.message || 'Deep search failed');
-            console.error('Deep search error:', err);
+            console.error('Deep search failed:', err);
+            throw err;
         }
     };
 
