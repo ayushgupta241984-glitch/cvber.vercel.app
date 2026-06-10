@@ -3,83 +3,67 @@ import { NextRequest, NextResponse } from 'next/server';
 const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
 export async function GET(request: NextRequest) {
-    const url = request.nextUrl.searchParams.get('url');
     const fileId = request.nextUrl.searchParams.get('fileId');
     const token = request.nextUrl.searchParams.get('token');
+    const url = request.nextUrl.searchParams.get('url');
 
-    if (!url && !fileId) {
-        return NextResponse.json({ error: 'Missing url or fileId param' }, { status: 400 });
+    if (!fileId && !url) {
+        return NextResponse.json({ error: 'Missing fileId or url param' }, { status: 400 });
     }
 
-    let lastError: string = '';
+    let lastError = '';
 
-    // Strategy 1: fileId + token → backend download
     if (fileId && token) {
         try {
             const resp = await fetch(`${BACKEND_URL}/vault/files/${fileId}/download`, {
                 headers: { 'Authorization': `Bearer ${token}` },
-                signal: AbortSignal.timeout(15000),
-            });
-            if (resp.ok) {
-                const contentType = resp.headers.get('content-type') || 'application/octet-stream';
-                const body = await resp.arrayBuffer();
-                return new NextResponse(body, {
-                    status: 200,
-                    headers: {
-                        'Content-Type': contentType,
-                        'Access-Control-Allow-Origin': '*',
-                        'Cache-Control': 'public, max-age=3600',
-                    },
-                });
-            }
-            lastError = `Backend ${resp.status}`;
-        } catch (e: any) {
-            lastError = e?.message || 'fetch failed';
-        }
-    }
-
-    // Strategy 2: direct URL proxy
-    if (url) {
-        try {
-            const resp = await fetch(url, {
-                headers: { Accept: 'image/*' },
                 signal: AbortSignal.timeout(20000),
             });
             if (resp.ok) {
-                const contentType = resp.headers.get('content-type') || 'application/octet-stream';
                 const body = await resp.arrayBuffer();
                 return new NextResponse(body, {
                     status: 200,
                     headers: {
-                        'Content-Type': contentType,
+                        'Content-Type': resp.headers.get('content-type') || 'application/octet-stream',
                         'Access-Control-Allow-Origin': '*',
                         'Cache-Control': 'public, max-age=3600',
                     },
                 });
             }
-            lastError = `URL ${resp.status}`;
+            lastError = `Backend HTTP ${resp.status}`;
         } catch (e: any) {
-            lastError = e?.message || 'url fetch failed';
+            lastError = `Backend fetch failed: ${e?.message || 'unknown'}`;
         }
     }
 
-    // Strategy 3: try backend storage URL directly (no auth)
-    if (url && url.includes('supabase')) {
-        try {
-            const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
-            if (resp.ok) {
-                const contentType = resp.headers.get('content-type') || 'application/octet-stream';
-                const body = await resp.arrayBuffer();
-                return new NextResponse(body, {
-                    status: 200,
-                    headers: {
-                        'Content-Type': contentType,
-                        'Access-Control-Allow-Origin': '*',
-                        'Cache-Control': 'public, max-age=3600',
-                    },
+    if (url) {
+        const urlsToTry = [url];
+        if (url.includes('supabase')) {
+            const noToken = url.split('?')[0];
+            if (noToken !== url) urlsToTry.push(noToken);
+        }
+        for (const tryUrl of urlsToTry) {
+            try {
+                const resp = await fetch(tryUrl, {
+                    signal: AbortSignal.timeout(20000),
                 });
+                if (resp.ok) {
+                    const contentType = resp.headers.get('content-type') || 'application/octet-stream';
+                    const body = await resp.arrayBuffer();
+                    return new NextResponse(body, {
+                        status: 200,
+                        headers: {
+                            'Content-Type': contentType,
+                            'Access-Control-Allow-Origin': '*',
+                            'Cache-Control': 'public, max-age=3600',
+                        },
+                    });
+                }
+                lastError = `URL HTTP ${resp.status}`;
+            } catch (e: any) {
+                lastError = `URL fetch failed: ${e?.message || 'unknown'}`;
             }
-        } catch {}
+        }
     }
 
     return NextResponse.json({ error: `Proxy failed: ${lastError}` }, { status: 502 });

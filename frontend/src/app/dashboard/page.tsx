@@ -452,14 +452,24 @@ function DashboardInner() {
     };
 
     const handleWatermark = async (file: FileData) => {
-        try {
-            const urlResp = await apiClient.getVaultFileUrl(file.id);
-            if (urlResp?.url) file.previewUrl = urlResp.url;
-        } catch {
+        const token = localStorage.getItem('access_token');
+        if (token) {
             try {
-                const proofs = await apiClient.getVaultFileWithProofs(file.id);
-                if (proofs?.file?.storage_url) file.previewUrl = proofs.file.storage_url;
-            } catch {}
+                const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${file.id}/download`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    signal: AbortSignal.timeout(15000),
+                });
+                if (resp.ok) {
+                    const blob = await resp.blob();
+                    file.previewUrl = URL.createObjectURL(blob);
+                }
+            } catch (e) {
+                console.error('Watermark download failed, trying signed URL:', e);
+                try {
+                    const urlResp = await apiClient.getVaultFileUrl(file.id);
+                    if (urlResp?.url) file.previewUrl = urlResp.url;
+                } catch {}
+            }
         }
         setSelectedFile({ ...file });
         setIsWatermarkOpen(true);
