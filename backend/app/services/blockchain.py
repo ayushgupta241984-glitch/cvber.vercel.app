@@ -121,24 +121,31 @@ class BlockchainTimestampService:
 
         try:
             hash_bytes = bytes.fromhex(content_hash)
-            async with httpx.AsyncClient(timeout=self.DEFAULT_TIMEOUT) as client:
-                # Submit hash bytes to calendar
-                response = await client.post(
-                    f"{self.OTS_CALENDARS[0]}/digest",
-                    content=hash_bytes,
-                    headers={"Content-Type": "application/octet-stream"}
-                )
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                submitted = False
+                for calendar_url in self.OTS_CALENDARS:
+                    try:
+                        response = await client.post(
+                            f"{calendar_url}/digest",
+                            content=hash_bytes,
+                            headers={"Content-Type": "application/octet-stream"}
+                        )
+                        if response.status_code == 200:
+                            ots_proof = base64.b64encode(response.content).decode('utf-8')
+                            status = "pending"
+                            submitted = True
+                            logger.info(f"OpenTimestamps proof created via {calendar_url} for {asset_name}")
+                            break
+                        else:
+                            logger.warning(f"OTS calendar {calendar_url} returned {response.status_code}")
+                    except Exception as cal_err:
+                        logger.warning(f"OTS calendar {calendar_url} failed: {cal_err}")
+                        continue
 
-                if response.status_code == 200:
-                    # Get the timestamp proof (binary .ots file)
-                    ots_proof = base64.b64encode(response.content).decode('utf-8')
-                    status = "pending"  # Will be confirmed after Bitcoin inclusion
-                    logger.info(f"OpenTimestamps proof created for {asset_name}")
-                else:
-                    logger.warning(f"OpenTimestamps returned status {response.status_code}")
+                if not submitted:
+                    logger.warning("All OTS calendars failed, creating local proof")
                     status = "local_only"
         except Exception as e:
-            # Fallback: Create local proof (not blockchain-anchored but still verifiable)
             logger.error(f"OpenTimestamps submit failed: {e}. Creating local proof.")
             status = "local_only"
 

@@ -124,6 +124,7 @@ function DashboardInner() {
     const [selectedBlockchainFile, setSelectedBlockchainFile] = useState<FileData | null>(null);
     const [blockchainFileProofs, setBlockchainFileProofs] = useState<any[]>([]);
     const [proofsLoading, setProofsLoading] = useState(false);
+    const [timestampingId, setTimestampingId] = useState<string | null>(null);
     const [proofModalFile, setProofModalFile] = useState<FileData | null>(null);
     const [proofType, setProofType] = useState<'declaration' | 'source' | 'original'>('declaration');
     const [proofText, setProofText] = useState('');
@@ -486,8 +487,10 @@ function DashboardInner() {
     const loadBlockchainProofs = async (file: FileData) => {
         setSelectedBlockchainFile(file);
         setProofsLoading(true);
+        setBlockchainFileProofs([]);
         try {
             const result = await apiClient.getVaultFileWithProofs(file.id);
+            console.log('Blockchain proofs loaded:', result);
             setBlockchainFileProofs(result.blockchain_proofs || []);
         } catch (err) {
             console.error("Failed to load proofs:", err);
@@ -503,15 +506,18 @@ function DashboardInner() {
             toast("File hash not available.", 'error');
             return;
         }
+        setTimestampingId(file.id);
         try {
             const result = await apiClient.createBlockchainTimestamp(file.name, hash, file.id);
             console.log('Blockchain timestamp created:', result);
+            toast('Blockchain timestamp created — anchoring to Bitcoin', 'success');
             window.dispatchEvent(new Event('blockchain-update'));
-            if (selectedBlockchainFile?.id === file.id) {
-                await loadBlockchainProofs(file);
-            }
+            setSelectedBlockchainFile(file);
+            await loadBlockchainProofs(file);
         } catch (err: any) {
             toast(err?.message || 'Failed to create blockchain timestamp', 'error');
+        } finally {
+            setTimestampingId(null);
         }
     };
 
@@ -935,9 +941,10 @@ function DashboardInner() {
                                                                 {f.hash && (
                                                                     <button
                                                                         onClick={(e) => { e.stopPropagation(); handleTimestamp(f); }}
-                                                                        className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-gold/30 text-luxury-gold hover:bg-luxury-gold/10 transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
+                                                                        disabled={timestampingId === f.id}
+                                                                        className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-gold/30 text-luxury-gold hover:bg-luxury-gold/10 transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] disabled:opacity-40 disabled:cursor-wait"
                                                                     >
-                                                                        Anchor
+                                                                        {timestampingId === f.id ? 'Anchoring...' : 'Anchor'}
                                                                     </button>
                                                                 )}
                                                                 <span className="text-[10px] text-luxury-muted/40 uppercase tracking-widest">
