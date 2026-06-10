@@ -94,18 +94,13 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
 
     return (
         <div>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, ease: easeLuxury }}
-                className="flex items-center justify-between mb-8 pb-4 border-b border-luxury-steel/30"
-            >
-                <div>
-                    <p className="text-luxury-subheading mb-2">The Gallery</p>
-                    <h2 className="text-xl font-display text-luxury-cream">Your Collection</h2>
+                <div className="flex items-center justify-between mb-8 pb-4 border-b border-luxury-steel/30">
+                    <div>
+                        <p className="text-luxury-subheading mb-2">The Gallery</p>
+                        <h2 className="text-xl font-display text-luxury-cream">Your Collection</h2>
+                    </div>
+                    <span className="text-[10px] text-luxury-muted uppercase tracking-ultra-wide font-semibold">{files.length} {files.length === 1 ? 'piece' : 'pieces'}</span>
                 </div>
-                <span className="text-[10px] text-luxury-muted uppercase tracking-ultra-wide font-semibold">{files.length} {files.length === 1 ? 'piece' : 'pieces'}</span>
-            </motion.div>
 
             {loading && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0">
@@ -191,7 +186,7 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                                         {file.riskScore.toFixed(0)}%
                                                     </span>
                                                 </div>
-                                                <div className="h-px bg-luxury-steel/30 relative">
+                                                <div className="h-[2px] bg-luxury-steel/30 relative">
                                                     <div
                                                         className={`absolute left-0 top-0 h-full transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${file.riskScore < 30 ? 'bg-luxury-gold/60' : 'bg-luxury-gold/30'}`}
                                                         style={{ width: `${file.riskScore}%` }}
@@ -207,7 +202,7 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                                         {file.originalityScore.toFixed(0)}%
                                                     </span>
                                                 </div>
-                                                <div className="h-px bg-luxury-steel/30 relative">
+                                                <div className="h-[2px] bg-luxury-steel/30 relative">
                                                     <div
                                                         className={`absolute left-0 top-0 h-full transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${file.originalityScore > 70 ? 'bg-luxury-gold/60' : 'bg-luxury-gold/30'}`}
                                                         style={{ width: `${file.originalityScore}%` }}
@@ -217,10 +212,10 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                         )}
                                     </div>
 
-                                    {/* Actions - pushed to bottom by flex-1 */}
+                                    {/* Actions */}
                                     <div className="flex items-center justify-between pt-4 border-t border-luxury-steel/20 mt-auto">
                                         <span className="text-[9px] text-luxury-muted/40 uppercase tracking-widest">{new Date(file.uploadedAt).toLocaleDateString()}</span>
-                                        <div className="flex gap-1">
+                                        <div className="flex items-center gap-1">
                                             <button
                                                 onClick={() => onDelete?.(file)}
                                                 className="p-2 text-luxury-muted/40 hover:text-luxury-gold/60 transition-colors duration-300"
@@ -260,24 +255,26 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                             >
                                                 <Scale className="h-3.5 w-3.5" />
                                             </button>
-                                            {file.status !== 'scanning' && (
-                                                <button
-                                                    onClick={() => onView?.(file)}
-                                                    className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold text-luxury-cream border border-luxury-steel/40 hover:border-luxury-gold/40 hover:text-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
-                                                >
-                                                    View
-                                                </button>
-                                            )}
-                                            {file.status === 'safe' && (!file.proofRequired || file.ownershipProofStatus === 'verified') && (
-                                                <button
-                                                    onClick={() => onWatermark?.(file)}
-                                                    className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] flex items-center gap-2"
-                                                >
-                                                    <Shield className="h-3 w-3" />
-                                                    Mark
-                                                </button>
-                                            )}
                                         </div>
+                                    </div>
+                                    <div className="flex gap-2 mt-3">
+                                        {file.status !== 'scanning' && (
+                                            <button
+                                                onClick={() => onView?.(file)}
+                                                className="flex-1 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold text-luxury-cream border border-luxury-steel/40 hover:border-luxury-gold/40 hover:text-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
+                                            >
+                                                View
+                                            </button>
+                                        )}
+                                        {file.status === 'safe' && (!file.proofRequired || file.ownershipProofStatus === 'verified') && (
+                                            <button
+                                                onClick={() => onWatermark?.(file)}
+                                                className="flex-1 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] flex items-center justify-center gap-2"
+                                            >
+                                                <Shield className="h-3 w-3" />
+                                                Mark
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>
