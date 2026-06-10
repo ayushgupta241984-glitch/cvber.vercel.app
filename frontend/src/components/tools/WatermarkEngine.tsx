@@ -3,6 +3,11 @@
 import { Shield, Download, X, Copy, Check, ExternalLink, Settings, Type, Grid, Layout, Square, Palette, Sparkles } from 'lucide-react';
 import { useRef, useEffect, useState, useCallback } from 'react';
 
+function proxyUrl(url: string): string {
+    if (typeof window === 'undefined') return url;
+    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+}
+
 interface WatermarkEngineProps {
     file: {
         name: string;
@@ -50,20 +55,8 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
         setError(null);
 
         try {
-            let img: HTMLImageElement;
-            try {
-                img = await loadImage(file.previewUrl);
-            } catch {
-                const resp = await fetch(file.previewUrl);
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const blob = await resp.blob();
-                const localUrl = URL.createObjectURL(blob);
-                try {
-                    img = await loadImage(localUrl);
-                } finally {
-                    URL.revokeObjectURL(localUrl);
-                }
-            }
+            const pUrl = proxyUrl(file.previewUrl);
+            const img = await loadImage(pUrl);
 
             canvas.width = img.width;
             canvas.height = img.height;
