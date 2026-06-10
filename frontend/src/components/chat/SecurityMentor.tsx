@@ -126,9 +126,17 @@ function searchFiles(query: string, files: FileData[]): { message: string; resul
     const findMatch = q.match(/(?:find|search|look|locate|show|where|get|open)\s*(?:for\s*)?["']?(.+?)["']?$/i);
     if (findMatch) {
         let searchTerm = findMatch[1].toLowerCase();
-        searchTerm = searchTerm.replace(/\s+(online|on the web|on the internet|on google|on yandex|on bing|internet|web)$/i, '');
+        searchTerm = searchTerm.replace(/\s+(online|on the web|on the internet|on google|on yandex|on bing|internet|web|my art|all my|my files|my collection)$/i, '').trim();
         const matched = searchTerm ? files.filter(f => f.name.toLowerCase().includes(searchTerm)) : [];
-        if (matched.length === 0) return { message: `I couldn't find any files matching "${searchTerm}".`, results: [] };
+        if (matched.length === 0) {
+            if (files.length > 0) {
+                return {
+                    message: `No files match "${searchTerm}" by name. Here's your full collection:`,
+                    results: files.map(f => ({ name: f.name, score: f.riskScore, status: f.status, originality: f.originalityScore }))
+                };
+            }
+            return { message: `No files found. Upload some art to your vault first.`, results: [] };
+        }
         return {
             message: `Found **${matched.length}** ${matched.length === 1 ? 'match' : 'matches'} for "${searchTerm}":`,
             results: matched.map(f => ({ name: f.name, score: f.riskScore, status: f.status, originality: f.originalityScore }))
@@ -161,6 +169,14 @@ function searchFiles(query: string, files: FileData[]): { message: string; resul
         return {
             message: `Found **${nameSearch.length}** ${nameSearch.length === 1 ? 'file' : 'files'} matching your query:`,
             results: nameSearch.map(f => ({ name: f.name, score: f.riskScore, status: f.status, originality: f.originalityScore }))
+        };
+    }
+
+    const vagueQuery = /^(my art|my art|art|my work|my files|my collection|everything|all|show me|show all|what do i have|what's in|what is in)/i.test(q);
+    if (vagueQuery && files.length > 0) {
+        return {
+            message: `Here's everything in your vault:`,
+            results: files.map(f => ({ name: f.name, score: f.riskScore, status: f.status, originality: f.originalityScore }))
         };
     }
 
@@ -228,7 +244,7 @@ export function SecurityMentor({ context, onSearchFile }: SecurityMentorProps) {
             const result = searchFiles(input, files);
 
             const wantsOnline = /\b(online|internet|web|google|yandex|bing|on the web|on the internet)\b/i.test(input);
-            const genericSearch = /find my file|search my file|search online|find online|reverse image|search web|find web/i.test(input);
+            const genericSearch = /find my file|search my file|search online|find online|reverse image|search web|find web|find my art|search my art|show my art|find all|show all/i.test(input);
             const matched = result.results;
 
             // "find my file online" with exactly 1 total file → auto-search it
