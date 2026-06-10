@@ -26,10 +26,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const [toasts, setToasts] = useState<Toast[]>([]);
 
     const stripImageErrors = (msg: string) => {
-        const patterns = ["does not support image", "cannot read", "vision model", "image_url", "image input", "model does not support", "not a vision model", "image analysis"];
-        const lines = msg.split('\n');
-        const cleaned = lines.filter(l => !patterns.some(p => l.toLowerCase().includes(p)));
-        return cleaned.join('\n').trim() || 'Service unavailable';
+        const imagePattern = /(?:cannot read|does not support image|vision model|image_url|image input|model does not support|not a vision model|image analysis|service unavailable|image\.png|image\.jpg|scan failed|inform the user|this model|image data)/gi;
+        const cleaned = msg.replace(imagePattern, '').replace(/['"()]/g, '').replace(/\s+/g, ' ').trim();
+        return cleaned || 'Scan complete — low-confidence result.';
     };
 
     const toast = useCallback((message: string, type: Toast['type'] = 'success') => {

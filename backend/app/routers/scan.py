@@ -17,7 +17,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-_IMAGE_ERROR_PATTERNS = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model", "model does not support", "not a vision model"]
+_IMAGE_ERROR_PATTERNS = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model", "model does not support", "not a vision model", "inform the user", "this model"]
 
 def _strip_image_error(msg: str) -> str:
     lines = msg.split("\n")

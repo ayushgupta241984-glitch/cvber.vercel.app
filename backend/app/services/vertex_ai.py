@@ -601,7 +601,7 @@ class VertexAIService:
             err_str = str(e)
             logger.error(f"Analysis failed for provider={self.provider}: {err_str}")
 
-            image_errors = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model"]
+            image_errors = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model", "inform the user", "image.png", "this model"]
             if any(e in err_str.lower() for e in image_errors):
                 logger.warning("Model does not support image input. Falling back to rule-based analysis.")
                 return await self._fallback_image_analysis(file_name, file_type, file_buffer, rules, has_c2pa)
@@ -611,7 +611,7 @@ class VertexAIService:
     @staticmethod
     def _strip_image_errors(text: str) -> str:
         lines = text.split("\n")
-        patterns = ["does not support image", "cannot read", "vision model", "image_url"]
+        patterns = ["does not support image", "cannot read", "vision model", "image_url", "image input", "model does not support", "inform the user", "image.png", "image data"]
         cleaned = [l for l in lines if not any(p in l.lower() for p in patterns)]
         result = "\n".join(cleaned).strip()
         if not result:

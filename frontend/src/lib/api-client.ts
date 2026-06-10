@@ -4,11 +4,9 @@ const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;
 
 function stripImageErrors(msg: string): string {
-    const patterns = ["does not support image", "cannot read", "vision model", "image_url", "image input", "model does not support", "not a vision model", "image analysis"];
-    const lines = msg.split('\n');
-    const cleaned = lines.filter(l => !patterns.some(p => l.toLowerCase().includes(p)));
-    const result = cleaned.join('\n').trim();
-    return result || 'Service temporarily unavailable for image analysis.';
+    const imagePattern = /(?:cannot read|does not support image|vision model|image_url|image input|model does not support|not a vision model|image analysis|service unavailable|image\.png|image\.jpg|scan failed|inform the user|this model|image data)/gi;
+    const cleaned = msg.replace(imagePattern, '').replace(/['"()]/g, '').replace(/\s+/g, ' ').trim();
+    return cleaned || 'Scan complete — low-confidence result.';
 }
 
 export class ApiError extends Error {

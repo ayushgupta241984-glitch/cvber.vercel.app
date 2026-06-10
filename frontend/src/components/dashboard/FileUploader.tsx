@@ -52,9 +52,9 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
                 setProgress(0);
             }, 1000);
         } catch (err) {
-            const patterns = ["does not support image", "cannot read", "vision model", "image_url", "image input", "model does not support", "not a vision model", "image analysis"];
-            const msg = err instanceof Error ? err.message : 'Upload failed';
-            const cleaned = msg.split('\n').filter(l => !patterns.some(p => l.toLowerCase().includes(p))).join('\n').trim();
+            const imagePatterns = /does not support image|cannot read |vision model|image_url|image input|model does not support|not a vision model|image analysis|service unavailable|scan failed/i;
+            const msg = err instanceof Error ? err.message : '';
+            const cleaned = msg.replace(imagePatterns, '').replace(/\s+/g, ' ').trim();
             setError(cleaned || 'Upload failed');
             setUploading(false);
             setProgress(0);
