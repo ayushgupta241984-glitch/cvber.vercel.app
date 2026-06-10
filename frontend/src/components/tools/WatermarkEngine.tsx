@@ -2,6 +2,7 @@
 
 import { Shield, Download, X, Copy, Check, ExternalLink, Settings, Type, Grid, Layout, Square, Palette, Sparkles } from 'lucide-react';
 import { useRef, useEffect, useState, useCallback } from 'react';
+import { apiClient } from '@/lib/api-client';
 
 interface WatermarkEngineProps {
     file: {
@@ -28,8 +29,28 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
     const [opacity, setOpacity] = useState(30);
     const [color, setColor] = useState<WatermarkColor>('white');
 
-    const fetchAsDataUrl = useCallback(async (url: string): Promise<string> => {
-        const resp = await fetch(url);
+    const fetchImageAsDataUrl = useCallback(async (previewUrl: string, fileId?: string): Promise<string> => {
+        const baseUrl = apiClient.getBaseUrl();
+
+        if (fileId) {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                const resp = await fetch(`${baseUrl}/vault/files/${fileId}/download`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                if (resp.ok) {
+                    const blob = await resp.blob();
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result as string);
+                        reader.onerror = () => reject(new Error('FileReader failed'));
+                        reader.readAsDataURL(blob);
+                    });
+                }
+            }
+        }
+
+        const resp = await fetch(previewUrl);
         if (!resp.ok) throw new Error(`Fetch failed: ${resp.status}`);
         const blob = await resp.blob();
         return new Promise((resolve, reject) => {
@@ -62,7 +83,7 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
         setError(null);
 
         try {
-            const dataUrl = await fetchAsDataUrl(file.previewUrl);
+            const dataUrl = await fetchImageAsDataUrl(file.previewUrl, file.id);
             const img = await loadImage(dataUrl);
 
             canvas.width = img.width;
@@ -142,7 +163,7 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
             setError(e?.message || 'Failed to load image — try again');
             setIsProcessing(false);
         }
-    }, [file, text, style, opacity, color, fetchAsDataUrl, loadImage]);
+    }, [file, text, style, opacity, color, fetchImageAsDataUrl, loadImage]);
 
     useEffect(() => {
         if (!isOpen || !file) return;
