@@ -553,6 +553,7 @@ function DashboardInner() {
 
         try {
             const result = await apiClient.reverseImageSearch(fileToUpload);
+            console.log('[SEARCH] reverseImageSearch result:', JSON.stringify(result).slice(0, 500));
 
             if (result?.scan_id) {
                 const baseUrl = apiClient.getBaseUrl();
@@ -565,12 +566,15 @@ function DashboardInner() {
                 result._saucenaoUrl = `https://saucenao.com/search.php?url=${encodedUrl}`;
                 result._tineyeUrl = `https://tineye.com/search?url=${encodedUrl}`;
                 result._imageUrl = imageUrl;
+                console.log('[SEARCH] Search URLs generated for scan_id:', result.scan_id);
+            } else {
+                console.warn('[SEARCH] No scan_id in result, no search URLs generated');
             }
 
             setSearchResults(result);
         } catch (err: any) {
+            console.error('[SEARCH] performSearch error:', err);
             setSearchError(err?.message || 'Search failed');
-            console.error('Image search error:', err);
         } finally {
             setSearchLoading(false);
             setPendingSearchId(null);
@@ -599,13 +603,16 @@ function DashboardInner() {
 
             const cached = fileBlobCache.current.get(file.id);
             if (cached) {
+                console.log('[SEARCH] Using cached blob for', file.id, file.name, 'size:', cached.size);
                 blob = cached;
             } else {
                 const token = localStorage.getItem('access_token');
                 let downloadOk = false;
                 if (token) {
                     try {
-                        const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${file.id}/download`, {
+                        const downloadUrl = `${apiClient.getBaseUrl()}/vault/files/${file.id}/download`;
+                        console.log('[SEARCH] Downloading from', downloadUrl);
+                        const resp = await fetch(downloadUrl, {
                             headers: { 'Authorization': `Bearer ${token}` },
                             signal: AbortSignal.timeout(15000),
                         });
@@ -613,18 +620,28 @@ function DashboardInner() {
                             blob = await resp.blob();
                             fileBlobCache.current.set(file.id, blob);
                             downloadOk = true;
+                            console.log('[SEARCH] Download OK, blob size:', blob.size, 'type:', blob.type);
+                        } else {
+                            console.warn('[SEARCH] Download failed, status:', resp.status);
                         }
-                    } catch {}
+                    } catch (e) {
+                        console.warn('[SEARCH] Download error:', e);
+                    }
                 }
 
                 if (!downloadOk) {
+                    console.log('[SEARCH] Trying DOM grab');
                     const domImg = document.querySelector<HTMLImageElement>('img[src]');
                     if (domImg && domImg.complete && domImg.naturalWidth > 0) {
+                        console.log('[SEARCH] DOM img found:', domImg.src.slice(0, 100));
                         const c = document.createElement('canvas');
                         c.width = domImg.naturalWidth;
                         c.height = domImg.naturalHeight;
                         c.getContext('2d')!.drawImage(domImg, 0, 0);
                         blob = await new Promise<Blob>((resolve) => c.toBlob(b => resolve(b!), 'image/png'));
+                        console.log('[SEARCH] DOM grab blob size:', blob?.size);
+                    } else {
+                        console.warn('[SEARCH] No suitable DOM img found');
                     }
                 }
 
@@ -635,14 +652,14 @@ function DashboardInner() {
 
             setSearchFileBlob(blob);
             const fileToUpload = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
+            console.log('[SEARCH] Calling performSearch, file:', fileToUpload.name, 'size:', fileToUpload.size, 'type:', fileToUpload.type);
             await performSearch(fileToUpload);
             try {
                 await apiClient.registerHash(fileToUpload, file.id);
             } catch {
-                // non-critical
             }
         } catch (err) {
-            console.error('Search failed:', err);
+            console.error('[SEARCH] handleSearch error:', err);
             const msg = err instanceof Error ? err.message : 'Unknown error';
             toast(`Could not search file: ${msg}`, 'error');
         } finally {
