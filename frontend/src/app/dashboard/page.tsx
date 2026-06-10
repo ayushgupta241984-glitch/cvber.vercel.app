@@ -451,7 +451,6 @@ function DashboardInner() {
     };
 
     const handleWatermark = async (file: FileData) => {
-        if (checkProofRequired(file)) return;
         if (!file.previewUrl) {
             try {
                 const urlResp = await apiClient.getVaultFileUrl(file.id);

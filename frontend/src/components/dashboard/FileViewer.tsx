@@ -35,11 +35,9 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
 
     if (!isOpen || !file) return null;
 
-    // Smart Lock Logic: Disable watermark if score is low or screenshot detected
-    // It is "locked" if it's not original AND the user hasn't signed the waiver yet
-    const isOriginal = (file.originalityScore ?? 0) > 50;
-    const isLocked = (!isOriginal || file.isScreenshot) && !hasSignedWaiver;
-    const needsWaiver = (!isOriginal || file.isScreenshot);
+    // No lock — always allow watermarking
+    const isLocked = false;
+    const needsWaiver = false;
 
     const handleLegalWaiver = () => {
         generateLegalAffidavit({
