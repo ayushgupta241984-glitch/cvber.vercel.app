@@ -27,6 +27,16 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
     const [opacity, setOpacity] = useState(30);
     const [color, setColor] = useState<WatermarkColor>('white');
 
+    const loadImage = useCallback((url: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error('Image load failed'));
+            img.crossOrigin = 'anonymous';
+            img.src = url;
+        });
+    }, []);
+
     const drawWatermark = useCallback(async () => {
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
@@ -40,101 +50,99 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
         setError(null);
 
         try {
-            const resp = await fetch(file.previewUrl);
-            const blob = await resp.blob();
-            const localUrl = URL.createObjectURL(blob);
-
-            const img = new Image();
-            img.onload = () => {
+            let img: HTMLImageElement;
+            try {
+                img = await loadImage(file.previewUrl);
+            } catch {
+                const resp = await fetch(file.previewUrl);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const blob = await resp.blob();
+                const localUrl = URL.createObjectURL(blob);
                 try {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
+                    img = await loadImage(localUrl);
+                } finally {
                     URL.revokeObjectURL(localUrl);
-
-                    const baseSize = Math.max(20, Math.floor(canvas.width * 0.04));
-                    const alpha = opacity / 100;
-                    const rgbaColor = color === 'white'
-                        ? `rgba(255, 255, 255, ${alpha})`
-                        : `rgba(0, 0, 0, ${alpha})`;
-
-                    ctx.fillStyle = rgbaColor;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-
-                    if (style === 'grid') {
-                        ctx.font = `bold ${baseSize}px Inter, sans-serif`;
-                        const spacing = baseSize * 6;
-                        ctx.save();
-                        ctx.rotate(-Math.PI / 4);
-                        const diagonal = Math.sqrt(canvas.width ** 2 + canvas.height ** 2);
-                        for (let y = -diagonal; y < diagonal; y += spacing) {
-                            for (let x = -diagonal; x < diagonal; x += spacing * 2) {
-                                ctx.fillText(text, x + (y % (spacing * 2) === 0 ? 0 : spacing), y);
-                            }
-                        }
-                        ctx.restore();
-                    } else if (style === 'center') {
-                        const centerSize = Math.max(40, Math.floor(canvas.width * 0.15));
-                        ctx.font = `900 ${centerSize}px Inter, sans-serif`;
-                        ctx.save();
-                        ctx.translate(canvas.width / 2, canvas.height / 2);
-                        ctx.rotate(-Math.PI / 6);
-                        ctx.fillText(text, 0, 0);
-                        const metrics = ctx.measureText(text);
-                        const padding = centerSize * 0.5;
-                        const borderW = metrics.width + padding;
-                        const borderH = centerSize * 1.5;
-                        ctx.lineWidth = centerSize * 0.05;
-                        ctx.strokeStyle = rgbaColor;
-                        ctx.strokeRect(-borderW / 2, -borderH / 2, borderW, borderH);
-                        ctx.restore();
-                    } else if (style === 'badge') {
-                        const badgeW = canvas.width * 0.3;
-                        const badgeH = badgeW * 0.25;
-                        const margin = canvas.width * 0.05;
-                        const x = canvas.width - badgeW - margin;
-                        const y = canvas.height - badgeH - margin;
-                        const r = 10;
-                        ctx.fillStyle = color === 'white' ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.95)';
-                        ctx.beginPath();
-                        ctx.moveTo(x + r, y);
-                        ctx.lineTo(x + badgeW - r, y);
-                        ctx.quadraticCurveTo(x + badgeW, y, x + badgeW, y + r);
-                        ctx.lineTo(x + badgeW, y + badgeH - r);
-                        ctx.quadraticCurveTo(x + badgeW, y + badgeH, x + badgeW - r, y + badgeH);
-                        ctx.lineTo(x + r, y + badgeH);
-                        ctx.quadraticCurveTo(x, y + badgeH, x, y + badgeH - r);
-                        ctx.lineTo(x, y + r);
-                        ctx.quadraticCurveTo(x, y, x + r, y);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.fillStyle = color === 'white' ? 'white' : 'black';
-                        ctx.font = `bold ${badgeH * 0.35}px Inter, sans-serif`;
-                        ctx.fillText(text, x + badgeW / 2, y + badgeH / 2);
-                        ctx.font = `black ${badgeH * 0.18}px Inter, sans-serif`;
-                        ctx.globalAlpha = 0.6;
-                        ctx.fillText('CVBER VERIFIED AUTHENTIC', x + badgeW / 2, y + badgeH * 0.78);
-                        ctx.globalAlpha = 1.0;
-                    }
-
-                    setDownloadUrl(canvas.toDataURL('image/png'));
-                    setIsProcessing(false);
-                } catch {
-                    setError('Failed to render watermark');
-                    setIsProcessing(false);
                 }
-            };
-            img.onerror = () => {
-                setError('Failed to load image');
-                setIsProcessing(false);
-            };
-            img.src = localUrl;
+            }
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            const baseSize = Math.max(20, Math.floor(canvas.width * 0.04));
+            const alpha = opacity / 100;
+            const rgbaColor = color === 'white'
+                ? `rgba(255, 255, 255, ${alpha})`
+                : `rgba(0, 0, 0, ${alpha})`;
+
+            ctx.fillStyle = rgbaColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            if (style === 'grid') {
+                ctx.font = `bold ${baseSize}px Inter, sans-serif`;
+                const spacing = baseSize * 6;
+                ctx.save();
+                ctx.rotate(-Math.PI / 4);
+                const diagonal = Math.sqrt(canvas.width ** 2 + canvas.height ** 2);
+                for (let y = -diagonal; y < diagonal; y += spacing) {
+                    for (let x = -diagonal; x < diagonal; x += spacing * 2) {
+                        ctx.fillText(text, x + (y % (spacing * 2) === 0 ? 0 : spacing), y);
+                    }
+                }
+                ctx.restore();
+            } else if (style === 'center') {
+                const centerSize = Math.max(40, Math.floor(canvas.width * 0.15));
+                ctx.font = `900 ${centerSize}px Inter, sans-serif`;
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(-Math.PI / 6);
+                ctx.fillText(text, 0, 0);
+                const metrics = ctx.measureText(text);
+                const padding = centerSize * 0.5;
+                const borderW = metrics.width + padding;
+                const borderH = centerSize * 1.5;
+                ctx.lineWidth = centerSize * 0.05;
+                ctx.strokeStyle = rgbaColor;
+                ctx.strokeRect(-borderW / 2, -borderH / 2, borderW, borderH);
+                ctx.restore();
+            } else if (style === 'badge') {
+                const badgeW = canvas.width * 0.3;
+                const badgeH = badgeW * 0.25;
+                const margin = canvas.width * 0.05;
+                const x = canvas.width - badgeW - margin;
+                const y = canvas.height - badgeH - margin;
+                const r = 10;
+                ctx.fillStyle = color === 'white' ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.95)';
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + badgeW - r, y);
+                ctx.quadraticCurveTo(x + badgeW, y, x + badgeW, y + r);
+                ctx.lineTo(x + badgeW, y + badgeH - r);
+                ctx.quadraticCurveTo(x + badgeW, y + badgeH, x + badgeW - r, y + badgeH);
+                ctx.lineTo(x + r, y + badgeH);
+                ctx.quadraticCurveTo(x, y + badgeH, x, y + badgeH - r);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = color === 'white' ? 'white' : 'black';
+                ctx.font = `bold ${badgeH * 0.35}px Inter, sans-serif`;
+                ctx.fillText(text, x + badgeW / 2, y + badgeH / 2);
+                ctx.font = `black ${badgeH * 0.18}px Inter, sans-serif`;
+                ctx.globalAlpha = 0.6;
+                ctx.fillText('CVBER VERIFIED AUTHENTIC', x + badgeW / 2, y + badgeH * 0.78);
+                ctx.globalAlpha = 1.0;
+            }
+
+            setDownloadUrl(canvas.toDataURL('image/png'));
+            setIsProcessing(false);
         } catch (e) {
-            setError('Failed to fetch image — check your connection');
+            console.error('Watermark error:', e);
+            setError('Failed to load image — try again');
             setIsProcessing(false);
         }
-    }, [file, text, style, opacity, color]);
+    }, [file, text, style, opacity, color, loadImage]);
 
     useEffect(() => {
         if (!isOpen || !file) return;
