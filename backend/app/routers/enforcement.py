@@ -336,14 +336,30 @@ async def verify_chain_integrity(current_user: dict = Depends(get_current_user))
 
 @router.get("/audit/asset-history/{asset_id}")
 async def get_asset_history(asset_id: str, current_user: dict = Depends(get_current_user)):
-    """Get event history for an asset"""
+    """Get event history for an asset (user must own the asset)"""
+    try:
+        vault = supabase.table("vault_files").select("user_id").eq("scan_id", asset_id).single().execute()
+        if vault.data and vault.data.get("user_id") != current_user["id"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=404, detail="Asset not found")
     events = event_log.get_asset_history(asset_id)
     return {"asset_id": asset_id, "events": [e.dict() for e in events]}
 
 
 @router.get("/audit/evidence-packet/{asset_id}")
 async def export_evidence_packet(asset_id: str, current_user: dict = Depends(get_current_user)):
-    """Export evidence packet for legal proceedings"""
+    """Export evidence packet for legal proceedings (user must own the asset)"""
+    try:
+        vault = supabase.table("vault_files").select("user_id").eq("scan_id", asset_id).single().execute()
+        if vault.data and vault.data.get("user_id") != current_user["id"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=404, detail="Asset not found")
     return event_log.export_evidence_packet(asset_id)
 
 

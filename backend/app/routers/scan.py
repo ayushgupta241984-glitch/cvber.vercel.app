@@ -327,7 +327,7 @@ async def scan_file(
             )
         except Exception as store_err:
             logger.warning(f"Supabase storage failed, saving locally: {store_err}")
-            safe_name = re.sub(r'[^\w\.\-]', '_', file.filename)
+            safe_name = re.sub(r'[^\w]', '_', file.filename)
             local_dir = os.path.join(settings.local_storage_path or "uploads", str(current_user["id"]))
             os.makedirs(local_dir, exist_ok=True)
             local_path = os.path.join(local_dir, f"{scan_id}_{safe_name}")

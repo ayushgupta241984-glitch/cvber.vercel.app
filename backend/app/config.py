@@ -26,10 +26,17 @@ class Settings(BaseSettings):
     # Backend
     backend_url: str = "http://localhost:8000"
     
-    # JWT
-    jwt_secret: str = "dev-secret-key-change-in-production"
+    # JWT — MUST override with a strong random value in production .env
+    jwt_secret: str = "change-this-to-a-random-64-char-string-in-production-env"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+
+    @field_validator("jwt_secret", mode="before")
+    def warn_default_jwt(cls, v):
+        if v and v.startswith("change-this"):
+            import logging
+            logging.warning("!!! DEFAULT JWT SECRET IN USE. Set JWT_SECRET in production .env !!!")
+        return v
     
     # Google Cloud
     gcp_project_id: str = "placeholder-project-id"

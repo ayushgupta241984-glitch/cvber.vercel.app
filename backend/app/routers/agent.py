@@ -12,6 +12,31 @@ import os
 
 logger = logging.getLogger(__name__)
 
+_PRIVATE_BLOCKS = ["10.", "172.16.", "172.17.", "172.18.", "172.19.", "172.20.", "172.21.", "172.22.", "172.23.", "172.24.", "172.25.", "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31.", "192.168.", "127.", "0.", "169.254.", "::1", "::ffff:"]
+_BLOCKED_HOSTS = ["localhost", "metadata.google.internal", "metadata.internal"]
+
+def _validate_image_url(url: str) -> bool:
+    """Block SSRF: only allow http/https, no private/internal IPs or hostnames."""
+    import urllib.parse
+    if not url.startswith(("http://", "https://")):
+        return False
+    parsed = urllib.parse.urlparse(url)
+    hostname = parsed.hostname or ""
+    if hostname in _BLOCKED_HOSTS:
+        return False
+    if any(hostname.startswith(b) for b in _PRIVATE_BLOCKS):
+        return False
+    if hostname == hostname[::-1]:
+        return False
+    try:
+        import socket
+        addr = socket.getaddrinfo(hostname, 80, socket.AF_INET, socket.SOCK_STREAM)[0][4][0]
+        if any(addr.startswith(b) for b in _PRIVATE_BLOCKS):
+            return False
+    except Exception:
+        pass
+    return True
+
 router = APIRouter(prefix="/agent", tags=["agent"])
 
 class ChatMessage(BaseModel):
@@ -485,13 +510,26 @@ async def _code_interpreter(code: str) -> str:
         for node in ast.walk(tree):
             if isinstance(node, (ast.Import, ast.ImportFrom)):
                 for alias in node.names:
-                    if alias.name not in ("json", "re", "math", "random", "datetime", "collections", "itertools", "typing", "hashlib", "base64", "string", "statistics", "decimal", "fractions", "uuid", "textwrap"):
-                        if not alias.name.startswith("_"):
-                            return json.dumps({"error": f"Module '{alias.name}' not allowed in code_interpreter"})
+                    if not alias.name.startswith("_"):
+                        return json.dumps({"error": f"Module imports not allowed in code_interpreter"})
+        safe_builtins = {
+            "abs": abs, "all": all, "any": any, "bool": bool, "chr": chr,
+            "dict": dict, "divmod": divmod, "enumerate": enumerate,
+            "filter": filter, "float": float, "format": format,
+            "frozenset": frozenset, "hex": hex, "int": int,
+            "isinstance": isinstance, "issubclass": issubclass,
+            "len": len, "list": list, "map": map, "max": max,
+            "min": min, "oct": oct, "ord": ord, "pow": pow,
+            "print": print, "range": range, "repr": repr,
+            "reversed": reversed, "round": round, "set": set,
+            "slice": slice, "sorted": sorted, "str": str,
+            "sum": sum, "tuple": tuple, "type": type, "zip": zip,
+            "True": True, "False": False, "None": None,
+        }
         stdout = io.StringIO()
         local_env = {}
         with contextlib.redirect_stdout(stdout):
-            exec(code, {"__builtins__": __builtins__}, local_env)
+            exec(code, {"__builtins__": safe_builtins}, local_env)
         output = stdout.getvalue()
         if not output.strip():
             output = "(no output — code executed without print())"
@@ -617,6 +655,9 @@ async def _register_asset(user_id: str, scan_id: str, scan_frequency_hours: int 
 
 
 async def _download_image_bytes(image_url: str) -> bytes | None:
+    if not _validate_image_url(image_url):
+        logger.warning(f"Blocked SSRF attempt: {image_url[:80]}")
+        return None
     try:
         import httpx
         ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
@@ -1011,6 +1052,8 @@ async def _compare_images(source_bytes: bytes, candidate_url: str) -> dict:
     Primary: OpenCV ORB feature matching (finds geometric correspondences between images).
     Fallback: SSIM (structural similarity), then perceptual hashing.
     Returns similarity score (0-1) where >0.5 suggests likely copy."""
+    if not _validate_image_url(candidate_url):
+        return {"score": 0.0, "error": "Blocked: invalid URL"}
     try:
         import io, httpx
         import cv2
@@ -1994,7 +2037,7 @@ class TestRISRequest(BaseModel):
 
 
 @router.get("/self-report")
-async def agent_self_report():
+async def agent_self_report(current_user: dict = Depends(get_current_user)):
     """Get agent self-improvement report."""
     from app.services.agent_self_improve import get_search_report, load_strategies, load_trajectories, get_success_rate, load_memory
     return {
@@ -2007,7 +2050,7 @@ async def agent_self_report():
 
 
 @router.get("/test-playwright")
-async def test_playwright():
+async def test_playwright(current_user: dict = Depends(get_current_user)):
     """Debug endpoint to test Playwright Bing search directly."""
     try:
         import httpx
@@ -2032,12 +2075,12 @@ async def test_playwright():
 
 
 @router.post("/test-ris")
-async def test_reverse_image_search(request: TestRISRequest):
+async def test_reverse_image_search(request: TestRISRequest, current_user: dict = Depends(get_current_user)):
     """Test endpoint: runs the full find_image_copies pipeline on a public image URL.
     Bypasses vault upload — just give a URL and get results."""
     try:
         start = asyncio.get_event_loop().time()
-        user_id = "00000000-0000-0000-0000-000000000001"
+        user_id = current_user["id"]
 
         # 1. Download image bytes
         img_bytes = await _download_image_bytes(request.image_url)

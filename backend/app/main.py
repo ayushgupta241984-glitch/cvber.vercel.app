@@ -40,9 +40,12 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Response-Time-Ms"] = str(int((time.time() - start_time) * 1000))
     return response
 
+trusted_hosts = ["cvber-free-las-app.onrender.com", "cvber.vercel.app", "localhost"]
+if settings.allowed_origins and settings.allowed_origins != "*":
+    trusted_hosts.append(settings.allowed_origins.replace("https://", "").replace("http://", ""))
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["*"],
+    allowed_hosts=trusted_hosts,
 )
 
 cors_origins = settings.parsed_allowed_origins
