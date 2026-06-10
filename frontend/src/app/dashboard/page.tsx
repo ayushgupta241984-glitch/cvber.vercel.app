@@ -142,6 +142,7 @@ function DashboardInner() {
 
     const [isIndexing, setIsIndexing] = useState(false);
     const indexedRef = useRef(false);
+    const fileBlobCache = useRef<Map<string, Blob>>(new Map());
 
     const indexVault = useCallback(async (silent: boolean = false) => {
         if (isIndexing) return;
@@ -391,6 +392,8 @@ function DashboardInner() {
     const handleUploadComplete = async (result: UploadResult, rawFile: File) => {
         const previewUrl = result.storage_url || URL.createObjectURL(rawFile);
 
+        fileBlobCache.current.set(result.scan_id, rawFile);
+
         const arrayBuffer = await rawFile.arrayBuffer();
         const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -470,6 +473,7 @@ function DashboardInner() {
                 });
                 if (resp.ok) {
                     const blob = await resp.blob();
+                    fileBlobCache.current.set(file.id, blob);
                     file.previewUrl = URL.createObjectURL(blob);
                 }
             } catch (e) {
@@ -590,21 +594,42 @@ function DashboardInner() {
         setPendingSearchId(file.id);
 
         try {
-            const token = localStorage.getItem('access_token');
-            let blob: Blob;
+            let blob: Blob | null = null;
 
-            if (token) {
-                const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${file.id}/download`, {
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    signal: AbortSignal.timeout(15000),
-                });
-                if (resp.ok) {
-                    blob = await resp.blob();
-                } else {
-                    throw new Error(`Download ${resp.status}`);
-                }
+            const cached = fileBlobCache.current.get(file.id);
+            if (cached) {
+                blob = cached;
             } else {
-                throw new Error('Not authenticated');
+                const token = localStorage.getItem('access_token');
+                let downloadOk = false;
+                if (token) {
+                    try {
+                        const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${file.id}/download`, {
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            signal: AbortSignal.timeout(15000),
+                        });
+                        if (resp.ok) {
+                            blob = await resp.blob();
+                            fileBlobCache.current.set(file.id, blob);
+                            downloadOk = true;
+                        }
+                    } catch {}
+                }
+
+                if (!downloadOk) {
+                    const domImg = document.querySelector<HTMLImageElement>('img[src]');
+                    if (domImg && domImg.complete && domImg.naturalWidth > 0) {
+                        const c = document.createElement('canvas');
+                        c.width = domImg.naturalWidth;
+                        c.height = domImg.naturalHeight;
+                        c.getContext('2d')!.drawImage(domImg, 0, 0);
+                        blob = await new Promise<Blob>((resolve) => c.toBlob(b => resolve(b!), 'image/png'));
+                    }
+                }
+
+                if (!blob) {
+                    throw new Error('Could not load file');
+                }
             }
 
             setSearchFileBlob(blob);
