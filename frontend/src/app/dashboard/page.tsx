@@ -553,17 +553,20 @@ function DashboardInner() {
 
         try {
             const result = await apiClient.reverseImageSearch(fileToUpload);
+
             if (result?.scan_id) {
                 const baseUrl = apiClient.getBaseUrl();
-                const imageUrl = `${baseUrl}/search/temp/${result.scan_id}`;
+                const imageUrl = `${baseUrl}/api/search/temp/${result.scan_id}`;
                 const encodedUrl = encodeURIComponent(imageUrl);
+
                 result._yandexUrl = `https://yandex.com/images/search?url=${encodedUrl}&rpt=imageview`;
-                result._bingUrl = `https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:${encodedUrl}`;
+                result._bingUrl = `https://www.bing.com/images/search?view=detailv2&iss=sbi&form=SBIVSP&sbisrc=UrlPaste&q=imgurl:${encodedUrl}`;
                 result._googleLensUrl = `https://lens.google.com/uploadbyurl?url=${encodedUrl}`;
-                result._saucenaoUrl = `https://saucenao.com/search.php?db=999&url=${encodedUrl}`;
+                result._saucenaoUrl = `https://saucenao.com/search.php?url=${encodedUrl}`;
                 result._tineyeUrl = `https://tineye.com/search?url=${encodedUrl}`;
                 result._imageUrl = imageUrl;
             }
+
             setSearchResults(result);
         } catch (err: any) {
             setSearchError(err?.message || 'Search failed');

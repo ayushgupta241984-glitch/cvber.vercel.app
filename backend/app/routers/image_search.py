@@ -43,7 +43,7 @@ async def reverse_image_search(
 
 
 @router.get("/temp/{scan_id}")
-async def serve_temp_image(scan_id: str, current_user: dict = Depends(get_current_user)):
+async def serve_temp_image(scan_id: str):
     image_bytes = get_temp_image(scan_id)
     if image_bytes is None:
         raise HTTPException(status_code=404, detail="Image not found or expired")
