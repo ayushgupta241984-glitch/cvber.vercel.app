@@ -98,7 +98,8 @@ export default function Navbar() {
 
     const isDashboard = pathname.startsWith("/dashboard");
     const isHomepage = pathname === "/";
-    if (isDashboard || isHomepage) return null;
+    const isAuth = pathname === "/login" || pathname === "/register";
+    if (isDashboard || isHomepage || isAuth) return null;
 
     return (
         <>
