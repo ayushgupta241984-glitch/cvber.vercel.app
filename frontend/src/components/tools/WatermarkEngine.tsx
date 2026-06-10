@@ -30,53 +30,25 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
     const [color, setColor] = useState<WatermarkColor>('white');
 
     const fetchImageAsDataUrl = useCallback(async (previewUrl: string, fileId?: string): Promise<string> => {
-        const baseUrl = apiClient.getBaseUrl();
         const token = localStorage.getItem('access_token');
+        const toDataUrl = (blob: Blob): Promise<string> =>
+            new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = () => reject(new Error('FileReader failed'));
+                reader.readAsDataURL(blob);
+            });
 
         if (fileId && token) {
-            try {
-                const resp = await fetch(`${baseUrl}/vault/files/${fileId}/download`, {
-                    headers: { 'Authorization': `Bearer ${token}` },
-                });
-                if (resp.ok) {
-                    const blob = await resp.blob();
-                    return new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => resolve(reader.result as string);
-                        reader.onerror = () => reject(new Error('FileReader failed'));
-                        reader.readAsDataURL(blob);
-                    });
-                }
-            } catch {}
-
-            try {
-                const urlResp = await apiClient.getVaultFileUrl(fileId);
-                if (urlResp?.url) {
-                    const resp = await fetch(urlResp.url);
-                    if (resp.ok) {
-                        const blob = await resp.blob();
-                        return new Promise((resolve, reject) => {
-                            const reader = new FileReader();
-                            reader.onload = () => resolve(reader.result as string);
-                            reader.onerror = () => reject(new Error('FileReader failed'));
-                            reader.readAsDataURL(blob);
-                        });
-                    }
-                }
-            } catch {}
+            const proxyUrl = `/api/proxy-image?fileId=${encodeURIComponent(fileId)}&token=${encodeURIComponent(token)}`;
+            const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(20000) });
+            if (resp.ok) return toDataUrl(await resp.blob());
         }
 
         if (previewUrl && !previewUrl.startsWith('blob:')) {
-            const resp = await fetch(previewUrl);
-            if (resp.ok) {
-                const blob = await resp.blob();
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.onerror = () => reject(new Error('FileReader failed'));
-                    reader.readAsDataURL(blob);
-                });
-            }
+            const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(previewUrl)}`;
+            const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(20000) });
+            if (resp.ok) return toDataUrl(await resp.blob());
         }
 
         throw new Error('Could not load image — try uploading again');

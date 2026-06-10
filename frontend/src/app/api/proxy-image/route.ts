@@ -1,26 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/+$/, '');
+
 export async function GET(request: NextRequest) {
     const url = request.nextUrl.searchParams.get('url');
-    if (!url) {
-        return NextResponse.json({ error: 'Missing url param' }, { status: 400 });
-    }
+    const fileId = request.nextUrl.searchParams.get('fileId');
+    const token = request.nextUrl.searchParams.get('token');
 
-    let parsed: URL;
-    try {
-        parsed = new URL(url);
-    } catch {
-        return NextResponse.json({ error: 'Invalid url' }, { status: 400 });
-    }
-
-    if (!parsed.hostname.endsWith('.supabase.co')) {
-        return NextResponse.json({ error: 'Only Supabase URLs allowed' }, { status: 403 });
+    if (!url && !fileId) {
+        return NextResponse.json({ error: 'Missing url or fileId param' }, { status: 400 });
     }
 
     try {
-        const resp = await fetch(parsed.toString(), {
-            headers: { Accept: 'image/*' },
-        });
+        let resp: Response;
+
+        if (fileId && token) {
+            resp = await fetch(`${BACKEND_URL}/vault/files/${fileId}/download`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+                signal: AbortSignal.timeout(15000),
+            });
+        } else if (url) {
+            resp = await fetch(url, {
+                headers: { Accept: 'image/*' },
+                signal: AbortSignal.timeout(15000),
+            });
+        } else {
+            return NextResponse.json({ error: 'Invalid params' }, { status: 400 });
+        }
 
         if (!resp.ok) {
             return NextResponse.json({ error: `Upstream ${resp.status}` }, { status: resp.status });
