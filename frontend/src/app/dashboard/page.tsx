@@ -440,10 +440,19 @@ function DashboardInner() {
         if (checkProofRequired(file)) return;
         if (!file.previewUrl) {
             try {
-                const urlResp = await apiClient.getVaultFileUrl(file.id);
-                file.previewUrl = urlResp.url;
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${file.id}/download`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        signal: AbortSignal.timeout(15000),
+                    });
+                    if (resp.ok) {
+                        const blob = await resp.blob();
+                        file.previewUrl = URL.createObjectURL(blob);
+                    }
+                }
             } catch (err) {
-                console.error("Failed to get vault URL:", err);
+                console.error("Failed to get vault file:", err);
             }
         }
         setSelectedFile(file);
@@ -580,13 +589,24 @@ function DashboardInner() {
         setSearchFileBlob(null);
         setPendingSearchId(file.id);
 
-        // Always get a fresh signed URL — stored URLs expire
         try {
-            const urlResp = await apiClient.getVaultFileUrl(file.id);
-            const url = urlResp.url;
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const blob = await resp.blob();
+            const token = localStorage.getItem('access_token');
+            let blob: Blob;
+
+            if (token) {
+                const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${file.id}/download`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    signal: AbortSignal.timeout(15000),
+                });
+                if (resp.ok) {
+                    blob = await resp.blob();
+                } else {
+                    throw new Error(`Download ${resp.status}`);
+                }
+            } else {
+                throw new Error('Not authenticated');
+            }
+
             setSearchFileBlob(blob);
             const fileToUpload = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
             await performSearch(fileToUpload);
