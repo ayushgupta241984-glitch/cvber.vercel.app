@@ -35,7 +35,7 @@ export function FileViewer({ file, isOpen, onClose, onWatermark }: FileViewerPro
 
     if (!isOpen || !file) return null;
 
-    // No lock — always allow watermarking
+    const isOriginal = (file.originalityScore ?? 0) > 50;
     const isLocked = false;
     const needsWaiver = false;
 
