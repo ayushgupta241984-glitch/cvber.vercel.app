@@ -81,7 +81,11 @@ class StorageService:
         last_exception = None
         for attempt in range(1, self.MAX_RETRIES + 1):
             try:
-                return operation(*args, **kwargs)
+                result = operation(*args, **kwargs)
+                import inspect
+                if inspect.isawaitable(result):
+                    result = await result
+                return result
             except Exception as e:
                 last_exception = e
                 if attempt < self.MAX_RETRIES:
@@ -187,7 +191,10 @@ class StorageService:
                 safe_path,
                 expires_in
             )
-            signed_url = response.get("signedURL")
+            logger.info(f"create_signed_url response type: {type(response)}, value: {response}")
+            signed_url = (response or {}).get("signedURL") or (response or {}).get("signedUrl")
+            if not signed_url and isinstance(response, str):
+                signed_url = response
             if not signed_url:
                 raise StorageError("Failed to generate signed URL: No URL returned")
             return signed_url
