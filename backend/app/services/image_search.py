@@ -178,7 +178,7 @@ def get_temp_image(scan_id: str) -> Optional[bytes]:
 
 def generate_search_links(scan_id: str, site_url: str = "https://cvber.vercel.app") -> dict:
     """Generate search engine links for the uploaded image."""
-    image_url = f"{site_url}/api/search/temp/{scan_id}"
+    image_url = f"{site_url}/search/temp/{scan_id}"
     encoded_url = urllib.parse.quote(image_url, safe="")
 
     return {

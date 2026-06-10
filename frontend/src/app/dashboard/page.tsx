@@ -556,7 +556,7 @@ function DashboardInner() {
 
             if (result?.scan_id) {
                 const baseUrl = apiClient.getBaseUrl();
-                const imageUrl = `${baseUrl}/api/search/temp/${result.scan_id}`;
+                const imageUrl = `${baseUrl}/search/temp/${result.scan_id}`;
                 const encodedUrl = encodeURIComponent(imageUrl);
 
                 result._yandexUrl = `https://yandex.com/images/search?url=${encodedUrl}&rpt=imageview`;
