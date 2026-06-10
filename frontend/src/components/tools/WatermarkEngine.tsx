@@ -30,7 +30,6 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
     const [color, setColor] = useState<WatermarkColor>('white');
 
     const fetchImageAsDataUrl = useCallback(async (previewUrl: string, fileId?: string): Promise<string> => {
-        const token = localStorage.getItem('access_token');
         const toDataUrl = (blob: Blob): Promise<string> =>
             new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -39,16 +38,60 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
                 reader.readAsDataURL(blob);
             });
 
-        if (fileId && token) {
-            const proxyUrl = `/api/proxy-image?fileId=${encodeURIComponent(fileId)}&token=${encodeURIComponent(token)}`;
-            const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(20000) });
-            if (resp.ok) return toDataUrl(await resp.blob());
-        }
+        const loadIntoCanvas = async (url: string): Promise<HTMLImageElement> => {
+            return new Promise((resolve, reject) => {
+                const el = new Image();
+                el.crossOrigin = 'anonymous';
+                el.onload = () => resolve(el);
+                el.onerror = () => reject(new Error('decode'));
+                el.src = url;
+            });
+        };
 
-        if (previewUrl && !previewUrl.startsWith('blob:')) {
-            const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(previewUrl)}`;
-            const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(20000) });
-            if (resp.ok) return toDataUrl(await resp.blob());
+        const tryMethod = async (label: string, fn: () => Promise<string | null>): Promise<string> => {
+            try {
+                const result = await fn();
+                if (result) return result;
+            } catch (e) {
+                console.warn(`[Watermark] ${label} failed:`, e);
+            }
+            return '';
+        };
+
+        const token = localStorage.getItem('access_token');
+
+        const methods: Array<[string, () => Promise<string | null>]> = [
+            ['proxy-fileId', async () => {
+                if (!fileId || !token) return null;
+                const resp = await fetch(`/api/proxy-image?fileId=${encodeURIComponent(fileId)}&token=${encodeURIComponent(token)}`, { signal: AbortSignal.timeout(30000) });
+                if (resp.ok) return toDataUrl(await resp.blob());
+                return null;
+            }],
+            ['fresh-url-proxy', async () => {
+                if (!fileId) return null;
+                const urlResp = await apiClient.getVaultFileUrl(fileId);
+                if (!urlResp?.url) return null;
+                const resp = await fetch(`/api/proxy-image?url=${encodeURIComponent(urlResp.url)}`, { signal: AbortSignal.timeout(30000) });
+                if (resp.ok) return toDataUrl(await resp.blob());
+                return null;
+            }],
+            ['direct-proxy', async () => {
+                if (!previewUrl || previewUrl.startsWith('blob:')) return null;
+                const resp = await fetch(`/api/proxy-image?url=${encodeURIComponent(previewUrl)}`, { signal: AbortSignal.timeout(30000) });
+                if (resp.ok) return toDataUrl(await resp.blob());
+                return null;
+            }],
+            ['direct-fetch', async () => {
+                if (!previewUrl || previewUrl.startsWith('blob:')) return null;
+                const resp = await fetch(previewUrl, { signal: AbortSignal.timeout(10000) });
+                if (resp.ok) return toDataUrl(await resp.blob());
+                return null;
+            }],
+        ];
+
+        for (const [label, fn] of methods) {
+            const result = await tryMethod(label, fn);
+            if (result) return result;
         }
 
         throw new Error('Could not load image — try uploading again');
