@@ -318,19 +318,22 @@ class BlockchainTimestampService:
                 .execute()
 
             proofs = []
-            for row in result.data:
-                proofs.append(TimestampProof(
-                    proof_id=row['proof_id'],
-                    asset_hash=row['asset_hash'],
-                    asset_name=row['asset_name'],
-                    timestamp=row['created_at'],
-                    blockchain=row['blockchain'],
-                    status=row['status'],
-                    ots_proof=row.get('ots_proof'),
-                    verification_url=row['verification_url'],
-                    bitcoin_block=row.get('bitcoin_block'),
-                    vault_file_id=row.get('vault_file_id')
-                ))
+            for row in (result.data or []):
+                try:
+                    proofs.append(TimestampProof(
+                        proof_id=row.get('proof_id', ''),
+                        asset_hash=row.get('asset_hash', ''),
+                        asset_name=row.get('asset_name', ''),
+                        timestamp=row.get('created_at') or row.get('timestamp') or datetime.utcnow().isoformat(),
+                        blockchain=row.get('blockchain', 'bitcoin'),
+                        status=row.get('status', 'local_only'),
+                        ots_proof=row.get('ots_proof'),
+                        verification_url=row.get('verification_url', 'https://opentimestamps.org/'),
+                        bitcoin_block=row.get('bitcoin_block'),
+                        vault_file_id=row.get('vault_file_id')
+                    ))
+                except Exception as row_err:
+                    logger.warning(f"Skipping malformed proof row: {row_err}")
 
             logger.info(f"Retrieved {len(proofs)} proofs for user {user_id}")
             return proofs

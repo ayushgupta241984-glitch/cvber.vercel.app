@@ -130,9 +130,9 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
 
             setDownloadUrl(canvas.toDataURL('image/png'));
             setIsProcessing(false);
-        } catch (e) {
+        } catch (e: any) {
             console.error('Watermark error:', e);
-            setError('Failed to load image — try again');
+            setError(e?.message || 'Failed to load image — try again');
             setIsProcessing(false);
         }
     }, [file, text, style, opacity, color, loadImage]);

@@ -23,13 +23,14 @@ export function BlockchainStatus() {
 
     // Load proofs from backend on mount
     useEffect(() => {
+        let mounted = true;
+
         const loadProofs = async () => {
+            if (!mounted) return;
             try {
                 const result = await apiClient.getUserBlockchainProofs();
-                if (result.success) {
+                if (mounted && result && result.success && Array.isArray(result.proofs)) {
                     setProofs(result.proofs);
-                } else {
-                    console.error('Failed to load blockchain proofs:', result);
                 }
             } catch (e) {
                 console.error('Failed to load blockchain proofs:', e);
@@ -39,12 +40,15 @@ export function BlockchainStatus() {
         loadProofs();
 
         // Listen for blockchain-update events (dispatched after creating a timestamp)
-        const handleUpdate = () => loadProofs();
+        const handleUpdate = () => {
+            setTimeout(() => loadProofs(), 500);
+        };
         window.addEventListener('blockchain-update', handleUpdate);
 
-        // Refresh every 30 seconds to check for status updates
-        const interval = setInterval(loadProofs, 30000);
+        // Refresh every 15 seconds to check for status updates
+        const interval = setInterval(loadProofs, 15000);
         return () => {
+            mounted = false;
             clearInterval(interval);
             window.removeEventListener('blockchain-update', handleUpdate);
         };
