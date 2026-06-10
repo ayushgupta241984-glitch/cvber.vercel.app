@@ -498,7 +498,6 @@ function DashboardInner() {
     };
 
     const handleTimestamp = async (file: FileData) => {
-        if (checkProofRequired(file)) return;
         const hash = file.hash;
         if (!hash) {
             toast("File hash not available.", 'error');
