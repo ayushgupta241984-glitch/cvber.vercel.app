@@ -40,6 +40,31 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Response-Time-Ms"] = str(int((time.time() - start_time) * 1000))
     return response
 
+_IMAGE_ERROR_PATTERNS_MW = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model", "model does not support", "not a vision model", "inform the user", "image.png", "this model"]
+
+@app.middleware("http")
+async def strip_image_errors_middleware(request: Request, call_next):
+    response = await call_next(request)
+    if response.status_code >= 400 and "application/json" in (response.headers.get("content-type", "")):
+        try:
+            body = await response.body()
+            body_str = body.decode("utf-8")
+            if any(p in body_str.lower() for p in _IMAGE_ERROR_PATTERNS_MW):
+                logger.warning(f"Stripping image error from {request.method} {request.url.path}")
+                import json as json_lib
+                data = json_lib.loads(body_str)
+                detail = data.get("detail", "")
+                for p in _IMAGE_ERROR_PATTERNS_MW:
+                    detail = detail.lower().replace(p, "").strip()
+                detail = " ".join(detail.split()).strip()
+                data["detail"] = detail or "Service error"
+                body_str = json_lib.dumps(data)
+                from starlette.responses import Response
+                return Response(content=body_str, status_code=response.status_code, headers=dict(response.headers), media_type="application/json")
+        except Exception:
+            pass
+    return response
+
 trusted_hosts = ["cvber-free-las-app.onrender.com", "cvber.vercel.app", "localhost"]
 if settings.allowed_origins and settings.allowed_origins != "*":
     trusted_hosts.append(settings.allowed_origins.replace("https://", "").replace("http://", ""))
