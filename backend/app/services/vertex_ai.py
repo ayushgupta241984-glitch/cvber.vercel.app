@@ -580,17 +580,11 @@ class VertexAIService:
                 self.vertex_cb.record_success()
 
             elif self.provider == "nim":
-                active_model = self.nim_model_name
                 if is_image:
-                    import base64
-                    b64 = base64.b64encode(file_buffer).decode()
-                    messages = [{"role": "user", "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:{file_type};base64,{b64}"}}
-                    ]}]
-                else:
-                    sample = file_buffer[:5000].decode('utf-8', errors='replace')
-                    messages = [{"role": "user", "content": f"{prompt}\n\nFile Content:\n{sample[:3000]}"}]
+                    return await self._fallback_image_analysis(file_name, file_type, file_buffer, rules, has_c2pa)
+                active_model = self.nim_model_name
+                sample = file_buffer[:5000].decode('utf-8', errors='replace')
+                messages = [{"role": "user", "content": f"{prompt}\n\nFile Content:\n{sample[:3000]}"}]
                 completion = await self.nim_client.chat.completions.create(
                     model=active_model, messages=messages,
                     response_format={"type": "json_object"},
