@@ -452,13 +452,11 @@ function DashboardInner() {
     };
 
     const handleWatermark = async (file: FileData) => {
-        if (!file.previewUrl) {
-            try {
-                const urlResp = await apiClient.getVaultFileUrl(file.id);
-                file.previewUrl = urlResp.url;
-            } catch (err) {
-                console.error("Failed to refresh URL for watermark:", err);
-            }
+        try {
+            const urlResp = await apiClient.getVaultFileUrl(file.id);
+            if (urlResp?.url) file.previewUrl = urlResp.url;
+        } catch (err) {
+            console.error("Failed to refresh URL for watermark:", err);
         }
         setSelectedFile(file);
         setIsWatermarkOpen(true);

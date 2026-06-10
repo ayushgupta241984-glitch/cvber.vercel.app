@@ -2,7 +2,6 @@
 
 import { Shield, Download, X, Copy, Check, ExternalLink, Settings, Type, Grid, Layout, Square, Palette, Sparkles } from 'lucide-react';
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { apiClient } from '@/lib/api-client';
 
 interface WatermarkEngineProps {
     file: {
@@ -29,81 +28,56 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
     const [opacity, setOpacity] = useState(30);
     const [color, setColor] = useState<WatermarkColor>('white');
 
-    const fetchImageAsDataUrl = useCallback(async (previewUrl: string, fileId?: string): Promise<string> => {
-        const toDataUrl = (blob: Blob): Promise<string> =>
-            new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result as string);
-                reader.onerror = () => reject(new Error('FileReader failed'));
-                reader.readAsDataURL(blob);
-            });
-
-        const loadIntoCanvas = async (url: string): Promise<HTMLImageElement> => {
-            return new Promise((resolve, reject) => {
-                const el = new Image();
-                el.crossOrigin = 'anonymous';
-                el.onload = () => resolve(el);
-                el.onerror = () => reject(new Error('decode'));
-                el.src = url;
-            });
-        };
-
-        const tryMethod = async (label: string, fn: () => Promise<string | null>): Promise<string> => {
-            try {
-                const result = await fn();
-                if (result) return result;
-            } catch (e) {
-                console.warn(`[Watermark] ${label} failed:`, e);
+    const grabCanvasImage = useCallback(async (previewUrl: string, fileId?: string): Promise<HTMLCanvasElement> => {
+        const tryDom = (): HTMLCanvasElement | null => {
+            const candidates = document.querySelectorAll<HTMLImageElement>('img[src*="supabase"]');
+            for (const img of candidates) {
+                if (!img.complete || img.naturalWidth === 0) continue;
+                const c = document.createElement('canvas');
+                c.width = img.naturalWidth;
+                c.height = img.naturalHeight;
+                const ctx = c.getContext('2d');
+                if (!ctx) continue;
+                ctx.drawImage(img, 0, 0);
+                return c;
             }
-            return '';
+            return null;
         };
+
+        const proxyFetch = async (query: string): Promise<HTMLCanvasElement> => {
+            const resp = await fetch(`/api/proxy-image?${query}`, { signal: AbortSignal.timeout(30000) });
+            if (!resp.ok) throw new Error(`Proxy ${resp.status}`);
+            const blob = await resp.blob();
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+                const r = new FileReader();
+                r.onload = () => resolve(r.result as string);
+                r.onerror = () => reject(new Error('FileReader'));
+                r.readAsDataURL(blob);
+            });
+            const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+                const el = new Image();
+                el.onload = () => resolve(el);
+                el.onerror = () => reject(new Error('Decode'));
+                el.src = dataUrl;
+            });
+            const c = document.createElement('canvas');
+            c.width = img.width;
+            c.height = img.height;
+            c.getContext('2d')!.drawImage(img, 0, 0);
+            return c;
+        };
+
+        const domResult = tryDom();
+        if (domResult) return domResult;
 
         const token = localStorage.getItem('access_token');
-
-        const methods: Array<[string, () => Promise<string | null>]> = [
-            ['proxy-fileId', async () => {
-                if (!fileId || !token) return null;
-                const resp = await fetch(`/api/proxy-image?fileId=${encodeURIComponent(fileId)}&token=${encodeURIComponent(token)}`, { signal: AbortSignal.timeout(30000) });
-                if (resp.ok) return toDataUrl(await resp.blob());
-                return null;
-            }],
-            ['fresh-url-proxy', async () => {
-                if (!fileId) return null;
-                const urlResp = await apiClient.getVaultFileUrl(fileId);
-                if (!urlResp?.url) return null;
-                const resp = await fetch(`/api/proxy-image?url=${encodeURIComponent(urlResp.url)}`, { signal: AbortSignal.timeout(30000) });
-                if (resp.ok) return toDataUrl(await resp.blob());
-                return null;
-            }],
-            ['direct-proxy', async () => {
-                if (!previewUrl || previewUrl.startsWith('blob:')) return null;
-                const resp = await fetch(`/api/proxy-image?url=${encodeURIComponent(previewUrl)}`, { signal: AbortSignal.timeout(30000) });
-                if (resp.ok) return toDataUrl(await resp.blob());
-                return null;
-            }],
-            ['direct-fetch', async () => {
-                if (!previewUrl || previewUrl.startsWith('blob:')) return null;
-                const resp = await fetch(previewUrl, { signal: AbortSignal.timeout(10000) });
-                if (resp.ok) return toDataUrl(await resp.blob());
-                return null;
-            }],
-        ];
-
-        for (const [label, fn] of methods) {
-            const result = await tryMethod(label, fn);
-            if (result) return result;
+        if (fileId && token) {
+            try {
+                return await proxyFetch(`fileId=${encodeURIComponent(fileId)}&token=${encodeURIComponent(token)}`);
+            } catch {}
         }
 
-        throw new Error('Could not load image — try uploading again');
-    }, []);
-
-    const loadImage = useCallback((src: string): Promise<HTMLImageElement> => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error('Image decode failed'));
-            img.src = src;
-        });
+        return await proxyFetch(`url=${encodeURIComponent(previewUrl)}`);
     }, []);
 
     const drawWatermark = useCallback(async () => {
@@ -119,12 +93,10 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
         setError(null);
 
         try {
-            const dataUrl = await fetchImageAsDataUrl(file.previewUrl, file.id);
-            const img = await loadImage(dataUrl);
-
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+            const source = await grabCanvasImage(file.previewUrl, file?.id);
+            canvas.width = source.width;
+            canvas.height = source.height;
+            ctx.drawImage(source, 0, 0);
 
             const baseSize = Math.max(20, Math.floor(canvas.width * 0.04));
             const alpha = opacity / 100;
@@ -199,7 +171,7 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
             setError(e?.message || 'Failed to load image — try again');
             setIsProcessing(false);
         }
-    }, [file, text, style, opacity, color, fetchImageAsDataUrl, loadImage]);
+    }, [file, text, style, opacity, color, grabCanvasImage]);
 
     useEffect(() => {
         if (!isOpen || !file) return;
