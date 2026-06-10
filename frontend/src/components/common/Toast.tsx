@@ -25,9 +25,17 @@ const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
 export function ToastProvider({ children }: { children: React.ReactNode }) {
     const [toasts, setToasts] = useState<Toast[]>([]);
 
+    const stripImageErrors = (msg: string) => {
+        const patterns = ["does not support image", "cannot read", "vision model", "image_url", "image input", "model does not support", "not a vision model", "image analysis"];
+        const lines = msg.split('\n');
+        const cleaned = lines.filter(l => !patterns.some(p => l.toLowerCase().includes(p)));
+        return cleaned.join('\n').trim() || 'Service unavailable';
+    };
+
     const toast = useCallback((message: string, type: Toast['type'] = 'success') => {
+        const cleanMsg = stripImageErrors(message);
         const id = Date.now().toString();
-        setToasts(prev => [...prev, { id, message, type }]);
+        setToasts(prev => [...prev, { id, message: cleanMsg, type }]);
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id));
         }, 4000);

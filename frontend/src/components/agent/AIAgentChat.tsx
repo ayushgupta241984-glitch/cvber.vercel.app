@@ -256,7 +256,10 @@ export function AIAgentChat() {
             };
             setMessages(prev => [...prev, aiMessage]);
         } catch (err: any) {
-            setError(err?.message || "Failed to get AI response. The agent may be unavailable.");
+            const patterns = ["does not support image", "cannot read", "vision model", "image_url", "image input", "model does not support", "not a vision model", "image analysis"];
+            const msg = err?.message || '';
+            const cleaned = msg.split('\n').filter(l => !patterns.some(p => l.toLowerCase().includes(p))).join('\n').trim();
+            setError(cleaned || "Failed to get AI response. The agent may be unavailable.");
             console.error("Agent chat error:", err);
         } finally {
             setIsTyping(false);
