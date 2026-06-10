@@ -366,6 +366,7 @@ class VertexAIService:
     def __init__(self):
         self.model = None
         self.groq_client = None
+        self.nim_client = None
         self.initialized = False
         self.provider: Optional[str] = None
         self._setup_attempted = False
@@ -373,6 +374,7 @@ class VertexAIService:
         self.google_cb = CircuitBreaker("google-ai", failure_threshold=3, recovery_timeout=60)
         self.groq_cb = CircuitBreaker("groq", failure_threshold=3, recovery_timeout=60)
         self.vertex_cb = CircuitBreaker("vertex", failure_threshold=2, recovery_timeout=120)
+        self.nim_cb = CircuitBreaker("nim", failure_threshold=3, recovery_timeout=60)
 
         self._config_models()
         self.ensure_initialized()
@@ -382,6 +384,8 @@ class VertexAIService:
         self.groq_model_name = settings.groq_model or "llama-3.3-70b-versatile"
         self.groq_vision_model = settings.groq_vision_model or "llama-3.2-90b-vision-preview"
         self.vertex_model_name = settings.vertex_ai_model or "gemini-1.5-flash-002"
+        self.nim_model_name = settings.nvidia_nim_model or "google/gemma-3n-e4b-it"
+        self.nim_base_url = settings.nvidia_nim_base_url
 
     @staticmethod
     def is_valid_key(key: Optional[str]) -> bool:
@@ -407,6 +411,11 @@ class VertexAIService:
                 "creds_present": bool(settings.google_application_credentials and os.path.exists(settings.google_application_credentials)),
                 "circuit_breaker": self.vertex_cb.state.value,
             },
+            "nim": {
+                "available": True,
+                "key_present": self.is_valid_key(settings.nvidia_nim_api_key),
+                "circuit_breaker": self.nim_cb.state.value,
+            },
             "active_provider": self.provider,
             "initialized": self.initialized,
         }
@@ -431,6 +440,24 @@ class VertexAIService:
                 except Exception as e:
                     logger.error(f"Groq init failed: {e}")
                     self.groq_cb.record_failure()
+                    self.provider = None
+
+        if self.is_valid_key(settings.nvidia_nim_api_key) and self.nim_cb.can_attempt():
+            if self.provider != "nim":
+                try:
+                    from openai import AsyncOpenAI
+                    self.nim_client = AsyncOpenAI(
+                        api_key=settings.nvidia_nim_api_key,
+                        base_url=settings.nvidia_nim_base_url,
+                    )
+                    self.initialized = True
+                    self.provider = "nim"
+                    self.nim_cb.record_success()
+                    logger.info(f"NVIDIA NIM ({self.nim_model_name}) initialized")
+                    return True
+                except Exception as e:
+                    logger.error(f"NVIDIA NIM init failed: {e}")
+                    self.nim_cb.record_failure()
                     self.provider = None
 
         if GENAI_AVAILABLE and self.is_valid_key(settings.google_api_key) and self.google_cb.can_attempt():
@@ -552,6 +579,26 @@ class VertexAIService:
                 response_text = response.text
                 self.vertex_cb.record_success()
 
+            elif self.provider == "nim":
+                active_model = self.nim_model_name
+                if is_image:
+                    import base64
+                    b64 = base64.b64encode(file_buffer).decode()
+                    messages = [{"role": "user", "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:{file_type};base64,{b64}"}}
+                    ]}]
+                else:
+                    sample = file_buffer[:5000].decode('utf-8', errors='replace')
+                    messages = [{"role": "user", "content": f"{prompt}\n\nFile Content:\n{sample[:3000]}"}]
+                completion = await self.nim_client.chat.completions.create(
+                    model=active_model, messages=messages,
+                    response_format={"type": "json_object"},
+                    max_tokens=2000,
+                )
+                response_text = completion.choices[0].message.content
+                self.nim_cb.record_success()
+
             data = json.loads(_clean_json_response(response_text))
             return _build_risk_from_data(data, rules, has_c2pa, self.provider, active_model,
                                          file_name, file_type, len(file_buffer))
@@ -614,6 +661,15 @@ RULES:
                 messages.append({"role": "user", "content": message})
                 completion = await self.groq_client.chat.completions.create(
                     messages=messages, model=self.groq_model_name,
+                )
+                return self._strip_image_errors(completion.choices[0].message.content)
+            elif self.provider == "nim":
+                messages = [{"role": "system", "content": system_prompt}]
+                for h in history:
+                    messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+                messages.append({"role": "user", "content": message})
+                completion = await self.nim_client.chat.completions.create(
+                    messages=messages, model=self.nim_model_name,
                 )
                 return self._strip_image_errors(completion.choices[0].message.content)
         except Exception as e:
