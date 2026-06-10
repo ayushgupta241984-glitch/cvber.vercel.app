@@ -3,15 +3,11 @@
 import { Shield, Download, X, Copy, Check, ExternalLink, Settings, Type, Grid, Layout, Square, Palette, Sparkles } from 'lucide-react';
 import { useRef, useEffect, useState, useCallback } from 'react';
 
-function proxyUrl(url: string): string {
-    if (typeof window === 'undefined') return url;
-    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
-}
-
 interface WatermarkEngineProps {
     file: {
         name: string;
         previewUrl?: string;
+        id?: string;
     } | null;
     isOpen: boolean;
     onClose: () => void;
@@ -32,13 +28,24 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
     const [opacity, setOpacity] = useState(30);
     const [color, setColor] = useState<WatermarkColor>('white');
 
-    const loadImage = useCallback((url: string): Promise<HTMLImageElement> => {
+    const fetchAsDataUrl = useCallback(async (url: string): Promise<string> => {
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`Fetch failed: ${resp.status}`);
+        const blob = await resp.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(new Error('FileReader failed'));
+            reader.readAsDataURL(blob);
+        });
+    }, []);
+
+    const loadImage = useCallback((src: string): Promise<HTMLImageElement> => {
         return new Promise((resolve, reject) => {
             const img = new Image();
             img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error('Image load failed'));
-            img.crossOrigin = 'anonymous';
-            img.src = url;
+            img.onerror = () => reject(new Error('Image decode failed'));
+            img.src = src;
         });
     }, []);
 
@@ -55,8 +62,8 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
         setError(null);
 
         try {
-            const pUrl = proxyUrl(file.previewUrl);
-            const img = await loadImage(pUrl);
+            const dataUrl = await fetchAsDataUrl(file.previewUrl);
+            const img = await loadImage(dataUrl);
 
             canvas.width = img.width;
             canvas.height = img.height;
@@ -135,7 +142,7 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
             setError(e?.message || 'Failed to load image — try again');
             setIsProcessing(false);
         }
-    }, [file, text, style, opacity, color, loadImage]);
+    }, [file, text, style, opacity, color, fetchAsDataUrl, loadImage]);
 
     useEffect(() => {
         if (!isOpen || !file) return;
