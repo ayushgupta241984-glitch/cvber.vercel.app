@@ -281,10 +281,15 @@ function DashboardInner() {
     const downloadEvidencePdf = async () => {
         try {
             const token = localStorage.getItem('access_token');
+            console.log('[EVIDENCE] Downloading evidence PDF');
             const response = await fetch(`${BASE_URL}/api/enforcement/audit/evidence-pdf`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
-            if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+            if (!response.ok) {
+                const body = await response.text().catch(() => '');
+                console.error('[EVIDENCE] Download failed:', response.status, body);
+                throw new Error(`Download failed: ${response.status}`);
+            }
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -294,8 +299,9 @@ function DashboardInner() {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            console.log('[EVIDENCE] Download OK, blob size:', blob.size);
         } catch (e) {
-            console.error('Evidence PDF download failed:', e);
+            console.error('[EVIDENCE] Evidence PDF download failed:', e);
             toast('Failed to download evidence log.', 'error');
         }
     };
