@@ -15,13 +15,6 @@ export default function StructuredData() {
             "priceCurrency": "USD",
             "availability": "https://schema.org/InStock"
         },
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.9",
-            "reviewCount": "847",
-            "bestRating": "5",
-            "worstRating": "1"
-        },
         "featureList": [
             "C2PA Digital Provenance Certificates",
             "Automated DMCA Takedown Generator",
@@ -33,7 +26,7 @@ export default function StructuredData() {
             "Screenshot Guard"
         ],
         "keywords": "protect art from AI, stop AI from using my art, C2PA certificate for artists, DMCA takedown generator, digital art copyright protection, AI art theft prevention, how to protect digital art online, art theft detection software, C2PA provenance, protect illustrations from AI scraping, watermark digital art, blockchain art ownership, how to file DMCA for stolen art, Glaze alternative, Nightshade alternative, protect NFT art, reverse image search stolen art, AI training opt out tool, content authenticity initiative artist, DeviantArt protect alternative, free art protection tool, digital watermark for artists, copyright my artwork, protect photos from AI, photographer copyright protection",
-        "screenshot": "https://cvber.vercel.app/og-image.png",
+        "screenshot": "https://cvber.vercel.app/og-image.svg",
         "softwareHelp": "https://cvber.vercel.app/how-it-works",
         "applicationSuite": "CVBER Creative Protection Suite"
     };
@@ -266,7 +259,7 @@ export default function StructuredData() {
         "programmingLanguage": "TypeScript",
         "runtimePlatform": "Web",
         "license": "https://opensource.org/licenses/MIT",
-        "codeRepository": "https://github.com/cvber/cvber-free"
+        "codeRepository": "https://github.com/ayushgupta241984-glitch/cvber.free.las.app"
     };
 
     const speakableSchema = {

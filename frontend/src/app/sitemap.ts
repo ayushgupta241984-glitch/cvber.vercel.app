@@ -10,10 +10,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
         { url: `${baseUrl}/features`, lastModified: currentDate, changeFrequency: 'weekly', priority: 0.95 },
         { url: `${baseUrl}/how-it-works`, lastModified: currentDate, changeFrequency: 'weekly', priority: 0.95 },
         { url: `${baseUrl}/art-hub`, lastModified: currentDate, changeFrequency: 'weekly', priority: 0.9 },
-        { url: `${baseUrl}/verify`, lastModified: currentDate, changeFrequency: 'weekly', priority: 0.85 },
-        { url: `${baseUrl}/register`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
-        { url: `${baseUrl}/login`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.8 },
-        { url: `${baseUrl}/dashboard`, lastModified: currentDate, changeFrequency: 'daily', priority: 0.7 },
 
         // GEO / AEO high-value landing pages
         { url: `${baseUrl}/c2pa-certificate`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },

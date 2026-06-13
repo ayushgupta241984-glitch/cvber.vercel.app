@@ -36,7 +36,7 @@ const nextConfig = {
                 headers: [
                     {
                         key: 'X-Robots-Tag',
-                        value: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1, noimageindex',
+                        value: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
                     },
                     {
                         key: 'Cache-Control',

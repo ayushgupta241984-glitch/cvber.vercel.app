@@ -1,6 +1,13 @@
 import React from 'react';
 import { Gavel, Scale, AlertTriangle, CheckCircle, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Terms of Use',
+    description: 'CVBER terms of use. Read our terms and conditions for using the CVBER art protection platform.',
+    alternates: { canonical: 'https://cvber.vercel.app/terms' },
+};
 
 export default function TermsOfUse() {
     return (
