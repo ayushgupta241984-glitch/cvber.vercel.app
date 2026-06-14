@@ -1,13 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Heart, Zap, Users, Globe, Lock } from "lucide-react";
+import { Shield, Heart, Zap, Users, Globe, Lock, Menu } from "lucide-react";
 import Link from "next/link";
 import SidebarNav from "@/components/nav/SidebarNav";
 
 const fadeIn = {
     hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const } },
 };
 
 const stagger = {
@@ -15,9 +16,17 @@ const stagger = {
 };
 
 export default function AboutPage() {
+    const [menuOpen, setMenuOpen] = useState(false);
+
     return (
         <main className="min-h-screen bg-black text-white">
-            <SidebarNav />
+            <button
+                onClick={() => setMenuOpen(true)}
+                className="fixed top-6 right-6 z-[140] w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:border-white/20 transition-colors bg-black/50 backdrop-blur-md"
+            >
+                <Menu className="w-5 h-5 text-zinc-400" />
+            </button>
+            <SidebarNav open={menuOpen} onClose={() => setMenuOpen(false)} />
 
             {/* Hero */}
             <section className="pt-32 pb-20 px-6">
