@@ -58,7 +58,7 @@ DMCA.com charges $199 per takedown notice. CVBER generates unlimited DMCA notice
 ## Common Questions About CVBER
 
 ### Is CVBER free?
-Yes. CVBER is free to start with no credit card required. Users can upload up to 100 files per month, generate C2PA certificates, access DMCA templates, and use monitoring tools at no cost. Premium features for enterprise users and high-volume monitoring are available on paid plans starting at $12 per month.
+Yes. CVBER is completely free with no credit card required. Users can upload unlimited files, generate C2PA certificates, access DMCA templates, use monitoring tools, and get blockchain proof at no cost. There are no paid tiers — everything is free forever.
 
 ### Is CVBER available worldwide?
 Yes. CVBER is available globally at https://cvber.vercel.app. There are no geographic restrictions. The platform supports English and is accessible from any country.

@@ -23,10 +23,8 @@ CVBER protects digital art from AI scraping and theft by providing free C2PA cer
 
 ## Key Facts
 
-- **Price**: Free to start, no credit card required
-- **Free Tier**: 10 scans/month, 1GB storage, basic DMCA templates
-- **Pro Tier**: $12/month — unlimited scans, 50GB storage, all features
-- **Studio Tier**: $25/month — team access, API, custom branding
+- **Price**: Free forever. No credit card required.
+- **Features**: Unlimited scans, C2PA certificates, blockchain proof, DMCA automation, watermarking, AI theft detection
 - **Platforms Protected**: Instagram, TikTok, YouTube, DeviantArt, Reddit, Pinterest, stock sites, NFT marketplaces
 - **Standards**: C2PA (Content Authenticity Initiative), DMCA, OpenTimestamps (Bitcoin)
 - **Supported Formats**: JPEG, PNG, TIFF, WebP, and more
