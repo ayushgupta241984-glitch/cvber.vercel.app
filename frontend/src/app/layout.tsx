@@ -96,10 +96,17 @@ export default function RootLayout({
         <html lang="en" className={cn(playfair.variable, jakarta.variable, "font-sans", geist.variable)}>
             <head>
                 <Script
-                    data-domain="cvber.vercel.app"
-                    src="https://plausible.io/js/script.tagged-events.js"
+                    src="https://www.googletagmanager.com/gtag/js?id=G-EW5JZREK1V"
                     strategy="afterInteractive"
                 />
+                <Script id="google-analytics" strategy="afterInteractive">
+                    {`
+                        window.dataLayer = window.dataLayer || [];
+                        function gtag(){dataLayer.push(arguments);}
+                        gtag('js', new Date());
+                        gtag('config', 'G-EW5JZREK1V');
+                    `}
+                </Script>
             </head>
             <body className="font-sans antialiased">
                 <LenisProvider>
