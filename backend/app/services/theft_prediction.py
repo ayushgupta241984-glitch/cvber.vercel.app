@@ -54,13 +54,13 @@ def predict_theft_risk(
 
     risk_score = min(risk_score, 100)
 
-    if risk_score >= 70:
+    if risk_score >= 45:
         risk_level = "critical"
         recommendation = "Immediate action: Add C2PA certificate, enable watermarking, activate monitoring."
-    elif risk_score >= 50:
+    elif risk_score >= 30:
         risk_level = "high"
         recommendation = "Strongly recommended: Add C2PA certificate and enable monitoring."
-    elif risk_score >= 30:
+    elif risk_score >= 15:
         risk_level = "medium"
         recommendation = "Consider: Add C2PA certificate for legal protection."
     else:

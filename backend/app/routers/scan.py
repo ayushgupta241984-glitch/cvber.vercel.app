@@ -398,7 +398,7 @@ async def scan_file(
                         "confidence_level": risk_report.confidence_level,
                         "threat_count": len(risk_report.threat_categories)
                     },
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 supabase.table("audit_logs").insert(audit_log).execute()
             except Exception as db_err:
@@ -427,7 +427,7 @@ async def scan_file(
                     "file_name": file.filename,
                     "risk_score": None,
                     "metadata": {"error": str(e), "status": "failed"},
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 supabase.table("audit_logs").insert(error_log).execute()
             except Exception as log_error:
@@ -472,8 +472,8 @@ async def verify_file(
             "signed_hash": c2pa_result.get("signature", ""),
             "c2pa_manifest": c2pa_result.get("manifest", {}),
             "kms_key_version": c2pa_result.get("kms_key_version", ""),
-            "verified_at": datetime.utcnow().isoformat(),
-            "created_at": datetime.utcnow().isoformat()
+            "verified_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         if not is_mock_mode():
@@ -490,7 +490,7 @@ async def verify_file(
                     "file_name": file.filename,
                     "risk_score": risk_report.overall_risk_score,
                     "metadata": {"verification_id": str(verification_id), "file_id": str(file_id)},
-                    "created_at": datetime.utcnow().isoformat()
+                    "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 supabase.table("audit_logs").insert(audit_log).execute()
             except Exception as db_err:
@@ -514,7 +514,7 @@ async def verify_file(
                 "signed_hash": c2pa_result.get("signature", ""),
                 "manifest": c2pa_result.get("manifest", {}),
                 "kms_key_version": c2pa_result.get("kms_key_version", ""),
-                "verified_at": datetime.utcnow()
+                "verified_at": datetime.now(timezone.utc)
             },
             status="verified"
         )
