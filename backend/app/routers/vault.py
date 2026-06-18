@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 from app.supabase_client import get_supabase, init_supabase
 from app.config import settings
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, is_mock_mode
 from app.services.storage import storage_service
 from app.models.schemas import VaultFile, VaultFileList, VaultFileDetail, BlockchainProof, OwnershipProofRequest
 from app.services.blockchain import blockchain_service
@@ -17,17 +17,13 @@ router = APIRouter(prefix="/vault", tags=["vault"])
 supabase = init_supabase()
 
 
-def _is_mock_mode() -> bool:
-    return "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url
-
-
 @router.get("/files", response_model=VaultFileList)
 async def list_vault_files(
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user)
 ):
-    if _is_mock_mode():
+    if is_mock_mode():
         return VaultFileList(files=[], total=0)
 
     try:

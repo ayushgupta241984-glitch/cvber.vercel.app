@@ -1,36 +1,26 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
 from uuid import uuid4, UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
+import asyncio
+import os
+import re
 from app.models.schemas import ScanResponse, VerifyResponse, VerifyRequest, ThreatCategory, DetailedFinding
 from app.services.vertex_ai import vertex_ai_service
 from app.services.c2pa_service import c2pa_service, embed_and_store_after_signing
 from app.services.storage import storage_service
 from app.services.metadata_engine import metadata_engine
-import os
 from app.services.web_search import web_search_service
 from app.supabase_client import get_supabase
 from app.config import settings
-from app.dependencies import get_current_user
-import re
+from app.dependencies import get_current_user, is_mock_mode, strip_image_error
 import logging
 
 logger = logging.getLogger(__name__)
 
-_IMAGE_ERROR_PATTERNS = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model", "model does not support", "not a vision model", "inform the user", "this model"]
-
-def _strip_image_error(msg: str) -> str:
-    lines = msg.split("\n")
-    cleaned = [l for l in lines if not any(p in l.lower() for p in _IMAGE_ERROR_PATTERNS)]
-    result = "\n".join(cleaned).strip()
-    return result if result else "Image analysis unavailable."
 router = APIRouter(prefix="/scan", tags=["scan"])
 
 supabase = get_supabase()
-
-
-def _is_mock_mode() -> bool:
-    return "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url
 
 
 def detect_screenshot_from_image(file_buffer: bytes, filename: str) -> dict:
@@ -155,7 +145,6 @@ def validate_image_content(file_buffer: bytes) -> dict:
         width, height = img.size
         if width > 10000 or height > 10000:
             raise HTTPException(status_code=400, detail=f"Image dimensions too large: {width}x{height} (max 10000)")
-        extrema = img.getextrema() if hasattr(img, 'getextrema') else None
         return {
             "valid": True,
             "width": width,
@@ -340,7 +329,7 @@ async def scan_file(
             # Require proof if screenshot or low originality
             proof_required = risk_report.is_screenshot or risk_report.originality_score < 50
 
-            if not _is_mock_mode():
+            if not is_mock_mode():
                 try:
                     file_meta = risk_report.file_metadata or {}
                     ai_provider = file_meta.get("ai_provider", "unknown")
@@ -392,7 +381,7 @@ async def scan_file(
             logger.warning(f"Failed to upload to Storage: {storage_err}")
 
         # Write audit log with storage path populated
-        if not _is_mock_mode():
+        if not is_mock_mode():
             try:
                 audit_log = {
                     "id": str(uuid4()),
@@ -429,7 +418,7 @@ async def scan_file(
         raise
     except Exception as e:
         logger.error(f"Scan error: {e}")
-        if not _is_mock_mode():
+        if not is_mock_mode():
             try:
                 error_log = {
                     "id": str(uuid4()),
@@ -443,7 +432,7 @@ async def scan_file(
                 supabase.table("audit_logs").insert(error_log).execute()
             except Exception as log_error:
                 logger.warning(f"Failed to log scan error: {log_error}")
-        clean_msg = _strip_image_error(str(e))
+        clean_msg = strip_image_error(str(e))
         raise HTTPException(status_code=500, detail=f"Scan failed: {clean_msg}")
 
 
@@ -487,7 +476,7 @@ async def verify_file(
             "created_at": datetime.utcnow().isoformat()
         }
 
-        if not _is_mock_mode():
+        if not is_mock_mode():
             try:
                 supabase.table("verification_meta").insert(verification_meta).execute()
             except Exception as db_err:
@@ -534,7 +523,7 @@ async def verify_file(
         raise
     except Exception as e:
         logger.error(f"Verification failed: {e}")
-        clean_msg = _strip_image_error(str(e))
+        clean_msg = strip_image_error(str(e))
         raise HTTPException(status_code=500, detail=f"Verification failed: {clean_msg}")
 
 
@@ -543,7 +532,7 @@ async def get_scan_history(
     limit: int = 10,
     current_user: dict = Depends(get_current_user)
 ):
-    if _is_mock_mode():
+    if is_mock_mode():
         return {"scans": []}
 
     try:

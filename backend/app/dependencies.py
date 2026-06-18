@@ -9,9 +9,18 @@ logger = logging.getLogger(__name__)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
+IMAGE_ERROR_PATTERNS = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model", "model does not support", "not a vision model", "inform the user", "this model"]
 
-def _is_mock_mode() -> bool:
+
+def is_mock_mode() -> bool:
     return "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url
+
+
+def strip_image_error(msg: str) -> str:
+    lines = msg.split("\n")
+    cleaned = [l for l in lines if not any(p in l.lower() for p in IMAGE_ERROR_PATTERNS)]
+    result = "\n".join(cleaned).strip()
+    return result if result else "Image analysis unavailable."
 
 
 async def get_current_user(token: str | None = Depends(oauth2_scheme)) -> dict:

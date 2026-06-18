@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from app.supabase_client import get_supabase
 from app.config import settings
 from app.models.schemas import LoginRequest, RegisterRequest, AuthTokens, UserProfile, RefreshRequest
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, is_mock_mode
 from app.rate_limiter import limiter
 from uuid import uuid4
 import logging
@@ -17,10 +17,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 supabase = get_supabase()
-
-
-def _is_mock_mode() -> bool:
-    return "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url
 
 
 def _encode_jwt(payload: dict) -> str:
@@ -55,7 +51,7 @@ async def register(request: Request, body: RegisterRequest):
     try:
         user_id = str(uuid4())
 
-        if not _is_mock_mode():
+        if not is_mock_mode():
             try:
                 user_attributes = {
                     "email": body.email,
@@ -114,7 +110,7 @@ async def login(request: Request, body: LoginRequest):
     try:
         user_id = str(uuid4())
 
-        if not _is_mock_mode():
+        if not is_mock_mode():
             try:
                 auth_response = supabase.auth.sign_in_with_password({
                     "email": body.email,
@@ -245,7 +241,7 @@ async def oauth_callback(code: str = None, error: str = None, error_description:
 
 @router.get("/me", response_model=UserProfile)
 async def get_current_user_profile(current_user: dict = Depends(get_current_user)):
-    if not _is_mock_mode():
+    if not is_mock_mode():
         try:
             response = supabase.table("profiles").select("*").eq("id", current_user["id"]).single().execute()
             if response.data:

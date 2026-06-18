@@ -84,31 +84,6 @@ const itemVariants = {
     }
 };
 
-const heroVariants = {
-    hidden: { opacity: 0, y: 40 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: 0.25,
-            ease: easeLuxury,
-        }
-    }
-};
-
-const lineVariants = {
-    hidden: { scaleX: 0, opacity: 0 },
-    visible: {
-        scaleX: 1,
-        opacity: 1,
-        transition: {
-            duration: 0.25,
-            ease: easeLuxury,
-            delay: 0.08,
-        }
-    }
-};
-
 function DashboardInner() {
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState<'monitor' | 'provenance'>('monitor');
@@ -281,7 +256,6 @@ function DashboardInner() {
     const downloadEvidencePdf = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            console.log('[EVIDENCE] Downloading evidence PDF');
             const response = await fetch(`${BASE_URL}/api/enforcement/audit/evidence-pdf`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
@@ -299,7 +273,6 @@ function DashboardInner() {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            console.log('[EVIDENCE] Download OK, blob size:', blob.size);
         } catch (e) {
             console.error('[EVIDENCE] Evidence PDF download failed:', e);
             toast('Failed to download evidence log.', 'error');
@@ -312,7 +285,6 @@ function DashboardInner() {
         const hasProofRequired = file.proofRequired === true && !alreadySubmitted;
 
         if (hasProofRequired || screenshotWithLowScore) {
-            console.log('Blocking access for:', file.name, { proofRequired: file.proofRequired, isScreenshot: file.isScreenshot, originality: file.originalityScore });
             setProofModalFile(file);
             return true;
         }
@@ -435,7 +407,6 @@ function DashboardInner() {
                 fileHash,
                 result.scan_id
             );
-            console.log('Blockchain timestamp created:', timestampResult);
             window.dispatchEvent(new Event('blockchain-update'));
         } catch (error: any) {
             console.error('Blockchain timestamp failed:', error);
@@ -520,7 +491,6 @@ function DashboardInner() {
         setBlockchainFileProofs([]);
         try {
             const result = await apiClient.getVaultFileWithProofs(file.id);
-            console.log('Blockchain proofs loaded:', result);
             setBlockchainFileProofs(result.blockchain_proofs || []);
         } catch (err) {
             console.error("Failed to load proofs:", err);
@@ -539,7 +509,6 @@ function DashboardInner() {
         setTimestampingId(file.id);
         try {
             const result = await apiClient.createBlockchainTimestamp(file.name, hash, file.id);
-            console.log('Blockchain timestamp created:', result);
             toast('Blockchain timestamp created — anchoring to Bitcoin', 'success');
             window.dispatchEvent(new Event('blockchain-update'));
             setSelectedBlockchainFile(file);
@@ -559,7 +528,6 @@ function DashboardInner() {
 
         try {
             const result = await apiClient.reverseImageSearch(fileToUpload);
-            console.log('[SEARCH] reverseImageSearch result:', JSON.stringify(result).slice(0, 500));
 
             if (result?.scan_id) {
                 const baseUrl = apiClient.getBaseUrl();
@@ -572,9 +540,6 @@ function DashboardInner() {
                 result._saucenaoUrl = `https://saucenao.com/search.php?url=${encodedUrl}`;
                 result._tineyeUrl = `https://tineye.com/search?url=${encodedUrl}`;
                 result._imageUrl = imageUrl;
-                console.log('[SEARCH] Search URLs generated for scan_id:', result.scan_id);
-            } else {
-                console.warn('[SEARCH] No scan_id in result, no search URLs generated');
             }
 
             setSearchResults(result);
@@ -609,7 +574,6 @@ function DashboardInner() {
 
             const cached = fileBlobCache.current.get(file.id);
             if (cached) {
-                console.log('[SEARCH] Using cached blob for', file.id, file.name, 'size:', cached.size);
                 blob = cached;
             } else {
                 const token = localStorage.getItem('access_token');
@@ -617,7 +581,6 @@ function DashboardInner() {
                 if (token) {
                     try {
                         const downloadUrl = `${apiClient.getBaseUrl()}/vault/files/${file.id}/download`;
-                        console.log('[SEARCH] Downloading from', downloadUrl);
                         const resp = await fetch(downloadUrl, {
                             headers: { 'Authorization': `Bearer ${token}` },
                             signal: AbortSignal.timeout(15000),
@@ -626,28 +589,20 @@ function DashboardInner() {
                             blob = await resp.blob();
                             fileBlobCache.current.set(file.id, blob);
                             downloadOk = true;
-                            console.log('[SEARCH] Download OK, blob size:', blob.size, 'type:', blob.type);
-                        } else {
-                            console.warn('[SEARCH] Download failed, status:', resp.status);
                         }
                     } catch (e) {
-                        console.warn('[SEARCH] Download error:', e);
+                        // download failed, try DOM grab
                     }
                 }
 
                 if (!downloadOk) {
-                    console.log('[SEARCH] Trying DOM grab');
                     const domImg = document.querySelector<HTMLImageElement>('img[src]');
                     if (domImg && domImg.complete && domImg.naturalWidth > 0) {
-                        console.log('[SEARCH] DOM img found:', domImg.src.slice(0, 100));
                         const c = document.createElement('canvas');
                         c.width = domImg.naturalWidth;
                         c.height = domImg.naturalHeight;
                         c.getContext('2d')!.drawImage(domImg, 0, 0);
                         blob = await new Promise<Blob>((resolve) => c.toBlob(b => resolve(b!), 'image/png'));
-                        console.log('[SEARCH] DOM grab blob size:', blob?.size);
-                    } else {
-                        console.warn('[SEARCH] No suitable DOM img found');
                     }
                 }
 
@@ -658,7 +613,6 @@ function DashboardInner() {
 
             setSearchFileBlob(blob);
             const fileToUpload = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
-            console.log('[SEARCH] Calling performSearch, file:', fileToUpload.name, 'size:', fileToUpload.size, 'type:', fileToUpload.type);
             await performSearch(fileToUpload);
             try {
                 await apiClient.registerHash(fileToUpload, file.id);

@@ -11,7 +11,6 @@ from app.services.hash_db import find_similar_multi
 logger = logging.getLogger(__name__)
 
 _TEMP_MAX_BYTES = 5 * 1024 * 1024
-_TEMP_TTL_SECONDS = 300
 
 _IMAGE_MAGIC: list[bytes] = [
     b"\xff\xd8\xff",
