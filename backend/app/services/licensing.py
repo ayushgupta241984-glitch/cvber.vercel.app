@@ -2,7 +2,7 @@
 Licensing Engine
 One-click license generation and verification.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from pydantic import BaseModel
 import hashlib
@@ -101,7 +101,7 @@ class LicensingEngine:
         # Calculate expiry
         expires_at = None
         if terms.get("duration_days"):
-            expires_at = datetime.utcnow() + timedelta(days=terms["duration_days"])
+            expires_at = datetime.now(timezone.utc) + timedelta(days=terms["duration_days"])
         
         # Generate verification URL
         verification_url = f"https://cvber.app/license/{license_id}"
@@ -114,7 +114,7 @@ class LicensingEngine:
             licensee_name=licensee_name,
             licensee_email=licensee_email,
             licensor_name=licensor_name,
-            granted_at=datetime.utcnow(),
+            granted_at=datetime.now(timezone.utc),
             expires_at=expires_at,
             terms=terms,
             verification_url=verification_url,
@@ -146,7 +146,7 @@ class LicensingEngine:
     
     def _generate_license_id(self, asset_hash: str, licensee_email: str) -> str:
         """Generate unique license ID"""
-        data = f"{asset_hash}{licensee_email}{datetime.utcnow().isoformat()}"
+        data = f"{asset_hash}{licensee_email}{datetime.now(timezone.utc).isoformat()}"
         return f"LIC-{hashlib.sha256(data.encode()).hexdigest()[:16].upper()}"
     
     def verify_license(self, license_id: str) -> Dict[str, Any]:
@@ -169,7 +169,7 @@ class LicensingEngine:
             if not is_active:
                 return {"valid": False, "reason": "License has been revoked"}
             
-            if expires_at and expires_at < datetime.utcnow():
+            if expires_at and expires_at < datetime.now(timezone.utc):
                 return {"valid": False, "reason": "License has expired"}
             
             return {

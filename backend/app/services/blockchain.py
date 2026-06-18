@@ -153,7 +153,7 @@ class BlockchainTimestampService:
             proof_id=proof_id,
             asset_hash=content_hash,
             asset_name=asset_name,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             blockchain="bitcoin",
             status=status,
             ots_proof=ots_proof,
@@ -258,7 +258,7 @@ class BlockchainTimestampService:
             raise ValueError("Asset name cannot be empty")
 
         content_hash = file_hash_hex.lower().strip()
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
 
         # Create proof document
         proof_document = {
@@ -324,7 +324,7 @@ class BlockchainTimestampService:
                         proof_id=row.get('proof_id', ''),
                         asset_hash=row.get('asset_hash', ''),
                         asset_name=row.get('asset_name', ''),
-                        timestamp=row.get('created_at') or row.get('timestamp') or datetime.utcnow().isoformat(),
+                        timestamp=row.get('created_at') or row.get('timestamp') or datetime.now(timezone.utc).isoformat(),
                         blockchain=row.get('blockchain', 'bitcoin'),
                         status=row.get('status', 'local_only'),
                         ots_proof=row.get('ots_proof'),
@@ -413,7 +413,7 @@ class BlockchainTimestampService:
                 update_data['bitcoin_block'] = bitcoin_block
 
             if status == 'confirmed':
-                update_data['confirmed_at'] = datetime.utcnow().isoformat()
+                update_data['confirmed_at'] = datetime.now(timezone.utc).isoformat()
 
             self.supabase.table('blockchain_proofs')\
                 .update(update_data)\

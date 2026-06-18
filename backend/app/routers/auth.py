@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import jwt
 from jwt import InvalidTokenError
 from passlib.context import CryptContext
@@ -26,14 +26,14 @@ def _encode_jwt(payload: dict) -> str:
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
     to_encode.update({"exp": expire, "type": "access", "iss": "cvber-auth", "aud": "cvber-api"})
     return _encode_jwt(to_encode)
 
 
 def create_refresh_token(data: dict):
     to_encode = data.copy()
-    to_encode.update({"exp": datetime.utcnow() + timedelta(days=30), "type": "refresh", "iss": "cvber-auth", "aud": "cvber-api"})
+    to_encode.update({"exp": datetime.now(timezone.utc) + timedelta(days=30), "type": "refresh", "iss": "cvber-auth", "aud": "cvber-api"})
     return _encode_jwt(to_encode)
 
 
@@ -67,8 +67,8 @@ async def register(request: Request, body: RegisterRequest):
                             "id": user_id,
                             "email": body.email,
                             "full_name": body.full_name or "",
-                            "created_at": datetime.utcnow().isoformat(),
-                            "updated_at": datetime.utcnow().isoformat()
+                            "created_at": datetime.now(timezone.utc).isoformat(),
+                            "updated_at": datetime.now(timezone.utc).isoformat()
                         }
                         supabase.table("profiles").insert(profile).execute()
                     except Exception as profile_error:
@@ -216,8 +216,8 @@ async def oauth_callback(code: str = None, error: str = None, error_description:
                 "email": email,
                 "full_name": session.user.user_metadata.get("full_name", ""),
                 "avatar_url": session.user.user_metadata.get("avatar_url", ""),
-                "created_at": datetime.utcnow().isoformat(),
-                "updated_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
             }
             supabase.table("profiles").upsert(profile).execute()
         except Exception as e:
@@ -258,6 +258,6 @@ async def get_current_user_profile(current_user: dict = Depends(get_current_user
         email=current_user.get("email", ""),
         full_name=None,
         avatar_url=None,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc)
     )

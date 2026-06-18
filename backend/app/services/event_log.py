@@ -77,7 +77,7 @@ class ImmutableEventLog:
         details: Dict[str, Any] = None
     ) -> AuditEvent:
         """Append a new event to the log in DB"""
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         previous_hash = self._get_last_hash()
         
         # Create event data for hashing
@@ -184,7 +184,7 @@ class ImmutableEventLog:
         
         return {
             "export_type": "CVBER Legal Evidence Packet",
-            "exported_at": datetime.utcnow().isoformat(),
+            "exported_at": datetime.now(timezone.utc).isoformat(),
             "chain_integrity": chain_verification,
             "asset_id": asset_id,
             "total_events": len(asset_events),

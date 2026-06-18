@@ -2,6 +2,7 @@ import os
 import time
 import json
 import logging
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request
@@ -18,10 +19,45 @@ from app.services.storage import storage_service
 
 logger = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Starting CVBER Free API...")
+    validate_environment()
+
+    gcp_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
+    if gcp_json:
+        try:
+            from supabase import create_client
+            from app.config import settings as s
+            gcp_storage = create_client(s.supabase_url, s.supabase_service_role_key)
+            gcp_storage.table("app_secrets").upsert({
+                "key": "gcp_service_account",
+                "value": gcp_json,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }).execute()
+            logger.info("GCP credentials stored in Supabase secrets table")
+        except Exception as e:
+            logger.warning(f"Could not store GCP credentials in secrets table: {e}")
+
+    try:
+        await storage_service.ensure_buckets_exist()
+        logger.info("Storage buckets verified")
+    except Exception as e:
+        logger.warning(f"Could not verify storage buckets: {e}")
+
+    provider_status = vertex_ai_service.get_provider_status()
+    logger.info(f"AI provider status: {json.dumps(provider_status, default=str)}")
+
+    app.state.start_time = time.time()
+    yield
+
+
 app = FastAPI(
     title="CVBER Free API",
     description="Cybersecurity platform with AI-powered threat detection and C2PA verification",
     version="1.0.1",
+    lifespan=lifespan,
 )
 
 app.state.limiter = limiter
@@ -121,36 +157,6 @@ def validate_environment():
     return len(missing) == 0
 
 
-@app.on_event("startup")
-async def startup():
-    logger.info("Starting CVBER Free API...")
-    validate_environment()
-
-    gcp_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
-    if gcp_json:
-        try:
-            from supabase import create_client
-            from app.config import settings as s
-            gcp_storage = create_client(s.supabase_url, s.supabase_service_role_key)
-            gcp_storage.table("app_secrets").upsert({
-                "key": "gcp_service_account",
-                "value": gcp_json,
-                "updated_at": datetime.utcnow().isoformat()
-            }).execute()
-            logger.info("GCP credentials stored in Supabase secrets table")
-        except Exception as e:
-            logger.warning(f"Could not store GCP credentials in secrets table: {e}")
-
-    try:
-        await storage_service.ensure_buckets_exist()
-        logger.info("Storage buckets verified")
-    except Exception as e:
-        logger.warning(f"Could not verify storage buckets: {e}")
-
-    provider_status = vertex_ai_service.get_provider_status()
-    logger.info(f"AI provider status: {json.dumps(provider_status, default=str)}")
-
-
 app.include_router(scan.router)
 app.include_router(auth.router)
 app.include_router(mentor.router)
@@ -194,11 +200,6 @@ async def ai_status():
             "google_key_present": bool(settings.google_api_key),
         }
     }
-
-
-@app.on_event("startup")
-async def record_start_time():
-    app.state.start_time = time.time()
 
 
 if __name__ == "__main__":

@@ -67,7 +67,7 @@ async def list_vault_files(
                 c2pa_manifest=item.get("c2pa_manifest"),
                 c2pa_signature=item.get("c2pa_signature"),
                 storage_url=signed_url,
-                created_at=item.get("created_at", datetime.utcnow())
+                created_at=item.get("created_at", datetime.now(timezone.utc))
             ))
 
         return VaultFileList(files=files, total=response.count or len(files))
@@ -270,7 +270,7 @@ async def get_vault_file_with_proofs(
             originality_score=item.get("originality_score"),
             is_screenshot=item.get("is_screenshot", False),
             storage_url=signed_url,
-            created_at=item.get("created_at", datetime.utcnow())
+            created_at=item.get("created_at", datetime.now(timezone.utc))
         )
 
         # Fetch linked blockchain proofs
@@ -291,7 +291,7 @@ async def get_vault_file_with_proofs(
                     verification_url=p["verification_url"],
                     blockchain=p.get("blockchain", "bitcoin"),
                     bitcoin_block=p.get("bitcoin_block"),
-                    created_at=p.get("created_at", datetime.utcnow()),
+                    created_at=p.get("created_at", datetime.now(timezone.utc)),
                     confirmed_at=p.get("confirmed_at"),
                     vault_file_id=p.get("vault_file_id")
                 ))

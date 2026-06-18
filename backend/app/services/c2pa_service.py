@@ -30,7 +30,7 @@ class C2PAService:
     ) -> Dict[str, Any]:
         metadata = {
             "author": user_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "file_name": file_name,
             "scan_results": {
                 "overall_risk_score": scan_results.overall_risk_score,

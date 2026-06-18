@@ -86,7 +86,7 @@ class TheftMonitor:
     def report_theft(self, asset_id: str, found_url: str, platform: str, estimated_views: int = None) -> TheftAlert:
         """Report a theft detection and store in DB"""
         # Generate alert ID
-        alert_id = f"THEFT-{hashlib.sha256(f'{asset_id}{found_url}{datetime.utcnow()}'.encode()).hexdigest()[:10].upper()}"
+        alert_id = f"THEFT-{hashlib.sha256(f'{asset_id}{found_url}{datetime.now(timezone.utc)}'.encode()).hexdigest()[:10].upper()}"
         
         # Estimate revenue loss
         revenue_loss = None
@@ -103,7 +103,7 @@ class TheftMonitor:
             confidence=0.85,
             estimated_views=estimated_views,
             estimated_revenue_loss=revenue_loss,
-            detected_at=datetime.utcnow(),
+            detected_at=datetime.now(timezone.utc),
             status="new"
         )
         

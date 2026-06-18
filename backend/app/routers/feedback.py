@@ -34,7 +34,7 @@ async def submit_feedback(feedback: FeedbackSubmit, user: dict = Depends(get_cur
             "message": feedback.message[:5000],
             "category": feedback.category,
             "email": feedback.email or user.get("email", ""),
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
         supabase.table("feedback").insert(record).execute()
         return {"status": "ok", "message": "Feedback received. Thank you!"}
@@ -55,7 +55,7 @@ async def generate_referral(user: dict = Depends(get_current_user)):
             "user_id": user_id,
             "code": code,
             "count": 0,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }).execute()
         return {"code": code, "url": f"https://cvber.vercel.app/register?ref={code}", "count": 0}
     except Exception as e:

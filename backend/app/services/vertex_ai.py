@@ -271,7 +271,7 @@ def _generate_mock_report(file_name: str, file_type: str, file_size: int,
         recommendations=[Recommendation(priority="high", action="Configure AI",
                                         rationale="Connect Google AI or Groq to enable pixel-level forensics.")],
         confidence_level=0.5,
-        scan_timestamp=datetime.utcnow(),
+        scan_timestamp=datetime.now(timezone.utc),
         file_metadata={
             "file_name": file_name, "file_type": file_type, "file_size": file_size,
             "ai_provider": "local_pre_scanner", "ai_model": "rule_v1",
@@ -351,7 +351,7 @@ def _build_risk_from_data(data: dict, rules: dict, has_c2pa: bool, provider: str
         detailed_findings=[DetailedFinding(**f) for f in data.get("detailed_findings", [])],
         recommendations=[Recommendation(**r) for r in data.get("recommendations", [])],
         confidence_level=data.get("confidence_level", 0.9),
-        scan_timestamp=datetime.utcnow(),
+        scan_timestamp=datetime.now(timezone.utc),
         file_metadata={
             "file_name": file_name, "file_type": file_type, "file_size": file_size,
             "ai_provider": provider, "ai_model": model,
@@ -508,7 +508,7 @@ class VertexAIService:
             recommendations=[Recommendation(priority="high", action="Use Google AI Studio",
                                             rationale="Switch to Google AI Studio for reliable Vision & Search.")],
             confidence_level=0.5,
-            scan_timestamp=datetime.utcnow(),
+            scan_timestamp=datetime.now(timezone.utc),
             file_metadata={
                 "file_name": file_name, "file_type": file_type, "file_size": len(file_buffer),
                 "ai_provider": f"{self.provider or 'none'}_fallback", "ai_model": "rule_based_v1",

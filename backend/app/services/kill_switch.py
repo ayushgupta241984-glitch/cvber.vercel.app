@@ -61,7 +61,7 @@ class KillSwitchEngine:
             claimant_id=None,
             reason=reason,
             status=DisputeStatus.PENDING,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             resolved_at=None,
             kill_switch_active=True,
             affected_urls=affected_urls or []
@@ -88,7 +88,7 @@ class KillSwitchEngine:
     
     def _generate_dispute_id(self, asset_id: str, owner_id: str) -> str:
         """Generate unique dispute ID"""
-        data = f"{asset_id}{owner_id}{datetime.utcnow().isoformat()}"
+        data = f"{asset_id}{owner_id}{datetime.now(timezone.utc).isoformat()}"
         return f"DISPUTE-{hashlib.sha256(data.encode()).hexdigest()[:10].upper()}"
     
     def check_asset_status(self, asset_hash: str) -> Dict[str, Any]:
@@ -128,7 +128,7 @@ class KillSwitchEngine:
                 .update({
                     "kill_switch_active": False,
                     "status": resolution,
-                    "resolved_at": datetime.utcnow().isoformat()
+                    "resolved_at": datetime.now(timezone.utc).isoformat()
                 })\
                 .eq("dispute_id", dispute_id)\
                 .execute()
@@ -173,7 +173,7 @@ class KillSwitchEngine:
         
         return {
             "report_type": "CVBER Infringer Report",
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "total_disputes": len(disputes),
             "top_infringers": [
                 {
