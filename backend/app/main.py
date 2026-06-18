@@ -13,7 +13,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
 from app.rate_limiter import limiter
-from app.routers import scan, auth, mentor, enforcement, diagnostics, vault, agent, leads, feedback, image_search, watermark
+from app.routers import scan, auth, mentor, enforcement, diagnostics, vault, agent, leads, feedback, image_search, watermark, ai
 from app.services.vertex_ai import vertex_ai_service
 from app.services.storage import storage_service
 
@@ -168,6 +168,7 @@ app.include_router(leads.router)
 app.include_router(feedback.router)
 app.include_router(image_search.router)
 app.include_router(watermark.router)
+app.include_router(ai.router)
 
 
 @app.api_route("/", methods=["GET", "HEAD"])
