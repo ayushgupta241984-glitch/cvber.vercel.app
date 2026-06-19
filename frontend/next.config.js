@@ -32,7 +32,7 @@ const nextConfig = {
                 ],
             },
             {
-                source: '/(c2pa-certificate|dmca-takedown|ai-art-theft|how-to-stop-ai-training-on-my-art|what-is-cvber|best-art-protection-tool|cvber-vs-glaze|features|how-it-works)',
+                source: '/(c2pa-certificate|dmca-takedown|ai-art-theft|how-to-stop-ai-training-on-my-art|what-is-cvber|best-art-protection-tool|cvber-vs-glaze|features|how-it-works|about|verify)',
                 headers: [
                     {
                         key: 'X-Robots-Tag',

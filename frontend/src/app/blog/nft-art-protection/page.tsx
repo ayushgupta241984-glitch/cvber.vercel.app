@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import BlogPostSchema from "@/components/seo/BlogPostSchema";
 
 export const metadata: Metadata = {
     title: { absolute: "NFT Art Protection: How to Protect Your NFTs From AI Theft | CVBER" },
@@ -11,6 +12,17 @@ export const metadata: Metadata = {
 export default function NFTArtProtection() {
     return (
         <div className="min-h-screen bg-[#050505] text-white pt-32 pb-20 px-6">
+            <BlogPostSchema
+                title="NFT Art Protection: How to Protect Your NFTs From AI Theft"
+                description="Protect your NFT art from AI scraping and theft. C2PA certificates for NFTs, marketplace monitoring, and DMCA automation."
+                url="https://cvber.vercel.app/blog/nft-art-protection"
+                datePublished="2026-05-28"
+                faqs={[
+                    { question: "How do I protect my NFT art from AI?", answer: "Protect your NFTs by: (1) Embedding C2PA certificates before minting (free via CVBER), (2) Including creation proof in NFT metadata, (3) Monitoring all major marketplaces (OpenSea, Rarible, Foundation), (4) Filing DMCA immediately when theft is detected, (5) Using CVBER's blockchain attestation for independent proof of creation." },
+                    { question: "Can AI companies scrape NFT art?", answer: "Yes. NFT art is public and AI companies scrape NFT marketplaces to train models. CVBER monitors OpenSea, Rarible, Foundation, SuperRare, Blur, and Zora for unauthorized copies." },
+                    { question: "Does CVBER work with NFTs?", answer: "Yes. CVBER provides C2PA certificates for NFT art, monitors NFT marketplaces for unauthorized copies, and uses OpenTimestamps to create Bitcoin-anchored proof of creation that provides additional legal evidence beyond the NFT itself." }
+                ]}
+            />
             <article className="max-w-3xl mx-auto">
                 <Link href="/blog" className="text-purple-400 text-sm font-bold uppercase tracking-widest mb-8 block">&larr; Back to Blog</Link>
                 <time className="text-zinc-500 text-sm">May 28, 2026 · 7 min read</time>

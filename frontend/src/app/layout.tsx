@@ -5,6 +5,7 @@ import "./globals.css";
 import LenisProvider from "@/providers/LenisProvider";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import GlobalSchema from "@/components/seo/GlobalSchema";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
@@ -109,6 +110,7 @@ export default function RootLayout({
                 </Script>
             </head>
             <body className="font-sans antialiased">
+                <GlobalSchema />
                 <LenisProvider>
                     <Navbar />
                     <main className="min-h-screen">

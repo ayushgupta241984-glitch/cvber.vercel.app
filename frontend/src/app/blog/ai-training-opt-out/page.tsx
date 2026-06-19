@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import BlogPostSchema from "@/components/seo/BlogPostSchema";
 
 export const metadata: Metadata = {
     title: { absolute: "How to Opt Out of AI Training: Complete Guide | CVBER" },
@@ -11,6 +12,17 @@ export const metadata: Metadata = {
 export default function AITrainingOptOut() {
     return (
         <div className="min-h-screen bg-[#050505] text-white pt-32 pb-20 px-6">
+            <BlogPostSchema
+                title="How to Opt Out of AI Training: Complete Guide"
+                description="Step-by-step guide to opting out of AI training. C2PA certificates, robots.txt, Spawning.ai, Have I Been Trained, and legal options."
+                url="https://cvber.vercel.app/blog/ai-training-opt-out"
+                datePublished="2026-06-01"
+                faqs={[
+                    { question: "How do I stop AI from training on my art?", answer: "The most effective methods are: (1) Get C2PA certificates from CVBER (free) which include machine-readable opt-out signals, (2) Use Spawning.ai for multi-platform opt-out, (3) Add robots.txt directives to block AI crawlers, (4) Use Glaze/Nightshade for technical protection, (5) File DMCA takedowns when training is detected." },
+                    { question: "Do AI companies respect opt-out signals?", answer: "Major AI companies including OpenAI, Google, and Adobe have committed to respecting C2PA opt-out signals. However, not all companies honor them. Using multiple opt-out methods provides the strongest protection." },
+                    { question: "Is opting out of AI training legally enforceable?", answer: "C2PA opt-out signals are increasingly recognized as legally relevant. Combined with copyright law, they provide strong evidence that unauthorized training violates your rights. The EU AI Act also requires respect for opt-out signals." }
+                ]}
+            />
             <article className="max-w-3xl mx-auto">
                 <Link href="/blog" className="text-purple-400 text-sm font-bold uppercase tracking-widest mb-8 block">&larr; Back to Blog</Link>
                 <time className="text-zinc-500 text-sm">June 1, 2026 · 8 min read</time>

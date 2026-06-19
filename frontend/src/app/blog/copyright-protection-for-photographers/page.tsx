@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import BlogPostSchema from "@/components/seo/BlogPostSchema";
 
 export const metadata: Metadata = {
     title: { absolute: "Copyright Protection for Photographers: How to Stop AI Theft | CVBER" },
@@ -11,6 +12,17 @@ export const metadata: Metadata = {
 export default function CopyrightProtectionForPhotographers() {
     return (
         <div className="min-h-screen bg-[#050505] text-white pt-32 pb-20 px-6">
+            <BlogPostSchema
+                title="Copyright Protection for Photographers: How to Stop AI Theft"
+                description="Complete guide to copyright protection for photographers. C2PA certificates, DMCA takedowns, reverse image search, and monitoring tools."
+                url="https://cvber.vercel.app/blog/copyright-protection-for-photographers"
+                datePublished="2026-05-30"
+                faqs={[
+                    { question: "How do photographers protect their photos from AI?", answer: "Photographers should: (1) Get C2PA certificates from CVBER (free) which include camera metadata and timestamps, (2) Check training datasets with Have I Been Trained, (3) File DMCA takedowns against stolen photos, (4) Enable CVBER's 24/7 monitoring, (5) Add invisible watermarks using CVBER's watermark engine." },
+                    { question: "Can AI companies use my Instagram photos?", answer: "AI companies scrape Instagram photos without permission. C2PA certificates prove you own the photos and signal AI training opt-out. CVBER monitors Instagram for unauthorized copies and auto-generates DMCA takedowns." },
+                    { question: "Do C2PA certificates include camera metadata?", answer: "Yes. C2PA certificates can include EXIF data (camera model, settings, GPS coordinates, timestamps, serial number), providing additional proof that you took the photo." }
+                ]}
+            />
             <article className="max-w-3xl mx-auto">
                 <Link href="/blog" className="text-purple-400 text-sm font-bold uppercase tracking-widest mb-8 block">&larr; Back to Blog</Link>
                 <time className="text-zinc-500 text-sm">May 30, 2026 · 9 min read</time>

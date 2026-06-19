@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import BlogPostSchema from "@/components/seo/BlogPostSchema";
 
 export const metadata: Metadata = {
     title: { absolute: "DMCA Takedown Guide for Artists: How to Get Stolen Art Removed | CVBER" },
@@ -11,6 +12,18 @@ export const metadata: Metadata = {
 export default function DMCAGuideForArtists() {
     return (
         <div className="min-h-screen bg-[#050505] text-white pt-32 pb-20 px-6">
+            <BlogPostSchema
+                title="DMCA Takedown Guide for Artists: How to Get Stolen Art Removed"
+                description="Step-by-step guide to filing DMCA takedown notices. Templates, platforms, timelines, and what to do if a site ignores your notice."
+                url="https://cvber.vercel.app/blog/dmca-guide-for-artists"
+                datePublished="2026-05-25"
+                faqs={[
+                    { question: "How do I file a DMCA takedown notice?", answer: "Gather evidence (URL of stolen content, your original file, timestamps), write a DMCA notice with your contact info, description of copyrighted work, location of infringing material, good faith statement, and accuracy statement, then send it to the platform's DMCA agent. CVBER automates this entire process." },
+                    { question: "How long does a DMCA takedown take?", answer: "Most platforms respond within 24-48 hours (Instagram, YouTube) to 3-7 business days (Reddit, Pinterest). If a platform ignores your notice, file with their hosting provider or domain registrar." },
+                    { question: "What platforms support DMCA takedowns?", answer: "All major platforms support DMCA: Instagram (copyright@fb.com), YouTube (Copyright Claims Studio), TikTok (copyright@tiktok.com), Reddit (copyright@reddit.com), DeviantArt (copyright@deviantart.com), Pinterest (copyright@pinterest.com), and X/Twitter." },
+                    { question: "Is CVBER's DMCA automation free?", answer: "Yes. CVBER automatically generates legally formatted DMCA notices when it detects stolen art. You review and send. Unlimited notices, no cost." }
+                ]}
+            />
             <article className="max-w-3xl mx-auto">
                 <Link href="/blog" className="text-purple-400 text-sm font-bold uppercase tracking-widest mb-8 block">&larr; Back to Blog</Link>
 

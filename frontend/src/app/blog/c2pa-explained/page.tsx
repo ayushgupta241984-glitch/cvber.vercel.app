@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import BlogPostSchema from "@/components/seo/BlogPostSchema";
 
 export const metadata: Metadata = {
     title: { absolute: "C2PA Certificates Explained: What Artists Need to Know | CVBER" },
@@ -11,6 +12,18 @@ export const metadata: Metadata = {
 export default function C2PAExplained() {
     return (
         <div className="min-h-screen bg-[#050505] text-white pt-32 pb-20 px-6">
+            <BlogPostSchema
+                title="C2PA Certificates Explained: What Artists Need to Know"
+                description="What is C2PA? How does it work? Why should artists care? Everything you need to know about the content authenticity standard for digital art."
+                url="https://cvber.vercel.app/blog/c2pa-explained"
+                datePublished="2026-05-28"
+                faqs={[
+                    { question: "What is C2PA?", answer: "C2PA (Coalition for Content Provenance and Authenticity) is a technical standard that creates a cryptographic digital signature for digital content. It proves who created a work, when it was created, and that it hasn't been altered. Supported by Adobe, Microsoft, Google, BBC, Nikon, Canon, and Leica." },
+                    { question: "How do I get a C2PA certificate for my art?", answer: "Sign up for CVBER (free, no credit card), upload your artwork, and get a C2PA certificate in seconds. The certificate is embedded in your file metadata and recognized by major tech companies." },
+                    { question: "Is C2PA recognized by AI companies?", answer: "Yes. Major AI companies including OpenAI, Google, and Adobe have committed to respecting C2PA opt-out signals. When your art has a C2PA certificate, AI companies know they cannot legally train on it." },
+                    { question: "Can a C2PA certificate be removed?", answer: "C2PA certificates are embedded in file metadata. While metadata can be stripped, CVBER's blockchain attestation provides independent proof of creation that cannot be removed." }
+                ]}
+            />
             <article className="max-w-3xl mx-auto">
                 <Link href="/blog" className="text-purple-400 text-sm font-bold uppercase tracking-widest mb-8 block">&larr; Back to Blog</Link>
 

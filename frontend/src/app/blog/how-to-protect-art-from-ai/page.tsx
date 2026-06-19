@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import BlogPostSchema from "@/components/seo/BlogPostSchema";
 
 export const metadata: Metadata = {
     title: { absolute: "How to Protect Your Art From AI Theft in 2026 — Complete Guide | CVBER" },
@@ -33,7 +34,17 @@ export default function HowToProtectArtFromAI() {
 
     return (
         <div className="min-h-screen bg-[#050505] text-white pt-32 pb-20 px-6">
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+            <BlogPostSchema
+                title="How to Protect Your Art From AI Theft in 2026 — Complete Guide"
+                description="Complete guide to protecting digital art from AI scraping. Learn about C2PA certificates, DMCA takedowns, Glaze, Nightshade, and free tools to stop AI from using your art."
+                url="https://cvber.vercel.app/blog/how-to-protect-art-from-ai"
+                datePublished="2026-06-01"
+                faqs={[
+                    { question: "Can AI companies legally use my art?", answer: "AI companies often scrape art without permission, which may violate copyright law. However, enforcement is difficult. CVBER helps by providing C2PA certificates (proof of ownership) and automated DMCA takedowns." },
+                    { question: "What is the best way to protect my art from AI?", answer: "The best approach combines multiple methods: C2PA certificates (proof of ownership), Glaze/Nightshade (technical protection), robots.txt (opt-out signals), and DMCA takedowns (enforcement). CVBER handles C2PA and DMCA automatically." },
+                    { question: "Is CVBER free?", answer: "Yes, CVBER is free to start with no credit card required. Upload up to 100 files per month, get C2PA certificates, and use monitoring tools at no cost." }
+                ]}
+            />
 
             <article className="max-w-3xl mx-auto">
                 <Link href="/blog" className="text-purple-400 text-sm font-bold uppercase tracking-widest mb-8 block">&larr; Back to Blog</Link>

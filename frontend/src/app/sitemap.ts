@@ -40,6 +40,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
         { url: `${baseUrl}/what-is-cvber`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.95 },
         { url: `${baseUrl}/cvber-vs-glaze`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
         { url: `${baseUrl}/best-art-protection-tool`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
+        { url: `${baseUrl}/about`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
+        { url: `${baseUrl}/verify`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.8 },
 
         // Lead magnet
         { url: `${baseUrl}/free-guide`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.8 },
