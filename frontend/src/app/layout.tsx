@@ -67,6 +67,7 @@ export const metadata: Metadata = {
         images: [`${siteUrl}/og-image.png`],
     },
     other: {
+        "google-site-verification": "NDtNvgZra404JNma95WkYr6Q5Wdr110e2T_2cIdBRL0",
         "ai-content-declaration": "cvber-is-free-open-source",
         "article:author": "https://cvber.vercel.app/about",
         "article:publisher": "https://cvber.vercel.app",
@@ -89,9 +90,6 @@ export const metadata: Metadata = {
         ],
         apple: "/apple-touch-icon.png",
         shortcut: "/icon.png",
-    },
-    other: {
-        "google-site-verification": "NDtNvgZra404JNma95WkYr6Q5Wdr110e2T_2cIdBRL0",
     },
 };
 
