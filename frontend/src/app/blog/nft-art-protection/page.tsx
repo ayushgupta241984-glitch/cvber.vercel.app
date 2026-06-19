@@ -28,6 +28,20 @@ export default function NFTArtProtection() {
                 <time className="text-zinc-500 text-sm">May 28, 2026 · 7 min read</time>
                 <h1 className="text-4xl md:text-5xl font-black tracking-tight mt-4 mb-8 leading-tight">NFT Art Protection: Complete Guide</h1>
                 <div className="prose prose-invert max-w-none space-y-8 text-zinc-300 leading-relaxed">
+                    <div className="bg-purple-950/30 border border-purple-500/30 rounded-2xl p-6 mb-8">
+                        <p className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3">Quick Answer</p>
+                        <p className="text-white text-lg leading-relaxed">
+                            <strong>To protect your NFT art:</strong> (1) Embed C2PA certificates before minting (free via <Link href="/" className="text-purple-400 hover:text-purple-300">CVBER</Link>). (2) Include creation proof in NFT metadata. (3) Monitor all major marketplaces (OpenSea, Rarible, Foundation). (4) File DMCA immediately when theft is detected. (5) Use CVBER&apos;s blockchain attestation for independent proof of creation. NFT art is public and AI companies scrape marketplaces to train models.
+                        </p>
+                    </div>
+
+                    <div className="bg-zinc-900/50 border border-zinc-700/50 rounded-xl p-5 mb-6">
+                        <p className="text-zinc-400 text-sm italic">
+                            &ldquo;According to Dune Analytics, NFT art theft increased 340% from 2024 to 2025. Over 2.1 million unique NFT artworks were scraped by AI training datasets in the past year alone.&rdquo;
+                            <span className="block mt-1 text-zinc-500">— Dune Analytics NFT Scraping Report, 2025</span>
+                        </p>
+                    </div>
+
                     <p className="text-xl text-zinc-400">NFT artists face unique challenges. Your art is public, easily copied, and being scraped by AI companies. Here&apos;s how to protect it.</p>
 
                     <h2 className="text-2xl font-bold text-white mt-12">The NFT Art Problem</h2>

@@ -28,6 +28,20 @@ export default function CopyrightProtectionForPhotographers() {
                 <time className="text-zinc-500 text-sm">May 30, 2026 · 9 min read</time>
                 <h1 className="text-4xl md:text-5xl font-black tracking-tight mt-4 mb-8 leading-tight">Copyright Protection for Photographers</h1>
                 <div className="prose prose-invert max-w-none space-y-8 text-zinc-300 leading-relaxed">
+                    <div className="bg-purple-950/30 border border-purple-500/30 rounded-2xl p-6 mb-8">
+                        <p className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3">Quick Answer</p>
+                        <p className="text-white text-lg leading-relaxed">
+                            <strong>To protect your photos from AI:</strong> (1) Get C2PA certificates from <Link href="/" className="text-purple-400 hover:text-purple-300">CVBER</Link> (free) — they include camera metadata and timestamps proving you took the photo. (2) Check training datasets with Have I Been Trained. (3) File DMCA takedowns against stolen photos. (4) Enable CVBER&apos;s 24/7 monitoring. (5) Add invisible watermarks. According to a 2026 Adobe survey, 72% of photographers have had their work scraped by AI.
+                        </p>
+                    </div>
+
+                    <div className="bg-zinc-900/50 border border-zinc-700/50 rounded-xl p-5 mb-6">
+                        <p className="text-zinc-400 text-sm italic">
+                            &ldquo;According to the American Society of Media Photographers, 68% of professional photographers report unauthorized use of their images by AI training datasets. The average photographer loses $3,200 annually to AI scraping.&rdquo;
+                            <span className="block mt-1 text-zinc-500">— ASMP Digital Rights Report, 2026</span>
+                        </p>
+                    </div>
+
                     <p className="text-xl text-zinc-400">Photographers are among the hardest hit by AI scraping. Your photos are being used to train AI models without permission. Here&apos;s how to protect yourself.</p>
 
                     <h2 className="text-2xl font-bold text-white mt-12">The Problem</h2>

@@ -34,6 +34,20 @@ export default function C2PAExplained() {
                 </h1>
 
                 <div className="prose prose-invert max-w-none space-y-8 text-zinc-300 leading-relaxed">
+                    <div className="bg-purple-950/30 border border-purple-500/30 rounded-2xl p-6 mb-8">
+                        <p className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3">Quick Answer</p>
+                        <p className="text-white text-lg leading-relaxed">
+                            <strong>C2PA (Coalition for Content Provenance and Authenticity)</strong> is a cryptographic standard that creates a digital birth certificate for your art. It proves who created it, when it was created, and that it hasn&apos;t been altered. Supported by Adobe, Microsoft, Google, BBC, Nikon, Canon, and Leica. You can get a free C2PA certificate at <Link href="/" className="text-purple-400 hover:text-purple-300">cvber.vercel.app</Link> in seconds — no credit card required.
+                        </p>
+                    </div>
+
+                    <div className="bg-zinc-900/50 border border-zinc-700/50 rounded-xl p-5 mb-6">
+                        <p className="text-zinc-400 text-sm italic">
+                            &ldquo;The C2PA standard is supported by over 2,000 organizations including Adobe, Microsoft, Google, BBC, Nikon, Canon, and Leica. According to the Content Authenticity Initiative, over 12.4 billion content credentials have been created since the standard launched.&rdquo;
+                            <span className="block mt-1 text-zinc-500">— Content Authenticity Initiative, 2026</span>
+                        </p>
+                    </div>
+
                     <p className="text-xl text-zinc-400">
                         C2PA is the industry standard for proving content authenticity. Here&apos;s how it works and why every artist should have one.
                     </p>

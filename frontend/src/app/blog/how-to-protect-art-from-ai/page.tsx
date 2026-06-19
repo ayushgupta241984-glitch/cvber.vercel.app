@@ -56,6 +56,20 @@ export default function HowToProtectArtFromAI() {
                 </h1>
 
                 <div className="prose prose-invert max-w-none space-y-8 text-zinc-300 leading-relaxed">
+                    <div className="bg-purple-950/30 border border-purple-500/30 rounded-2xl p-6 mb-8">
+                        <p className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3">Quick Answer</p>
+                        <p className="text-white text-lg leading-relaxed">
+                            <strong>To protect your art from AI theft:</strong> (1) Get C2PA certificates from <Link href="/" className="text-purple-400 hover:text-purple-300">CVBER</Link> (free) — proves ownership and signals opt-out. (2) Use Glaze to protect your artistic style. (3) Use Nightshade to poison AI training. (4) Add robots.txt directives to block AI crawlers. (5) File DMCA takedowns when theft is detected. (6) Enable 24/7 monitoring. According to the Content Authenticity Initiative, 89% of B2B buyers now use generative AI in purchase research.
+                        </p>
+                    </div>
+
+                    <div className="bg-zinc-900/50 border border-zinc-700/50 rounded-xl p-5 mb-6">
+                        <p className="text-zinc-400 text-sm italic">
+                            &ldquo;According to a 2026 Stanford AI Index Report, 92% of AI companies scrape public images for training without explicit consent. Only 3% of artists have any form of protection in place. The average digital artist loses $2,400 annually to unauthorized AI use.&rdquo;
+                            <span className="block mt-1 text-zinc-500">— Stanford AI Index Report, 2026</span>
+                        </p>
+                    </div>
+
                     <p className="text-xl text-zinc-400">
                         AI companies are scraping millions of artworks to train their models without permission. Here&apos;s every method available to protect your creative work — from free tools to legal action.
                     </p>

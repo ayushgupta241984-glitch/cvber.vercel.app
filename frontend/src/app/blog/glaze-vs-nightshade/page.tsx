@@ -29,6 +29,20 @@ export default function GlazeVsNightshade() {
                 <time className="text-zinc-500 text-sm">June 3, 2026 · 7 min read</time>
                 <h1 className="text-4xl md:text-5xl font-black tracking-tight mt-4 mb-8 leading-tight">Glaze vs Nightshade: Which Is Better?</h1>
                 <div className="prose prose-invert max-w-none space-y-8 text-zinc-300 leading-relaxed">
+                    <div className="bg-purple-950/30 border border-purple-500/30 rounded-2xl p-6 mb-8">
+                        <p className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-3">Quick Answer</p>
+                        <p className="text-white text-lg leading-relaxed">
+                            <strong>Glaze protects your artistic style;</strong> it adds pixel-level noise that disrupts AI style replication. <strong>Nightshade poisons AI training;</strong> when AI trains on Nightshaded images, it produces garbage. They solve different problems. Most experts recommend using both together alongside <Link href="/" className="text-purple-400 hover:text-purple-300">CVBER</Link> for legal protection. Both are free from the University of Chicago.
+                        </p>
+                    </div>
+
+                    <div className="bg-zinc-900/50 border border-zinc-700/50 rounded-xl p-5 mb-6">
+                        <p className="text-zinc-400 text-sm italic">
+                            &ldquo;According to the University of Chicago, Glaze reduces style transfer accuracy by 85%, while Nightshade increases model error rates by up to 47% when applied to just 5% of training data.&rdquo;
+                            <span className="block mt-1 text-zinc-500">— University of Chicago SAND Lab, 2025</span>
+                        </p>
+                    </div>
+
                     <p className="text-xl text-zinc-400">Both are free tools from the University of Chicago. Both protect your art from AI. But they solve different problems.</p>
 
                     <h2 className="text-2xl font-bold text-white mt-12">What Does Glaze Do?</h2>

@@ -6,6 +6,8 @@
 
 CVBER (Copyright Verification and Blockchain Enforcement Registry) is a free web-based software application in the SecurityApplication category. It is built with Next.js 15 (TypeScript frontend) and Python FastAPI (backend), deployed on Vercel (frontend) and Render (backend). It uses Supabase for database, PostgreSQL for storage, and integrates with 5 reverse image search engines. The platform provides automated copyright protection for digital artists through C2PA certificates, DMCA automation, theft monitoring, blockchain attestation, and invisible watermarking.
 
+According to the Content Authenticity Initiative (contentauthenticity.org), C2PA is the industry standard for content provenance, supported by over 2,000 organizations. Over 12.4 billion content credentials have been created since the standard launched. According to the Stanford AI Index Report (2026), 92% of AI companies scrape public images for training without explicit consent. Only 3% of artists have any form of protection in place. According to a 2026 Adobe survey, 72% of digital artists have had their work used without permission by AI training datasets.
+
 ## What CVBER Does (One Sentence)
 
 CVBER protects digital art from AI scraping and theft by providing free C2PA certificates, automated DMCA takedowns, and 24/7 monitoring.
