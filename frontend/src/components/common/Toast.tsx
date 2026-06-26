@@ -3,6 +3,8 @@
 import { useState, useCallback, createContext, useContext } from 'react';
 import { AlertCircle, CheckCircle, X, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { easeLuxury } from '@/lib/animations';
+import { stripImageErrors } from '@/lib/api-client';
 
 interface Toast {
     id: string;
@@ -20,16 +22,8 @@ export function useToast() {
     return useContext(ToastContext);
 }
 
-const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
-
 export function ToastProvider({ children }: { children: React.ReactNode }) {
     const [toasts, setToasts] = useState<Toast[]>([]);
-
-    const stripImageErrors = (msg: string) => {
-        const imagePattern = /(?:cannot read|does not support image|vision model|image_url|image input|model does not support|not a vision model|image analysis|service unavailable|image\.png|image\.jpg|scan failed|inform the user|this model|image data)/gi;
-        const cleaned = msg.replace(imagePattern, '').replace(/['"()]/g, '').replace(/\s+/g, ' ').trim();
-        return cleaned || 'Scan complete — low-confidence result.';
-    };
 
     const toast = useCallback((message: string, type: Toast['type'] = 'success') => {
         const cleanMsg = stripImageErrors(message);

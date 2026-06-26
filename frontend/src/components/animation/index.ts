@@ -1,9 +1,0 @@
-export { default as SlideEffect } from "./SlideEffect";
-export { default as TextBlurEffect } from "./TextBlurEffect";
-export { default as TextRevealEffect } from "./TextRevealEffect";
-export { default as FadeEffect } from "./FadeEffect";
-export { default as FollowCursor } from "./FollowCursor";
-export { default as SpotlightCard } from "./SpotlightCard";
-export { default as ScrollReveal } from "./ScrollReveal";
-export { default as TextReveal } from "./TextReveal";
-export { default as MeshGradient } from "./MeshGradient";

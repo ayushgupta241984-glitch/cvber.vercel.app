@@ -11,8 +11,9 @@ import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
 import { DMCAGenerator } from '@/components/enforcement/DMCAGenerator';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { ToastProvider, useToast } from '@/components/common/Toast';
-import { apiClient, BASE_URL } from '@/lib/api-client';
+import { apiClient, BASE_URL, downloadBlob } from '@/lib/api-client';
 import { FeedbackWidget } from '@/components/common/FeedbackWidget';
+import { easeLuxurySharp as easeLuxury } from '@/lib/animations';
 import { ReferralBanner } from '@/components/common/ReferralBanner';
 import { SearchResultsModal } from '@/components/search/SearchResultsModal';
 import { SearchTV } from '@/components/search/SearchTV';
@@ -56,8 +57,6 @@ interface UploadResult {
     storage_url?: string;
     original_hash?: string;
 }
-
-const easeLuxury = [0.16, 1, 0.3, 1] as const;
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -146,7 +145,7 @@ function DashboardInner() {
                 }));
                 setFiles(cleaned);
             } catch (e) {
-                console.error("Memory corruption:", e);
+
             }
         }
 
@@ -170,7 +169,7 @@ function DashboardInner() {
                         }
                     }
                 } catch (err) {
-                    console.error("Profile fetch failed:", err);
+
                 }
             }
         };
@@ -214,7 +213,7 @@ function DashboardInner() {
                     });
                 }
             } catch (err) {
-                console.error("Failed to fetch vault files:", err);
+
             } finally {
                 setVaultLoading(false);
                 if (!indexedRef.current) {
@@ -233,22 +232,10 @@ function DashboardInner() {
     const downloadOtsProof = async (proofId: string, assetName: string) => {
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${BASE_URL}/vault/proofs/${proofId}/ots-proof`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-            if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-            const blob = await response.blob();
             const baseName = assetName.includes('.') ? assetName.split('.').slice(0, -1).join('.') : assetName;
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${baseName}.ots`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            await downloadBlob(`${BASE_URL}/vault/proofs/${proofId}/ots-proof`, { 'Authorization': `Bearer ${token}` }, `${baseName}.ots`);
         } catch (e) {
-            console.error('OTS proof download failed:', e);
+
             toast('Failed to download OTS proof.', 'error');
         }
     };
@@ -261,7 +248,7 @@ function DashboardInner() {
             });
             if (!response.ok) {
                 const body = await response.text().catch(() => '');
-                console.error('[EVIDENCE] Download failed:', response.status, body);
+
                 throw new Error(`Download failed: ${response.status}`);
             }
             const blob = await response.blob();
@@ -274,7 +261,7 @@ function DashboardInner() {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         } catch (e) {
-            console.error('[EVIDENCE] Evidence PDF download failed:', e);
+
             toast('Failed to download evidence log.', 'error');
         }
     };
@@ -342,7 +329,7 @@ function DashboardInner() {
                 toast('Failed to submit proof. Please try again.', 'error');
             }
         } catch (e) {
-            console.error('Submit proof failed:', e);
+
             toast('Error submitting proof.', 'error');
         } finally {
             setSubmittingProof(false);
@@ -409,7 +396,7 @@ function DashboardInner() {
             );
             window.dispatchEvent(new Event('blockchain-update'));
         } catch (error: any) {
-            console.error('Blockchain timestamp failed:', error);
+
             if (error?.message) {
                 toast(`Blockchain timestamp failed: ${error.message}`, 'error');
             }
@@ -432,7 +419,7 @@ function DashboardInner() {
                     }
                 }
             } catch (err) {
-                console.error("Failed to get vault file:", err);
+
             }
         }
         setSelectedFile(file);
@@ -454,11 +441,11 @@ function DashboardInner() {
                     file.previewUrl = URL.createObjectURL(blob);
                 }
             } catch (e) {
-                console.error('Watermark download failed, trying signed URL:', e);
+
                 try {
                     const urlResp = await apiClient.getVaultFileUrl(file.id);
                     if (urlResp?.url) file.previewUrl = urlResp.url;
-                } catch {}
+                } catch { /* intentionally empty — fire-and-forget fallback */ }
             }
         }
         setSelectedFile({ ...file });
@@ -480,7 +467,7 @@ function DashboardInner() {
         try {
             await apiClient.deleteVaultFile(file.id);
         } catch (err) {
-            console.error("Failed to delete from backend:", err);
+
         }
         setFiles(prev => prev.filter(f => f.id !== file.id));
     };
@@ -493,7 +480,7 @@ function DashboardInner() {
             const result = await apiClient.getVaultFileWithProofs(file.id);
             setBlockchainFileProofs(result.blockchain_proofs || []);
         } catch (err) {
-            console.error("Failed to load proofs:", err);
+
             setBlockchainFileProofs([]);
         } finally {
             setProofsLoading(false);
@@ -544,7 +531,7 @@ function DashboardInner() {
 
             setSearchResults(result);
         } catch (err: any) {
-            console.error('[SEARCH] performSearch error:', err);
+
             setSearchError(err?.message || 'Search failed');
         } finally {
             setSearchLoading(false);
@@ -559,7 +546,7 @@ function DashboardInner() {
             const result = await apiClient.deepImageSearch(file);
             setSearchResults((prev: any) => ({ ...(prev || {}), _deepResults: result }));
         } catch (err: any) {
-            console.error('Deep search failed:', err);
+
             throw err;
         }
     };
@@ -616,10 +603,9 @@ function DashboardInner() {
             await performSearch(fileToUpload);
             try {
                 await apiClient.registerHash(fileToUpload, file.id);
-            } catch {
-            }
+            } catch { /* intentionally empty — fire-and-forget */ }
         } catch (err) {
-            console.error('[SEARCH] handleSearch error:', err);
+
             const msg = err instanceof Error ? err.message : 'Unknown error';
             toast(`Could not search file: ${msg}`, 'error');
         } finally {

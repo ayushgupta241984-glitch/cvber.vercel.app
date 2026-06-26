@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link2, CheckCircle, Clock, AlertCircle, RefreshCw, ExternalLink, Copy, Check, Download } from 'lucide-react';
-import { apiClient, BASE_URL } from '@/lib/api-client';
+import { apiClient, BASE_URL, downloadBlob } from '@/lib/api-client';
 
 interface BlockchainProof {
     proof_id: string;
@@ -33,7 +33,6 @@ export function BlockchainStatus() {
                     setProofs(result.proofs);
                 }
             } catch (e) {
-                console.error('Failed to load blockchain proofs:', e);
             }
         };
 
@@ -89,23 +88,10 @@ export function BlockchainStatus() {
     const downloadOtsProof = async (proofId: string, assetName: string) => {
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${BASE_URL}/vault/proofs/${proofId}/ots-proof`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-            if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-            const blob = await response.blob();
             const baseName = assetName.includes('.') ? assetName.split('.').slice(0, -1).join('.') : assetName;
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${baseName}.ots`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            await downloadBlob(`${BASE_URL}/vault/proofs/${proofId}/ots-proof`, { 'Authorization': `Bearer ${token}` }, `${baseName}.ots`);
         } catch (e) {
-            console.error('OTS proof download failed:', e);
-            alert('Failed to download OTS proof. The proof file may not be available.');
+            window.dispatchEvent(new CustomEvent('cvber:toast', { detail: { message: 'Failed to download OTS proof. The proof file may not be available.', type: 'error' } }));
         }
     };
 
@@ -117,7 +103,6 @@ export function BlockchainStatus() {
                 setProofs(result.proofs);
             }
         } catch (e) {
-            console.error('Failed to refresh blockchain proofs:', e);
         } finally {
             setIsLoading(false);
         }

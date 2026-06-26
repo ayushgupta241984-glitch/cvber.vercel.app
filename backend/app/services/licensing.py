@@ -2,11 +2,14 @@
 Licensing Engine
 One-click license generation and verification.
 """
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from pydantic import BaseModel
 import hashlib
 import json
+
+logger = logging.getLogger(__name__)
 
 
 class LicenseType:
@@ -138,7 +141,7 @@ class LicensingEngine:
             }
             self.supabase.table("licenses").insert(db_data).execute()
         except Exception as e:
-            print(f"Database error storing license: {e}")
+            logger.error(f"Database error storing license: {e}")
             # We still return the license object for the response, 
             # but log the failure to persist
             
@@ -195,7 +198,7 @@ class LicensingEngine:
                 .execute()
             return True
         except Exception as e:
-            print(f"Error revoking license: {e}")
+            logger.error(f"Error revoking license: {e}")
             return False
     
     def generate_license_metadata(self, license: License) -> str:

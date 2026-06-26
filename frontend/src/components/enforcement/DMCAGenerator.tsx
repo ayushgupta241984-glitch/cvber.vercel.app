@@ -53,7 +53,7 @@ export function DMCAGenerator({ asset, onClose }: DMCAGeneratorProps) {
             setGeneratedNotice(data);
             setStep(3);
         } catch (error) {
-            console.error('Failed to generate DMCA:', error);
+
         }
         setIsLoading(false);
     };

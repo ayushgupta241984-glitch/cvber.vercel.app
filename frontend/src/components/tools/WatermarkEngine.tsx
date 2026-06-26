@@ -64,16 +64,16 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
         if (fileId && token) {
             try {
                 return await fetchAsCanvas(`/api/proxy-image?fileId=${encodeURIComponent(fileId)}&token=${encodeURIComponent(token)}`);
-            } catch {}
+            } catch { /* intentionally empty — fire-and-forget fallback */ }
         }
 
         try {
             return await fetchAsCanvas(`/api/proxy-image?url=${encodeURIComponent(previewUrl)}`);
-        } catch {}
+        } catch { /* intentionally empty — fire-and-forget fallback */ }
 
         try {
             return await fetchAsCanvas(previewUrl);
-        } catch {}
+        } catch { /* intentionally empty — fire-and-forget fallback */ }
 
         throw new Error('Could not load image. Try refreshing the page.');
     }, []);
@@ -165,7 +165,6 @@ export function WatermarkEngine({ file, isOpen, onClose }: WatermarkEngineProps)
             setDownloadUrl(canvas.toDataURL('image/png'));
             setIsProcessing(false);
         } catch (e: any) {
-            console.error('Watermark error:', e);
             setError('Could not load image. Try refreshing and opening the watermark again.');
             setIsProcessing(false);
         }

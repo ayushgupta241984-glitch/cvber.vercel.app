@@ -3,10 +3,24 @@ export const BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhos
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;
 
-function stripImageErrors(msg: string): string {
+export function stripImageErrors(msg: string): string {
     const imagePattern = /(?:cannot read|does not support image|vision model|image_url|image input|model does not support|not a vision model|image analysis|service unavailable|image\.png|image\.jpg|scan failed|inform the user|this model|image data)/gi;
     const cleaned = msg.replace(imagePattern, '').replace(/['"()]/g, '').replace(/\s+/g, ' ').trim();
     return cleaned || 'Scan complete — low-confidence result.';
+}
+
+export async function downloadBlob(url: string, headers: Record<string, string>, filename: string): Promise<void> {
+    const response = await fetch(url, { headers });
+    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(objectUrl);
 }
 
 export class ApiError extends Error {

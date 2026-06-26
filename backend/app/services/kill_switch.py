@@ -2,10 +2,13 @@
 Kill Switch Engine
 Instant content revocation and dispute management.
 """
+import logging
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 import hashlib
+
+logger = logging.getLogger(__name__)
 
 
 class DisputeStatus:
@@ -82,7 +85,7 @@ class KillSwitchEngine:
             }
             self.supabase.table("disputes").insert(db_data).execute()
         except Exception as e:
-            print(f"Database error activating kill switch: {e}")
+            logger.error(f"Database error activating kill switch: {e}")
             
         return dispute
     
@@ -111,7 +114,7 @@ class KillSwitchEngine:
                     "show_warning": True
                 }
         except Exception as e:
-            print(f"Error checking asset status: {e}")
+            logger.error(f"Error checking asset status: {e}")
         
         return {
             "status": "active",
@@ -134,7 +137,7 @@ class KillSwitchEngine:
                 .execute()
             return True
         except Exception as e:
-            print(f"Error deactivating kill switch: {e}")
+            logger.error(f"Error deactivating kill switch: {e}")
             return False
     
     def get_dispute_banner(self, asset_hash: str) -> Dict[str, Any]:

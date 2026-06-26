@@ -2,11 +2,14 @@
 Immutable Event Log
 Append-only audit trail for legal hardening.
 """
+import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 import hashlib
 import json
+
+logger = logging.getLogger(__name__)
 
 
 class EventType:
@@ -64,7 +67,7 @@ class ImmutableEventLog:
             if response.data:
                 return response.data[0]["event_hash"]
         except Exception as e:
-            print(f"Error fetching last hash: {e}")
+            logger.error(f"Error fetching last hash: {e}")
             
         return self._genesis_hash
     
@@ -110,7 +113,7 @@ class ImmutableEventLog:
             }
             self.supabase.table("audit_trail").insert(db_data).execute()
         except Exception as e:
-            print(f"Database error logging event: {e}")
+            logger.error(f"Database error logging event: {e}")
             
         return AuditEvent(
             event_id=event_id,
@@ -160,7 +163,7 @@ class ImmutableEventLog:
                 "last_event": events[-1]["created_at"]
             }
         except Exception as e:
-            print(f"Error verifying chain integrity: {e}")
+            logger.error(f"Error verifying chain integrity: {e}")
             return {"valid": False, "error": str(e)}
 
     def get_asset_history(self, asset_id: str) -> List[Dict[str, Any]]:
@@ -174,7 +177,7 @@ class ImmutableEventLog:
             
             return response.data or []
         except Exception as e:
-            print(f"Error fetching asset history: {e}")
+            logger.error(f"Error fetching asset history: {e}")
             return []
 
     def export_evidence_packet(self, asset_id: str) -> Dict[str, Any]:

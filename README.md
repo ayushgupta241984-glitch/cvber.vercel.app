@@ -1,329 +1,184 @@
-# CVBER Free - AI-Powered Cybersecurity Platform
+# CVBER
 
-A comprehensive full-stack cybersecurity platform featuring AI-powered threat detection, C2PA digital authenticity verification, and secure encrypted storage.
+Free art-protection platform for digital creators.
 
-## 🚀 Quick Start
+**Live app:** https://cvber.vercel.app/
 
-### Option 1: Automated Setup (Recommended)
+## What it does
 
-```powershell
-# Install all dependencies
-.\setup.ps1
+CVBER helps artists create timestamped, downloadable evidence packages for their work using provenance metadata, watermarking, hashing, and DMCA-ready documentation.
 
-# Start all services
-.\start.ps1
+## Why it matters
+
+Digital creators need simple tools to prove ownership, prepare takedowns, and protect their work from unauthorized reposting, scraping, and AI training use. Most existing tools are expensive, complicated, or incomplete. CVBER is free and covers the full lifecycle: **detect, prove, enforce**.
+
+## Current features
+
+- Artwork upload with SHA-256 hashing
+- AI-powered risk analysis and originality scoring
+- 5-engine reverse image search (Yandex, Bing, Google Lens, TinEye, SauceNAO)
+- Invisible watermarking
+- Evidence ZIP download (report, hash certificate, DMCA template)
+- Creator dashboard with protection history
+- DMCA takedown template generation
+- C2PA provenance metadata (experimental)
+- Bitcoin blockchain timestamping (experimental)
+
+## Demo flow
+
+1. Upload artwork to the vault
+2. CVBER analyzes risk and generates a protection record
+3. Reverse image search scans for copies online
+4. Download an evidence ZIP with everything needed for a DMCA
+5. View protection status from the dashboard
+
+## Screenshots
+
+Screenshots coming soon. See `docs/screenshots/` for what will be added.
+
+## Architecture
+
+```
+frontend/       Next.js 15 + React 18 + TypeScript + Tailwind CSS
+backend/        Python FastAPI (54 API endpoints)
+c2pa-service/   Node.js C2PA microservice
+supabase/       PostgreSQL database migrations
 ```
 
-Then open `http://localhost:3000` in your browser!
+**Deployment:** Vercel (frontend) + Render (backend)
 
-### Option 2: Manual Setup
+**AI providers:** Groq (primary), NVIDIA NIM (deep search) — app works in mock mode without keys.
 
-```powershell
+**Database:** Supabase (PostgreSQL + Storage + Auth)
+
+See `docs/architecture.md` for full details.
+
+## Local development
+
+### Requirements
+
+- Node.js 20+
+- Python 3.10+
+- npm
+
+### Install
+
+```bash
+# Frontend
+cd frontend && npm install
+
+# Backend
+cd backend && pip install -r requirements.txt
+```
+
+### Run locally
+
+```bash
 # Backend
 cd backend
-pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload --port 8000
 
 # Frontend (new terminal)
 cd frontend
-npm install
-npm run dev
-
-# C2PA Service (new terminal)
-cd c2pa-service
-npm install
 npm run dev
 ```
 
-> **Note**: The app works with mock data by default. No external services required for testing!
+Open http://localhost:3000. The app works with mock data by default.
 
----
-
-## 🚀 Features
-
-- **AI Threat Detection**: Powered by Vertex AI (Gemini 3 Flash) with HIGH thinking level for comprehensive security analysis
-- **C2PA Digital Signatures**: Industry-standard digital authenticity verification with provenance tracking
-- **Secure Vault**: Encrypted storage with Row Level Security (RLS) and real-time threat monitoring
-- **AI Security Mentor**: Interactive chat assistant to guide users through security findings
-- **Dark-Themed Dashboard**: Modern, responsive UI with glassmorphism and gradient effects
-
-## 🏗️ Architecture
-
-### Monorepo Structure
-
-```
-cvber-free/
-├── frontend/          # Next.js 15+ (App Router)
-├── backend/           # Python FastAPI
-├── c2pa-service/      # Node.js C2PA microservice
-└── supabase/          # Database migrations
-```
-
-### Technology Stack
-
-**Frontend:**
-- Next.js 15+ with App Router
-- TypeScript
-- Tailwind CSS
-- Lucide Icons
-- Supabase Auth
-
-**Backend:**
-- Python FastAPI
-- Vertex AI (Gemini 3 Flash)
-- Supabase (PostgreSQL)
-- Google Cloud KMS
-
-**C2PA Service:**
-- Node.js + Express
-- @contentauth/c2pa-node
-- TypeScript
-
-## 📋 Prerequisites
-
-1. **Node.js** (v18+)
-2. **Python** (3.10+)
-3. **Google Cloud Account** with:
-   - Vertex AI API enabled
-   - Cloud KMS configured
-   - Service account with appropriate permissions
-4. **Supabase Project** with:
-   - Database created
-   - Storage buckets configured
-   - Auth providers enabled
-
-## 🛠️ Setup Instructions
-
-### 1. Clone and Install Dependencies
+### Build
 
 ```bash
-cd cvber-free
-
 # Frontend
-cd frontend
-npm install
+cd frontend && npm run build
 
 # Backend
-cd ../backend
-pip install -r requirements.txt
-
-# C2PA Service
-cd ../c2pa-service
-npm install
+cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-### 2. Configure Environment Variables
+### Test
 
-Create `.env` files in each directory based on `.env.example`:
+```bash
+# Backend
+cd backend
+PYTHONPATH=. python -m pytest tests/ -v
+```
 
-**Root `.env`:**
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+## Environment variables
 
-# Google Cloud
-GCP_PROJECT_ID=your-project-id
-GOOGLE_APPLICATION_CREDENTIALS=./service-account.json
+See `.env.example` for all required and optional variables.
 
-# Vertex AI
-VERTEX_AI_LOCATION=us-central1
-VERTEX_AI_MODEL=gemini-3-flash
+**Required:**
+- `JWT_SECRET` — Random string for authentication
 
-# Cloud KMS
-KMS_KEYRING=cvber-free-keyring
-KMS_KEY=c2pa-signing-key
+**Optional (app works in mock mode without these):**
+- `GROQ_API_KEY` — Groq API for AI analysis
+- `GOOGLE_API_KEY` — Google AI for style analysis
+- `NVIDIA_NIM_API_KEY` — NVIDIA for deep image search
+- `SUPABASE_URL` / `SUPABASE_ANON_KEY` — Database
+
+Do not commit real secrets. Use `.env.local` for local development.
+
+## Verification
+
+Before pushing, run:
+
+```bash
+# Frontend
+cd frontend && npm run lint && npm run build
 
 # Backend
-BACKEND_URL=http://localhost:8000
-JWT_SECRET=your-secret-key
-
-# C2PA Service
-C2PA_SERVICE_URL=http://localhost:3001
+cd backend && PYTHONPATH=. python -m pytest tests/ -v
 ```
 
-### 3. Setup Supabase Database
+## Roadmap
 
-Run the migration:
+### Now
+- Stabilize upload and evidence generation
+- Add monitoring workflow
+- Get 50 real users
+- Techstars NYC application
 
-```bash
-# Using Supabase CLI
-supabase db push
+### Next
+- Improve C2PA verification reliability
+- Add creator feedback loop
+- Add basic usage analytics
 
-# Or manually execute the SQL in supabase/migrations/001_initial_schema.sql
-```
+### Later
+- Rights transfer workflow
+- Team accounts for studios
+- Mobile app
 
-Create storage buckets in Supabase dashboard:
-- `safe-vault` (private, encrypted)
-- `scan-results` (private)
+See `docs/roadmap.md` for full details.
 
-### 4. Setup Google Cloud
+## Documentation
 
-1. Create a service account with these roles:
-   - Vertex AI User
-   - Cloud KMS CryptoKey Encrypter/Decrypter
+| Document | Description |
+|----------|-------------|
+| [Architecture](docs/architecture.md) | Tech stack, folder structure, data flow |
+| [Evidence Pipeline](docs/evidence-pipeline.md) | How evidence is collected and packaged |
+| [DMCA Workflow](docs/dmca-workflow.md) | How DMCA takedowns work |
+| [C2PA Integration](docs/c2pa-integration.md) | C2PA status and limitations |
+| [Security Model](docs/security-model.md) | Auth, data protection, known limitations |
+| [Roadmap](docs/roadmap.md) | Product roadmap |
 
-2. Download the service account JSON key and save as `service-account.json`
+## AI-assisted development
 
-3. Create KMS keyring and key:
-```bash
-gcloud kms keyrings create cvber-free-keyring --location=us-central1
-gcloud kms keys create c2pa-signing-key --location=us-central1 --keyring=cvber-free-keyring --purpose=encryption
-```
+CVBER was built with heavy use of coding agents including Claude Code and Codex. I used agents for implementation, debugging, refactoring, and deployment troubleshooting, while personally owning product direction, architecture, acceptance criteria, and QA.
 
-## 🚀 Running the Application
+For major changes I use:
+1. Written target files and acceptance criteria
+2. Local build/typecheck verification
+3. Manual UI verification
+4. Diff review before push
 
-### Development Mode
+## Legal note
 
-**Terminal 1 - Backend:**
-```bash
-cd backend
-uvicorn app.main:app --reload --port 8000
-```
+CVBER helps creators organize technical evidence and generate DMCA-ready materials. It is not a law firm and does not provide legal advice. C2PA metadata can be stripped by platforms. Blockchain timestamps prove existence, not authorship. CVBER combines multiple evidence layers for stronger protection, but no tool can guarantee legal outcomes.
 
-**Terminal 2 - C2PA Service:**
-```bash
-cd c2pa-service
-npm run dev
-```
+## License
 
-**Terminal 3 - Frontend:**
-```bash
-cd frontend
-npm run dev
-```
+MIT — see [LICENSE](LICENSE).
 
-Access the application at `http://localhost:3000`
+## Founder
 
-### Production Build
-
-**Backend:**
-```bash
-cd backend
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-**C2PA Service:**
-```bash
-cd c2pa-service
-npm run build
-npm start
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm run build
-npm start
-```
-
-## 📡 API Endpoints
-
-### Backend (FastAPI)
-
-**Health Check:**
-- `GET /` - API status
-- `GET /health` - Detailed health check
-
-**Authentication:**
-- `POST /auth/register` - Register new user
-- `POST /auth/login` - Login with credentials
-- `GET /auth/me` - Get current user profile
-
-**Scanning:**
-- `POST /scan/` - Upload and scan file
-- `POST /scan/verify` - Verify file with C2PA signature
-- `GET /scan/history` - Get scan history
-
-### C2PA Service
-
-- `POST /sign` - Sign file with C2PA
-- `POST /verify` - Verify C2PA signature
-- `GET /health` - Service health check
-
-## 🎨 UI Components
-
-### Dashboard
-- **FileUploader**: Drag-and-drop file upload with progress tracking
-- **SafeVault**: Grid view of scanned files with risk scores
-- **SecurityMentor**: AI chat assistant for security guidance
-
-### Authentication
-- Email/password login
-- Google OAuth integration
-- JWT token management
-
-## 🔒 Security Features
-
-1. **Row Level Security (RLS)**: Database-level access control
-2. **Encrypted Storage**: All files encrypted at rest
-3. **JWT Authentication**: Secure token-based auth
-4. **C2PA Provenance**: Digital signature verification
-5. **AI Threat Analysis**: Deep learning-based threat detection
-
-## 🧪 Testing
-
-### Backend Tests
-```bash
-cd backend
-pytest tests/ -v
-```
-
-### Frontend Tests
-```bash
-cd frontend
-npm run test
-```
-
-### Browser Testing
-Use the integrated browser tool to:
-1. Navigate to dashboard
-2. Upload test files
-3. Verify scan results
-4. Test C2PA signatures
-
-## 📝 Database Schema
-
-**profiles**
-- User profile information
-- Links to auth.users
-
-**audit_logs**
-- Security event tracking
-- Scan history
-
-**verification_meta**
-- C2PA verification records
-- Provenance data
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
-## 🆘 Support
-
-For issues or questions:
-1. Check the documentation
-2. Review existing issues
-3. Create a new issue with detailed information
-
-## 🎯 Roadmap
-
-- [ ] Mobile app (React Native)
-- [ ] Advanced threat intelligence
-- [ ] Team collaboration features
-- [ ] API rate limiting
-- [ ] Webhook integrations
-- [ ] Advanced analytics dashboard
-
----
-
-Built with ❤️ using Next.js, FastAPI, and Vertex AI
+Built by Ayush Gupta, high-school founder and solo developer.

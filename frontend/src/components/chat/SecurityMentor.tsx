@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, Search, Shield, AlertTriangle, CheckCircle, FileText, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { easeLuxury } from '@/lib/animations';
 
 interface FileData {
     id: string;
@@ -27,8 +28,6 @@ interface SecurityMentorProps {
     context?: { files: FileData[] };
     onSearchFile?: (file: { id: string; name: string; storageUrl?: string; previewUrl?: string }) => void;
 }
-
-const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
 
 function getStatusIcon(status: string) {
     if (status === 'danger') return <AlertTriangle className="w-3 h-3 text-red-400 shrink-0" />;

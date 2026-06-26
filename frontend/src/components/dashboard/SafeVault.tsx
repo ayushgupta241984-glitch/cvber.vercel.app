@@ -3,6 +3,7 @@
 import { FileText, Shield, AlertTriangle, CheckCircle, Trash2, Anchor, Image, Search, Scale, BadgeCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { easeLuxury } from '@/lib/animations';
 
 interface FileItem {
     id: string;
@@ -33,8 +34,6 @@ interface SafeVaultProps {
     onSearch?: (file: FileItem) => void;
     onDMCA?: (file: FileItem) => void;
 }
-
-const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
 
 function SkeletonCard() {
     return (

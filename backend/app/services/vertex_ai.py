@@ -176,7 +176,7 @@ def _analyze_image_for_screenshot(file_buffer: bytes, file_name: str = "") -> Di
                     if similar > 0.6:
                         screenshot_score += 2
                         reasons.append("uniform_edges")
-            except:
+            except Exception:
                 pass
         
         # Check for notch/status bar region - more lenient
@@ -195,7 +195,7 @@ def _analyze_image_for_screenshot(file_buffer: bytes, file_name: str = "") -> Di
                 if dark_rows >= top_region_height * 0.5:
                     screenshot_score += 2
                     reasons.append("notch_bar")
-            except:
+            except Exception:
                 pass
         
         # NEW: Check for bottom bar (home indicator)
@@ -213,7 +213,7 @@ def _analyze_image_for_screenshot(file_buffer: bytes, file_name: str = "") -> Di
                 if dark_rows >= bottom_region_height * 0.5:
                     screenshot_score += 2
                     reasons.append("home_bar")
-            except:
+            except Exception:
                 pass
         
         # NEW: Very small image size check (screenshots often have specific sizes)

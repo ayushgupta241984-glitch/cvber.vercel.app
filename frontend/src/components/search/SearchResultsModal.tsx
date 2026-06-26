@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, Search, Globe, ExternalLink, Loader2, AlertTriangle, Hash, Copy, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { easeLuxurySharp as easeLuxury } from '@/lib/animations';
 
 interface SimilarFile {
     scan_id: string;
@@ -51,8 +52,6 @@ interface SearchResultsModalProps {
     searchFileBlob?: Blob | null;
     onDeepSearch?: (blob: Blob, fileName: string) => Promise<void>;
 }
-
-const easeLuxury = [0.16, 1, 0.3, 1] as const;
 
 const searchEngines = [
     { key: 'yandex', label: 'Yandex Images', desc: 'Search on Yandex', urlKey: '_yandexUrl' as const },

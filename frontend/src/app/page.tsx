@@ -9,10 +9,6 @@ import StructuredData from "@/components/seo/StructuredData";
 import Preloader from "@/components/Preloader";
 import SidebarNav from "@/components/nav/SidebarNav";
 
-if (typeof window !== "undefined") {
-    gsap.registerPlugin(ScrollTrigger);
-}
-
 // ─── Hero ──────────────────────────────────────────
 
 function Hero({ onGetStarted }: { onGetStarted: () => void }) {

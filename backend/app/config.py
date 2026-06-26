@@ -26,16 +26,20 @@ class Settings(BaseSettings):
     # Backend
     backend_url: str = "http://localhost:8000"
     
-    # JWT — MUST override with a strong random value in production .env
-    jwt_secret: str = "change-this-to-a-random-64-char-string-in-production-env"
+    # JWT — Set a strong random value in .env or environment. Required in production.
+    jwt_secret: str = ""
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
     @field_validator("jwt_secret", mode="before")
-    def warn_default_jwt(cls, v):
-        if v and v.startswith("change-this"):
-            import logging
-            logging.warning("!!! DEFAULT JWT SECRET IN USE. Set JWT_SECRET in production .env !!!")
+    @classmethod
+    def validate_jwt_secret(cls, v):
+        if not v or v.startswith("change-this"):
+            is_prod = os.getenv("MOCK_MODE", "").lower() not in ("1", "true", "yes")
+            if is_prod:
+                raise ValueError("JWT_SECRET is required in production. Set it in .env or environment variable.")
+            logger.warning("JWT_SECRET not set — using empty string (development only)")
+            return ""
         return v
     
     # Google Cloud

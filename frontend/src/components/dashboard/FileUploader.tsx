@@ -4,12 +4,11 @@ import { useState, useCallback } from 'react';
 import { Upload, FileCheck, AlertCircle } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { motion, AnimatePresence } from 'framer-motion';
+import { easeLuxury } from '@/lib/animations';
 
 interface FileUploaderProps {
     onUploadComplete?: (result: any, file: File) => void;
 }
-
-const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
 
 export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     const [uploading, setUploading] = useState(false);

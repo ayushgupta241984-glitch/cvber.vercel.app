@@ -142,10 +142,6 @@ async def login(request: Request, body: LoginRequest):
         raise HTTPException(status_code=401, detail="Login failed")
 
 
-# DEV LOGIN REMOVED - Security: using a hardcoded backdoor user with no authentication
-# was a critical vulnerability. Use /auth/login with valid credentials instead.
-
-
 @router.post("/refresh")
 async def refresh_token(request: RefreshRequest):
     try:

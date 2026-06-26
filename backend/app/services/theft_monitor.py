@@ -2,10 +2,13 @@
 Theft Monitoring Engine
 Reverse image scanning and theft detection.
 """
+import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 import hashlib
+
+logger = logging.getLogger(__name__)
 
 
 class TheftAlert(BaseModel):
@@ -79,7 +82,7 @@ class TheftMonitor:
             }
             self.supabase.table("monitored_assets").insert(db_data).execute()
         except Exception as e:
-            print(f"Database error registering asset: {e}")
+            logger.error(f"Database error registering asset: {e}")
             
         return asset
     
@@ -122,7 +125,7 @@ class TheftMonitor:
             }
             self.supabase.table("theft_alerts").insert(db_data).execute()
         except Exception as e:
-            print(f"Database error reporting theft: {e}")
+            logger.error(f"Database error reporting theft: {e}")
             
         return alert
     
@@ -158,7 +161,7 @@ class TheftMonitor:
                 "violations": records
             }
         except Exception as e:
-            print(f"Error generating infringer report: {e}")
+            logger.error(f"Error generating infringer report: {e}")
             return {"error": str(e)}
 
     def estimate_total_loss(self, asset_id: str) -> Dict[str, Any]:
@@ -196,7 +199,7 @@ class TheftMonitor:
                 "legal_statement": f"This theft has resulted in an estimated ${total_loss:.2f} in lost revenue across {len(alerts)} unauthorized uses."
             }
         except Exception as e:
-            print(f"Error estimating total loss: {e}")
+            logger.error(f"Error estimating total loss: {e}")
             return {"error": str(e)}
 
 

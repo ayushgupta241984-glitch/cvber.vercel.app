@@ -3,6 +3,7 @@
 import { Shield, Layout, LogOut, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { easeLuxury } from '@/lib/animations';
 
 interface DashboardSidebarProps {
     userName: string;
@@ -11,8 +12,6 @@ interface DashboardSidebarProps {
     onClose: () => void;
     onLogout: () => void;
 }
-
-const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
 
 export function DashboardSidebar({ userName, userInitials, isOpen, onClose, onLogout }: DashboardSidebarProps) {
     return (

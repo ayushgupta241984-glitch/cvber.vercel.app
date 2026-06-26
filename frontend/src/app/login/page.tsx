@@ -30,10 +30,10 @@ function LoginForm() {
                         try {
                             const user = JSON.parse(decodeURIComponent(userStr));
                             if (user.full_name) localStorage.setItem('user_full_name', user.full_name);
-                        } catch {}
+                        } catch { /* intentionally empty — fire-and-forget */ }
                     }
                     router.push('/dashboard');
-                } catch {}
+                } catch { /* intentionally empty — fire-and-forget */ }
             })();
         }
     }, [searchParams, router]);

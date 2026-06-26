@@ -1,0 +1,46 @@
+{
+  "asset_name": "sample-artwork.png",
+  "asset_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "upload_timestamp": "2026-06-26T12:00:00Z",
+  "file_size_bytes": 245760,
+  "dimensions": {"width": 1024, "height": 768},
+  "format": "PNG",
+  "analysis": {
+    "risk_score": 12,
+    "originality_score": 87,
+    "is_screenshot": false,
+    "theft_risk": "low"
+  },
+  "style_dna": {
+    "embedding_length": 512,
+    "dominant_colors": ["#2c3e50", "#e74c3c", "#ecf0f1"],
+    "style_tags": ["digital", "illustration", "character"]
+  },
+  "reverse_image_search": {
+    "engines": ["yandex", "bing", "google_lens", "tineye", "saucenao"],
+    "matches_found": 0,
+    "results": []
+  },
+  "watermark": {
+    "embedded": true,
+    "type": "invisible",
+    "algorithm": "lsb"
+  },
+  "c2pa": {
+    "signed": false,
+    "status": "not_signed"
+  },
+  "blockchain": {
+    "anchored": false,
+    "status": "not_anchored"
+  },
+  "evidence_package": {
+    "generated_at": "2026-06-26T12:00:05Z",
+    "contains": [
+      "evidence_report.pdf",
+      "hash_certificate.txt",
+      "watermarked_copy.png",
+      "dmca_template.md"
+    ]
+  }
+}
