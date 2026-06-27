@@ -60,11 +60,10 @@ def compute_style_profile(embeddings: list[list[float]]) -> Optional[list[float]
     if not embeddings:
         return None
     try:
-        import numpy as np
-        arr = np.array(embeddings)
-        centroid = arr.mean(axis=0)
-        norm = np.linalg.norm(centroid)
-        return (centroid / norm).tolist() if norm > 0 else centroid.tolist()
+        dim = len(embeddings[0])
+        centroid = [sum(e[i] for e in embeddings) / len(embeddings) for i in range(dim)]
+        norm = sum(x * x for x in centroid) ** 0.5
+        return [x / norm for x in centroid] if norm > 0 else centroid
     except Exception as e:
         logger.error(f"Failed to compute style profile: {e}")
         return None
