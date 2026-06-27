@@ -2,7 +2,7 @@
 Trust Score Engine
 Calculates creator reputation based on history, originality, and verification.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 import hashlib

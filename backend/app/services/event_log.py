@@ -3,7 +3,7 @@ Immutable Event Log
 Append-only audit trail for legal hardening.
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 import hashlib

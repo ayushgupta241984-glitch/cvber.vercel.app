@@ -4,7 +4,7 @@ Uses OpenTimestamps for free Bitcoin blockchain anchoring.
 """
 import hashlib
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
 import httpx

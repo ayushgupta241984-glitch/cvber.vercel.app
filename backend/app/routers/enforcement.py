@@ -368,7 +368,7 @@ async def download_evidence_pdf(current_user: dict = Depends(get_current_user)):
     """Download evidence log as PDF for legal proceedings"""
     try:
         from fpdf import FPDF
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         supabase = get_supabase()
 

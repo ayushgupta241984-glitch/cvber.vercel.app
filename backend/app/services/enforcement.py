@@ -2,7 +2,7 @@
 DMCA Enforcement Engine
 Generates legally compliant takedown notices for major platforms.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from pydantic import BaseModel
 import hashlib

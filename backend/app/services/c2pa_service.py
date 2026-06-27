@@ -9,7 +9,7 @@ from app.config import settings
 from app.models.schemas import RiskReport, C2PASignature, C2PAManifest
 from app.supabase_client import get_supabase
 from app.services.storage import storage_service
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ Theft Monitoring Engine
 Reverse image scanning and theft detection.
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 import hashlib

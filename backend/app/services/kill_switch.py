@@ -3,7 +3,7 @@ Kill Switch Engine
 Instant content revocation and dispute management.
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 import hashlib
