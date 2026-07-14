@@ -82,6 +82,40 @@ export default function StructuredData() {
         ]
     };
 
+    const howToSchema = {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "name": "How to Protect Your Art from AI Scraping and Theft",
+        "description": "A step-by-step guide to protecting your digital art from AI scraping, unauthorized training, and art theft using C2PA certificates and automated DMCA enforcement.",
+        "totalTime": "PT10M",
+        "step": [
+            {
+                "@type": "HowToStep",
+                "name": "Upload Your Artwork to CVBER",
+                "text": "Create a free CVBER account and upload your digital artwork. CVBER supports images, illustrations, photographs, and 3D models in all major formats including PNG, JPEG, TIFF, and PSD.",
+                "url": "https://cvber.vercel.app/register"
+            },
+            {
+                "@type": "HowToStep",
+                "name": "Generate C2PA Provenance Certificates",
+                "text": "Click Generate Certificate to embed a cryptographic C2PA signature into your file. This digital certificate proves you are the original creator, records the creation timestamp, and survives file sharing and light editing.",
+                "url": "https://cvber.vercel.app"
+            },
+            {
+                "@type": "HowToStep",
+                "name": "Enable Watchtower Monitoring",
+                "text": "Activate AI-powered monitoring to continuously scan social media platforms, NFT marketplaces, and stock sites for unauthorized copies of your protected work. Get real-time alerts when theft is detected.",
+                "url": "https://cvber.vercel.app"
+            },
+            {
+                "@type": "HowToStep",
+                "name": "File Automated DMCA Takedowns",
+                "text": "When stolen art is detected, use CVBER's one-click DMCA generator to create legally formatted takedown notices and submit them to hosting providers, platforms, and search engines for removal.",
+                "url": "https://cvber.vercel.app"
+            }
+        ]
+    };
+
     return (
         <>
             <script
@@ -99,6 +133,10 @@ export default function StructuredData() {
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
             />
         </>
     );

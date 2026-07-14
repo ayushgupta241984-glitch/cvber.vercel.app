@@ -23,9 +23,20 @@ CVBER is a professional-grade cybersecurity platform specifically designed for d
 - 3D Modelers & Game Developers
 - Video Creators & Motion Designers
 
+## How to Protect Your Art
+
+**How to protect your art from AI scraping:** Use CVBER to embed C2PA provenance certificates into your files. These cryptographic signatures prove you are the original creator and signal that your work is not available for AI training. CVBER also monitors the web 24/7 for unauthorized copies and generates automated DMCA takedown notices.
+
+**How to stop AI from training on your artwork:** Upload your files to CVBER and generate C2PA certificates that opt out of AI training datasets. Combine this with CVBER Watchtower monitoring to detect if your art appears in training datasets despite opt-out signals, and file removal requests automatically.
+
+**What is the best way to protect digital art from theft:** The most effective approach combines C2PA certificates (proving ownership), automated DMCA takedowns (removing stolen copies), and continuous monitoring (detecting new theft). CVBER provides all three in a single platform, backed by the same standard used by Adobe, Microsoft, and the BBC.
+
+**Is CVBER better than Glaze or Nightshade:** CVBER and Glaze/Nightshade solve different problems. Glaze and Nightshade add noise to disrupt AI training. CVBER creates legally enforceable proof of ownership, automated DMCA enforcement, and theft monitoring — a complete protection ecosystem rather than just a deterrent.
+
 ## Links
 
 - [Features](https://cvber.vercel.app/features)
 - [How It Works](https://cvber.vercel.app/how-it-works)
 - [Art Protection Hub](https://cvber.vercel.app/art-hub)
 - [Verification Tool](https://cvber.vercel.app/verify)
+- [How to Protect Your Art Guide](https://cvber.vercel.app/how-to-protect-your-art)

@@ -129,8 +129,9 @@ export default function Home() {
             <section id="features" className="relative z-10 py-40 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="mb-24">
-                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase italic">The Anatomy of<br />True Provenance</h2>
+                        <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase italic">How can we ensure authentic proof-of-origin for every masterpiece?<br />Every digital asset is verifiable.</h2>
                         <p className="text-zinc-500 max-w-md font-medium text-lg">Sophisticated art security, simplified for the next generation of creators.</p>
+                        <p className="text-zinc-600 text-sm mt-4">Trusted by creators • Author: CVBER Security Team • Source: C2PA Coalition, 2025</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
