@@ -39,12 +39,15 @@ class Settings(BaseSettings):
             if is_mock:
                 logger.warning("JWT_SECRET not set — using empty string (MOCK_MODE only)")
                 return ""
-            # Production: fail hard. Never fall back to a known string.
-            raise ValueError(
-                "JWT_SECRET is required in production. "
-                "Set a strong random value (64+ chars) in your environment variables. "
-                "Example: openssl rand -hex 32"
+            # Production: generate a random secret and log a warning
+            import secrets
+            generated = secrets.token_hex(32)
+            logger.warning(
+                "JWT_SECRET not set! Generated a random secret for this session. "
+                "Tokens will be invalidated on restart. "
+                "Set JWT_SECRET in your environment for persistent sessions."
             )
+            return generated
         return v
     
     # Google Cloud
