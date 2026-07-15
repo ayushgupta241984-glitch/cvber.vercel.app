@@ -186,12 +186,14 @@ export const apiClient = {
         onDone?: () => void,
     ): { abort: () => void } {
         const controller = new AbortController();
-        const formData = new FormData();
-        formData.append('file', file);
-        const headers: Record<string, string> = getAuthHeaders();
+        let reconnectAttempts = 0;
+        const MAX_RECONNECTS = 3;
 
-        (async () => {
+        const startStream = async () => {
             try {
+                const formData = new FormData();
+                formData.append('file', file);
+                const headers: Record<string, string> = getAuthHeaders();
                 const response = await fetch(`${BASE_URL}/search/deep/tv`, {
                     method: 'POST',
                     headers,
@@ -228,14 +230,24 @@ export const apiClient = {
                         }
                     }
                 }
+                reconnectAttempts = 0;
                 onDone?.();
             } catch (err: any) {
-                if (err.name !== 'AbortError') {
-                    onError?.(err?.message || 'Connection failed');
+                if (err.name === 'AbortError') return;
+                if (reconnectAttempts < MAX_RECONNECTS) {
+                    reconnectAttempts++;
+                    onError?.(`Connection lost. Retrying (${reconnectAttempts}/${MAX_RECONNECTS})...`);
+                    await new Promise(r => setTimeout(r, 2000));
+                    if (!controller.signal.aborted) {
+                        await startStream();
+                    }
+                } else {
+                    onError?.('Search unavailable. Please try again.');
                 }
             }
-        })();
+        };
 
+        startStream();
         return { abort: () => controller.abort() };
     },
 

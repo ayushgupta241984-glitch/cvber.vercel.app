@@ -100,6 +100,7 @@ function DashboardInner() {
     const [proofsLoading, setProofsLoading] = useState(false);
     const [timestampingId, setTimestampingId] = useState<string | null>(null);
     const [proofModalFile, setProofModalFile] = useState<FileData | null>(null);
+    const [proofSubmitted, setProofSubmitted] = useState(false);
     const [proofType, setProofType] = useState<'declaration' | 'source' | 'original'>('declaration');
     const [proofText, setProofText] = useState('');
     const [proofUrl, setProofUrl] = useState('');
@@ -118,26 +119,38 @@ function DashboardInner() {
     const [pendingSearchId, setPendingSearchId] = useState<string | null>(null);
 
     const [isIndexing, setIsIndexing] = useState(false);
+    const [indexError, setIndexError] = useState<string | null>(null);
+    const [vaultError, setVaultError] = useState<string | null>(null);
+    const [vaultRetryKey, setVaultRetryKey] = useState(0);
     const indexedRef = useRef(false);
     const fileBlobCache = useRef<Map<string, Blob>>(new Map());
+
+    const revokeBlob = (url: string | undefined) => {
+        if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
+    };
 
     const indexVault = useCallback(async (silent: boolean = false) => {
         if (isIndexing) return;
         setIsIndexing(true);
+        setIndexError(null);
         try {
             const result = await apiClient.indexVault();
             if (!silent && result?.registered > 0) {
                 toast(`Indexed ${result.registered} file(s) for copy detection`, 'success');
             }
-        } catch {
-            if (!silent) toast('Failed to index vault', 'error');
+        } catch (err: any) {
+            if (!silent) {
+                const msg = err?.message || 'Failed to index vault';
+                setIndexError(msg);
+                toast(msg, 'error');
+            }
         } finally {
             setIsIndexing(false);
         }
     }, [isIndexing, toast]);
 
     useEffect(() => {
-        const saved = localStorage.getItem('cvber_vault_memory');
+            const saved = localStorage.getItem('cvber_vault_memory');
         if (saved) {
             try {
                 const parsed = JSON.parse(saved) as FileData[];
@@ -160,25 +173,36 @@ function DashboardInner() {
         const fetchProfile = async () => {
             const token = localStorage.getItem('access_token');
             if (token) {
-                try {
-                    const response = await fetch(`${BASE_URL}/auth/me`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (response.ok) {
-                        const profile = await response.json();
-                        setUser(profile);
-                        if (profile.full_name) {
-                            localStorage.setItem('user_full_name', profile.full_name);
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    try {
+                        const response = await fetch(`${BASE_URL}/auth/me`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (response.ok) {
+                            const profile = await response.json();
+                            setUser(profile);
+                            if (profile.full_name) {
+                                localStorage.setItem('user_full_name', profile.full_name);
+                            }
+                            return;
                         }
+                        if (response.status === 404 && attempt < 2) {
+                            await new Promise(r => setTimeout(r, 500));
+                            continue;
+                        }
+                        break;
+                    } catch (err) {
+                        break;
                     }
-                } catch (err) {
-
                 }
             }
+            setUser(prev => prev || { full_name: 'Creator' });
         };
         fetchProfile();
 
         const fetchVault = async () => {
+            setVaultError(null);
+            setVaultLoading(true);
             try {
                 const vault = await apiClient.listVaultFiles(100, 0);
                 if (vault.files && vault.files.length > 0) {
@@ -216,7 +240,7 @@ function DashboardInner() {
                     });
                 }
             } catch (err) {
-                toast('Could not load vault. Check your connection.', 'error');
+                setVaultError('Could not load your vault. Check your connection and try again.');
             } finally {
                 setVaultLoading(false);
                 if (!indexedRef.current) {
@@ -226,12 +250,13 @@ function DashboardInner() {
             }
         };
         fetchVault();
-    }, []);
+    }, [vaultRetryKey]);
 
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && proofModalFile) {
                 setProofModalFile(null);
+                setProofSubmitted(false);
             }
         };
         document.addEventListener('keydown', handleEscape);
@@ -241,6 +266,16 @@ function DashboardInner() {
     useEffect(() => {
         localStorage.setItem('cvber_vault_memory', JSON.stringify(files));
     }, [files]);
+
+    useEffect(() => {
+        return () => {
+            fileBlobCache.current.forEach((_, key) => {
+                const file = files.find(f => f.id === key);
+                if (file?.previewUrl) revokeBlob(file.previewUrl);
+            });
+            fileBlobCache.current.clear();
+        };
+    }, []);
 
     const downloadOtsProof = async (proofId: string, assetName: string) => {
         try {
@@ -285,6 +320,7 @@ function DashboardInner() {
         const hasProofRequired = file.proofRequired === true && !alreadySubmitted;
 
         if (hasProofRequired || screenshotWithLowScore) {
+            setProofSubmitted(false);
             setProofModalFile(file);
             return true;
         }
@@ -310,9 +346,12 @@ function DashboardInner() {
             });
             if (response.ok) {
                 toast('Proof submitted! Your file will be reviewed.', 'success');
-                setProofModalFile(null);
-                setProofText('');
-                setProofUrl('');
+                setProofSubmitted(true);
+                setFiles(prev => prev.map(f =>
+                    f.id === proofModalFile.id
+                        ? { ...f, ownershipProofStatus: 'pending' as const }
+                        : f
+                ));
                 const vault = await apiClient.listVaultFiles(100, 0);
                 if (vault.files) {
                     const vaultFiles = vault.files.map((f: any) => ({
@@ -405,17 +444,19 @@ function DashboardInner() {
             setLastUploadResult({ name: rawFile.name, scanId: result.scan_id });
             setTimeout(() => setLastUploadResult(null), 4000);
 
-            apiClient.createBlockchainTimestamp(
-                rawFile.name,
-                fileHash,
-                result.scan_id
-            ).then(() => {
-                window.dispatchEvent(new Event('blockchain-update'));
-            }).catch((error: any) => {
-                if (error?.message) {
-                    toast(`Blockchain timestamp failed: ${error.message}`, 'error');
-                }
-            });
+            setTimeout(() => {
+                apiClient.createBlockchainTimestamp(
+                    rawFile.name,
+                    fileHash,
+                    result.scan_id
+                ).then(() => {
+                    window.dispatchEvent(new Event('blockchain-update'));
+                }).catch((error: any) => {
+                    if (error?.message) {
+                        toast(`Blockchain timestamp failed: ${error.message}`, 'error');
+                    }
+                });
+            }, 1500);
         } finally {
             setIsUploading(false);
         }
@@ -433,6 +474,7 @@ function DashboardInner() {
                     });
                     if (resp.ok) {
                         const blob = await resp.blob();
+                        revokeBlob(file.previewUrl);
                         file.previewUrl = URL.createObjectURL(blob);
                     }
                 }
@@ -488,6 +530,8 @@ function DashboardInner() {
 
         }
         setFiles(prev => prev.filter(f => f.id !== file.id));
+        revokeBlob(file.previewUrl);
+        fileBlobCache.current.delete(file.id);
     };
 
     const loadBlockchainProofs = async (file: FileData) => {
@@ -725,9 +769,10 @@ function DashboardInner() {
                                 )}
                             </div>
 
+                            {!proofSubmitted && (
                             <div className="flex gap-0 border-t border-luxury-steel/30">
                                 <button
-                                    onClick={() => setProofModalFile(null)}
+                                    onClick={() => { setProofModalFile(null); setProofSubmitted(false); }}
                                     className="flex-1 py-4 text-xs uppercase tracking-ultra-wide font-semibold text-luxury-muted/60 hover:text-luxury-cream transition-colors duration-200"
                                 >
                                     Cancel
@@ -741,11 +786,25 @@ function DashboardInner() {
                                     {submittingProof ? 'Submitting...' : 'Submit Proof'}
                                 </button>
                             </div>
+                            )}
 
                             {proofModalFile.ownershipProofStatus === 'pending' && (
                                 <p className="text-luxury-gold/50 text-[10px] uppercase tracking-wider text-center mt-4">
                                     Previous proof under review
                                 </p>
+                            )}
+
+                            {proofSubmitted && (
+                                <div className="mt-6 p-6 border border-green-500/30 bg-green-500/5 text-center">
+                                    <p className="text-green-400 text-sm font-semibold mb-1">Proof submitted successfully</p>
+                                    <p className="text-luxury-muted/50 text-xs">Your file will be reviewed within 24 hours.</p>
+                                    <button
+                                        onClick={() => { setProofModalFile(null); setProofSubmitted(false); setProofText(''); setProofUrl(''); }}
+                                        className="mt-4 px-6 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </motion.div>
@@ -763,7 +822,7 @@ function DashboardInner() {
                 </motion.div>
             )}
 
-            <div className="min-h-screen bg-gallery-black text-luxury-cream flex overflow-x-hidden">
+            <div className="min-h-screen bg-[#050505] text-luxury-cream flex overflow-x-hidden">
                 <DashboardSidebar
                     userName={user?.full_name || ''}
                     userInitials={user?.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
@@ -803,7 +862,7 @@ function DashboardInner() {
 
                             <div className="hidden lg:flex items-center gap-12">
                                 {(['monitor', 'provenance'] as const).map((tab) => {
-                                    const labels = { monitor: 'Collection', provenance: 'Ledger' };
+                                    const labels = { monitor: 'My Work', provenance: 'Blockchain Proofs' };
                                     return (
                                         <button
                                             key={tab}
@@ -881,14 +940,25 @@ function DashboardInner() {
                                             {/* Upload Section — The Atelier */}
                                             <motion.section variants={itemVariants}>
                                                 <div className="mb-6">
-                                                    <p className="text-luxury-subheading mb-2">The Atelier</p>
-                                                    <h2 className="text-xl font-display text-luxury-cream">Present Your Work</h2>
+                                                    <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-2">The Atelier</p>
+                                                    <h2 className="text-xl md:text-2xl font-display tracking-tight text-white">Present Your Work</h2>
                                                 </div>
                                                 <FileUploader onUploadComplete={handleUploadComplete} />
                                             </motion.section>
 
                                             {/* Collection Section */}
                                             <motion.section variants={itemVariants}>
+                                                {vaultError && (
+                                                    <div className="mb-4 p-4 border border-red-500/20 bg-red-500/5 flex items-center justify-between">
+                                                        <p className="text-sm text-red-400">{vaultError}</p>
+                                                        <button
+                                                            onClick={() => setVaultRetryKey(k => k + 1)}
+                                                            className="text-[10px] uppercase tracking-ultra-wide font-semibold text-red-400 hover:text-red-300 border border-red-500/30 px-4 py-2 transition-colors"
+                                                        >
+                                                            Retry
+                                                        </button>
+                                                    </div>
+                                                )}
                                                 <SafeVault
                                                     files={files}
                                                     loading={vaultLoading}
@@ -923,7 +993,7 @@ function DashboardInner() {
                                                     disabled={isIndexing}
                                                     className="w-full py-3 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-steel/30 text-luxury-muted/60 hover:text-luxury-gold hover:border-luxury-gold/40 transition-all duration-300 disabled:opacity-30"
                                                 >
-                                                    {isIndexing ? 'Indexing Files...' : `Index Vault for Copy Detection (${files.length} files)`}
+                                                    {isIndexing ? 'Indexing...' : indexError ? 'Retry Index' : `Index Vault for Copy Detection (${files.length} files)`}
                                                 </button>
                                                 <div className="mt-3">
                                                     <SearchTV fileBlob={searchFileBlob ?? undefined} fileName={searchFileName || undefined} />
@@ -943,8 +1013,8 @@ function DashboardInner() {
                                         {/* Main Column */}
                                         <div className="space-y-12">
                                             <motion.div variants={itemVariants}>
-                                                <p className="text-luxury-subheading mb-2">The Ledger</p>
-                                                <h2 className="text-xl font-display text-luxury-cream">Provenance, Immutable</h2>
+                                                <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-2">The Ledger</p>
+                                                <h2 className="text-xl md:text-2xl font-display tracking-tight text-white">Provenance, Immutable</h2>
                                             </motion.div>
 
                                             <motion.p variants={itemVariants} className="text-sm text-luxury-muted/50 leading-relaxed max-w-2xl">
