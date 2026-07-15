@@ -37,13 +37,12 @@ service-account.json
 *.swp
 *.swo
 *~
-.hintrc
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Build
+# Build artifacts
 *.pyc
 *.pyo
 *.pyd
@@ -58,3 +57,86 @@ c2pa-service/signed-files/
 **/secrets/
 credentials.json
 *.cred
+
+# Dev scripts / generated files
+check_code.py
+check_db.py
+create_demo_video.py
+create_test_image.py
+find_query.py
+frontend_check.py
+list_vault.py
+run_migrations.js
+start_server.py
+test_*.py
+verify_backend.py
+apply_dna_migration.py
+create_tables.py
+create_user_final.py
+
+# Generated artwork / images / video
+_test_artwork.png
+test_artwork.png
+*.mp4
+*.wav
+cvber_dashboard.png
+cvber_features.png
+cvber_home.png
+cvber_howitworks.png
+cvber_login.png
+
+# Backend junk
+backend/.cvber_memory/
+backend/BLOCKCHAIN_TEST_RESULTS.md
+backend/launch_backend.vbs
+backend/start_bg.ps1
+backend/package.json
+backend/package-lock.json
+backend/*.bak
+backend/build_err.txt
+backend/build_output.txt
+
+# Frontend junk
+frontend/build_err*.txt
+frontend/build_output.txt
+frontend/tsconfig.tsbuildinfo
+
+# IDE
+.hintrc
+
+# Nested repos / standalone projects (not part of CVBER)
+AutoGEO/
+DeepResearchAgent/
+GEO/
+LUSION-RE/
+LibreCrawl/
+SEOBacklinkPro/
+SeOinNgabs/
+SeoTags/
+ai-content/
+analytics/
+backlink-generator-tool/
+chrome_profile/
+contentswift/
+cvber.free.las.app/
+dataseo-mcp/
+dualmark/
+gego/
+generative-engine-optimization-tools/
+instagram-mcp/
+Instagram-Outreach-Instantly/
+next-seo/
+next-sitemap/
+open-seo/
+postiz-app/
+recomby-geo/
+research/
+seo-audits-toolkit/
+seo-automation-backlink-tool/
+seo-geo-claude-skills/
+seobuild-onpage/
+trends-checker/
+TRACTION/
+
+# Reference repos
+ponytail/

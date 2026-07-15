@@ -2,10 +2,13 @@
 Theft Monitoring Engine
 Reverse image scanning and theft detection.
 """
-from datetime import datetime
+import logging
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 import hashlib
+
+logger = logging.getLogger(__name__)
 
 
 class TheftAlert(BaseModel):
@@ -79,14 +82,14 @@ class TheftMonitor:
             }
             self.supabase.table("monitored_assets").insert(db_data).execute()
         except Exception as e:
-            print(f"Database error registering asset: {e}")
+            logger.error(f"Database error registering asset: {e}")
             
         return asset
     
     def report_theft(self, asset_id: str, found_url: str, platform: str, estimated_views: int = None) -> TheftAlert:
         """Report a theft detection and store in DB"""
         # Generate alert ID
-        alert_id = f"THEFT-{hashlib.sha256(f'{asset_id}{found_url}{datetime.utcnow()}'.encode()).hexdigest()[:10].upper()}"
+        alert_id = f"THEFT-{hashlib.sha256(f'{asset_id}{found_url}{datetime.now(timezone.utc)}'.encode()).hexdigest()[:10].upper()}"
         
         # Estimate revenue loss
         revenue_loss = None
@@ -103,7 +106,7 @@ class TheftMonitor:
             confidence=0.85,
             estimated_views=estimated_views,
             estimated_revenue_loss=revenue_loss,
-            detected_at=datetime.utcnow(),
+            detected_at=datetime.now(timezone.utc),
             status="new"
         )
         
@@ -122,7 +125,7 @@ class TheftMonitor:
             }
             self.supabase.table("theft_alerts").insert(db_data).execute()
         except Exception as e:
-            print(f"Database error reporting theft: {e}")
+            logger.error(f"Database error reporting theft: {e}")
             
         return alert
     
@@ -158,7 +161,7 @@ class TheftMonitor:
                 "violations": records
             }
         except Exception as e:
-            print(f"Error generating infringer report: {e}")
+            logger.error(f"Error generating infringer report: {e}")
             return {"error": str(e)}
 
     def estimate_total_loss(self, asset_id: str) -> Dict[str, Any]:
@@ -196,7 +199,7 @@ class TheftMonitor:
                 "legal_statement": f"This theft has resulted in an estimated ${total_loss:.2f} in lost revenue across {len(alerts)} unauthorized uses."
             }
         except Exception as e:
-            print(f"Error estimating total loss: {e}")
+            logger.error(f"Error estimating total loss: {e}")
             return {"error": str(e)}
 
 

@@ -153,6 +153,9 @@ export default function HowItWorksPage() {
                     <Link href="/register" className="btn-primary inline-flex items-center gap-3 group">
                         Secure Your Legacy <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
+                    <p className="mt-6 text-sm text-zinc-500">
+                        <Link href="/how-to-protect-your-art" className="text-purple-400 hover:text-purple-300 transition-colors">Read our complete guide to protecting your art →</Link>
+                    </p>
                 </div>
             </section>
         </div>

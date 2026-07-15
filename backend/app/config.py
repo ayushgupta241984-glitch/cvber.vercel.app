@@ -26,10 +26,26 @@ class Settings(BaseSettings):
     # Backend
     backend_url: str = "http://localhost:8000"
     
-    # JWT
-    jwt_secret: str = "dev-secret-key-change-in-production"
+    # JWT — Set a strong random value in .env or environment. Required in production.
+    jwt_secret: str = ""
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+
+    @field_validator("jwt_secret", mode="before")
+    @classmethod
+    def validate_jwt_secret(cls, v):
+        if not v or v.startswith("change-this"):
+            is_mock = os.getenv("MOCK_MODE", "").lower() in ("1", "true", "yes")
+            if is_mock:
+                logger.warning("JWT_SECRET not set — using empty string (MOCK_MODE only)")
+                return ""
+            # Production: fail hard. Never fall back to a known string.
+            raise ValueError(
+                "JWT_SECRET is required in production. "
+                "Set a strong random value (64+ chars) in your environment variables. "
+                "Example: openssl rand -hex 32"
+            )
+        return v
     
     # Google Cloud
     gcp_project_id: str = "placeholder-project-id"
@@ -50,7 +66,7 @@ class Settings(BaseSettings):
     # NVIDIA NIM (OpenAI-compatible API)
     nvidia_nim_api_key: Optional[str] = None
     nvidia_nim_base_url: str = "https://integrate.api.nvidia.com/v1"
-    nvidia_nim_model: str = "stepfun-ai/step-3.5-flash"
+    nvidia_nim_model: str = "google/gemma-3n-e4b-it"
 
     # Hugging Face
     hf_token: Optional[str] = None
@@ -78,8 +94,6 @@ class Settings(BaseSettings):
     @property
     def parsed_allowed_origins(self) -> list:
         """Parse ALLOWED_ORIGINS from comma-separated string."""
-        if self.allowed_origins == "*":
-            return ["*"]
         return [origin.strip() for origin in self.allowed_origins.split(',') if origin.strip()]
     
     model_config = {

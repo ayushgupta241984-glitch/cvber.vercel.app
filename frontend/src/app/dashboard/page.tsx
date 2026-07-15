@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { FileUploader } from '@/components/dashboard/FileUploader';
 import { SafeVault } from '@/components/dashboard/SafeVault';
 import { SecurityMentor } from '@/components/chat/SecurityMentor';
@@ -8,12 +8,15 @@ import { ScreenshotGuard } from '@/components/security/ScreenshotGuard';
 import { FileViewer } from '@/components/dashboard/FileViewer';
 import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
 import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
+import { DMCAGenerator } from '@/components/enforcement/DMCAGenerator';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
-import { AIAgentChat } from '@/components/agent/AIAgentChat';
 import { ToastProvider, useToast } from '@/components/common/Toast';
-import { apiClient, BASE_URL } from '@/lib/api-client';
+import { apiClient, BASE_URL, downloadBlob } from '@/lib/api-client';
 import { FeedbackWidget } from '@/components/common/FeedbackWidget';
+import { easeLuxurySharp as easeLuxury } from '@/lib/animations';
 import { ReferralBanner } from '@/components/common/ReferralBanner';
+import { SearchResultsModal } from '@/components/search/SearchResultsModal';
+import { SearchTV } from '@/components/search/SearchTV';
 import { Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, Eye, ScanLine, Anchor, Globe, ChevronDown, ArrowUpRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -31,6 +34,9 @@ interface FileData {
     forensicSummary?: string;
     aiProvider?: string;
     aiModel?: string;
+    c2paSignedUrl?: string;
+    c2paManifest?: string;
+    c2paSignature?: string;
     uploadedAt: string;
     previewUrl?: string;
     storageUrl?: string;
@@ -51,8 +57,6 @@ interface UploadResult {
     storage_url?: string;
     original_hash?: string;
 }
-
-const easeLuxury = [0.16, 1, 0.3, 1] as const;
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -79,38 +83,14 @@ const itemVariants = {
     }
 };
 
-const heroVariants = {
-    hidden: { opacity: 0, y: 40 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: 0.25,
-            ease: easeLuxury,
-        }
-    }
-};
-
-const lineVariants = {
-    hidden: { scaleX: 0, opacity: 0 },
-    visible: {
-        scaleX: 1,
-        opacity: 1,
-        transition: {
-            duration: 0.25,
-            ease: easeLuxury,
-            delay: 0.08,
-        }
-    }
-};
-
 function DashboardInner() {
     const { toast } = useToast();
-    const [activeTab, setActiveTab] = useState<'monitor' | 'provenance' | 'investigator'>('investigator');
+    const [activeTab, setActiveTab] = useState<'monitor' | 'provenance'>('monitor');
     const [files, setFiles] = useState<FileData[]>([]);
     const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [isWatermarkOpen, setIsWatermarkOpen] = useState(false);
+    const [dmcaAsset, setDmcaAsset] = useState<{ name: string; hash: string; originalityScore: number; forensicSummary: string } | null>(null);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [vaultLoading, setVaultLoading] = useState(true);
@@ -118,19 +98,54 @@ function DashboardInner() {
     const [selectedBlockchainFile, setSelectedBlockchainFile] = useState<FileData | null>(null);
     const [blockchainFileProofs, setBlockchainFileProofs] = useState<any[]>([]);
     const [proofsLoading, setProofsLoading] = useState(false);
+    const [timestampingId, setTimestampingId] = useState<string | null>(null);
     const [proofModalFile, setProofModalFile] = useState<FileData | null>(null);
     const [proofType, setProofType] = useState<'declaration' | 'source' | 'original'>('declaration');
     const [proofText, setProofText] = useState('');
     const [proofUrl, setProofUrl] = useState('');
     const [submittingProof, setSubmittingProof] = useState(false);
 
+    const [searchResults, setSearchResults] = useState<any>(null);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState<string | null>(null);
+    const [searchFileName, setSearchFileName] = useState('');
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchFileBlob, setSearchFileBlob] = useState<Blob | null>(null);
+    const searchFileInputRef = useRef<HTMLInputElement>(null);
+    const [pendingSearchId, setPendingSearchId] = useState<string | null>(null);
+
+    const [isIndexing, setIsIndexing] = useState(false);
+    const indexedRef = useRef(false);
+    const fileBlobCache = useRef<Map<string, Blob>>(new Map());
+
+    const indexVault = useCallback(async (silent: boolean = false) => {
+        if (isIndexing) return;
+        setIsIndexing(true);
+        try {
+            const result = await apiClient.indexVault();
+            if (!silent && result?.registered > 0) {
+                toast(`Indexed ${result.registered} file(s) for copy detection`, 'success');
+            }
+        } catch {
+            if (!silent) toast('Failed to index vault', 'error');
+        } finally {
+            setIsIndexing(false);
+        }
+    }, [isIndexing, toast]);
+
     useEffect(() => {
         const saved = localStorage.getItem('cvber_vault_memory');
         if (saved) {
             try {
-                setFiles(JSON.parse(saved));
+                const parsed = JSON.parse(saved) as FileData[];
+                const cleaned = parsed.map(f => ({
+                    ...f,
+                    previewUrl: f.previewUrl?.startsWith('blob:') ? undefined : f.previewUrl,
+                    storageUrl: f.storageUrl?.startsWith('blob:') ? undefined : f.storageUrl,
+                }));
+                setFiles(cleaned);
             } catch (e) {
-                console.error("Memory corruption:", e);
+
             }
         }
 
@@ -154,7 +169,7 @@ function DashboardInner() {
                         }
                     }
                 } catch (err) {
-                    console.error("Profile fetch failed:", err);
+
                 }
             }
         };
@@ -177,6 +192,11 @@ function DashboardInner() {
                         isScreenshot: f.is_screenshot,
                         proofRequired: f.proof_required,
                         ownershipProofStatus: f.ownership_proof_status,
+                        aiProvider: f.ai_provider,
+                        aiModel: f.ai_model,
+                        c2paSignedUrl: f.c2pa_signed_url,
+                        c2paManifest: f.c2pa_manifest,
+                        c2paSignature: f.c2pa_signature,
                         uploadedAt: f.created_at,
                         storageUrl: f.storage_url,
                         previewUrl: f.storage_url || undefined,
@@ -193,9 +213,13 @@ function DashboardInner() {
                     });
                 }
             } catch (err) {
-                console.error("Failed to fetch vault files:", err);
+
             } finally {
                 setVaultLoading(false);
+                if (!indexedRef.current) {
+                    indexedRef.current = true;
+                    apiClient.indexVault().catch(() => {});
+                }
             }
         };
         fetchVault();
@@ -208,22 +232,10 @@ function DashboardInner() {
     const downloadOtsProof = async (proofId: string, assetName: string) => {
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${BASE_URL}/vault/proofs/${proofId}/ots-proof`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-            if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-            const blob = await response.blob();
             const baseName = assetName.includes('.') ? assetName.split('.').slice(0, -1).join('.') : assetName;
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${baseName}.ots`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            await downloadBlob(`${BASE_URL}/vault/proofs/${proofId}/ots-proof`, { 'Authorization': `Bearer ${token}` }, `${baseName}.ots`);
         } catch (e) {
-            console.error('OTS proof download failed:', e);
+
             toast('Failed to download OTS proof.', 'error');
         }
     };
@@ -234,7 +246,11 @@ function DashboardInner() {
             const response = await fetch(`${BASE_URL}/api/enforcement/audit/evidence-pdf`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
-            if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+            if (!response.ok) {
+                const body = await response.text().catch(() => '');
+
+                throw new Error(`Download failed: ${response.status}`);
+            }
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -245,17 +261,17 @@ function DashboardInner() {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         } catch (e) {
-            console.error('Evidence PDF download failed:', e);
+
             toast('Failed to download evidence log.', 'error');
         }
     };
 
     const checkProofRequired = (file: FileData) => {
-        const screenshotWithLowScore = file.isScreenshot && (file.originalityScore === undefined || file.originalityScore < 50);
-        const hasProofRequired = file.proofRequired === true && file.ownershipProofStatus !== 'verified';
+        const alreadySubmitted = file.ownershipProofStatus === 'pending' || file.ownershipProofStatus === 'verified';
+        const screenshotWithLowScore = file.isScreenshot && (file.originalityScore === undefined || file.originalityScore < 50) && !alreadySubmitted;
+        const hasProofRequired = file.proofRequired === true && !alreadySubmitted;
 
         if (hasProofRequired || screenshotWithLowScore) {
-            console.log('Blocking access for:', file.name, { proofRequired: file.proofRequired, isScreenshot: file.isScreenshot, originality: file.originalityScore });
             setProofModalFile(file);
             return true;
         }
@@ -289,15 +305,31 @@ function DashboardInner() {
                     const vaultFiles = vault.files.map((f: any) => ({
                         ...f,
                         proofRequired: f.proof_required,
-                        ownershipProofStatus: f.ownership_proof_status
+                        ownershipProofStatus: f.ownership_proof_status,
+                        aiProvider: f.ai_provider,
+                        aiModel: f.ai_model,
+                        c2paSignedUrl: f.c2pa_signed_url,
+                        c2paManifest: f.c2pa_manifest,
+                        c2paSignature: f.c2pa_signature,
                     }));
-                    setFiles(prev => [...prev, ...vaultFiles.filter(vf => !prev.find(p => p.id === vf.id))]);
+                    setFiles(prev => {
+                        const updated = [...prev];
+                        for (const vf of vaultFiles) {
+                            const idx = updated.findIndex(p => p.id === vf.id);
+                            if (idx >= 0) {
+                                updated[idx] = { ...updated[idx], ...vf };
+                            } else {
+                                updated.push(vf);
+                            }
+                        }
+                        return updated;
+                    });
                 }
             } else {
                 toast('Failed to submit proof. Please try again.', 'error');
             }
         } catch (e) {
-            console.error('Submit proof failed:', e);
+
             toast('Error submitting proof.', 'error');
         } finally {
             setSubmittingProof(false);
@@ -324,6 +356,8 @@ function DashboardInner() {
 
     const handleUploadComplete = async (result: UploadResult, rawFile: File) => {
         const previewUrl = result.storage_url || URL.createObjectURL(rawFile);
+
+        fileBlobCache.current.set(result.scan_id, rawFile);
 
         const arrayBuffer = await rawFile.arrayBuffer();
         const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
@@ -360,10 +394,9 @@ function DashboardInner() {
                 fileHash,
                 result.scan_id
             );
-            console.log('Blockchain timestamp created:', timestampResult);
             window.dispatchEvent(new Event('blockchain-update'));
         } catch (error: any) {
-            console.error('Blockchain timestamp failed:', error);
+
             if (error?.message) {
                 toast(`Blockchain timestamp failed: ${error.message}`, 'error');
             }
@@ -374,10 +407,19 @@ function DashboardInner() {
         if (checkProofRequired(file)) return;
         if (!file.previewUrl) {
             try {
-                const urlResp = await apiClient.getVaultFileUrl(file.id);
-                file.previewUrl = urlResp.url;
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${file.id}/download`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        signal: AbortSignal.timeout(15000),
+                    });
+                    if (resp.ok) {
+                        const blob = await resp.blob();
+                        file.previewUrl = URL.createObjectURL(blob);
+                    }
+                }
             } catch (err) {
-                console.error("Failed to get vault URL:", err);
+
             }
         }
         setSelectedFile(file);
@@ -385,11 +427,39 @@ function DashboardInner() {
         if (window.innerWidth < 1024) setIsSidebarOpen(false);
     };
 
-    const handleWatermark = (file: FileData) => {
-        if (checkProofRequired(file)) return;
-        setSelectedFile(file);
+    const handleWatermark = async (file: FileData) => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            try {
+                const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${file.id}/download`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    signal: AbortSignal.timeout(15000),
+                });
+                if (resp.ok) {
+                    const blob = await resp.blob();
+                    fileBlobCache.current.set(file.id, blob);
+                    file.previewUrl = URL.createObjectURL(blob);
+                }
+            } catch (e) {
+
+                try {
+                    const urlResp = await apiClient.getVaultFileUrl(file.id);
+                    if (urlResp?.url) file.previewUrl = urlResp.url;
+                } catch { /* intentionally empty — fire-and-forget fallback */ }
+            }
+        }
+        setSelectedFile({ ...file });
         setIsWatermarkOpen(true);
         if (window.innerWidth < 1024) setIsSidebarOpen(false);
+    };
+
+    const handleDMCA = (file: FileData) => {
+        setDmcaAsset({
+            name: file.name,
+            hash: file.hash || 'unknown',
+            originalityScore: file.originalityScore || 0,
+            forensicSummary: file.forensicSummary || 'No forensic summary available',
+        });
     };
 
     const handleDelete = async (file: FileData) => {
@@ -397,7 +467,7 @@ function DashboardInner() {
         try {
             await apiClient.deleteVaultFile(file.id);
         } catch (err) {
-            console.error("Failed to delete from backend:", err);
+
         }
         setFiles(prev => prev.filter(f => f.id !== file.id));
     };
@@ -405,11 +475,12 @@ function DashboardInner() {
     const loadBlockchainProofs = async (file: FileData) => {
         setSelectedBlockchainFile(file);
         setProofsLoading(true);
+        setBlockchainFileProofs([]);
         try {
             const result = await apiClient.getVaultFileWithProofs(file.id);
             setBlockchainFileProofs(result.blockchain_proofs || []);
         } catch (err) {
-            console.error("Failed to load proofs:", err);
+
             setBlockchainFileProofs([]);
         } finally {
             setProofsLoading(false);
@@ -417,22 +488,138 @@ function DashboardInner() {
     };
 
     const handleTimestamp = async (file: FileData) => {
-        if (checkProofRequired(file)) return;
         const hash = file.hash;
         if (!hash) {
             toast("File hash not available.", 'error');
             return;
         }
+        setTimestampingId(file.id);
         try {
             const result = await apiClient.createBlockchainTimestamp(file.name, hash, file.id);
-            console.log('Blockchain timestamp created:', result);
+            toast('Blockchain timestamp created — anchoring to Bitcoin', 'success');
             window.dispatchEvent(new Event('blockchain-update'));
-            if (selectedBlockchainFile?.id === file.id) {
-                await loadBlockchainProofs(file);
-            }
+            setSelectedBlockchainFile(file);
+            await loadBlockchainProofs(file);
         } catch (err: any) {
             toast(err?.message || 'Failed to create blockchain timestamp', 'error');
+        } finally {
+            setTimestampingId(null);
         }
+    };
+
+    const performSearch = async (fileToUpload: File) => {
+        setSearchResults(null);
+        setSearchError(null);
+        setSearchLoading(true);
+        setIsSearchOpen(true);
+
+        try {
+            const result = await apiClient.reverseImageSearch(fileToUpload);
+
+            if (result?.scan_id) {
+                const baseUrl = apiClient.getBaseUrl();
+                const imageUrl = `${baseUrl}/search/temp/${result.scan_id}`;
+                const encodedUrl = encodeURIComponent(imageUrl);
+
+                result._yandexUrl = `https://yandex.com/images/search?url=${encodedUrl}&rpt=imageview`;
+                result._bingUrl = `https://www.bing.com/images/search?view=detailv2&iss=sbi&form=SBIVSP&sbisrc=UrlPaste&q=imgurl:${encodedUrl}`;
+                result._googleLensUrl = `https://lens.google.com/uploadbyurl?url=${encodedUrl}`;
+                result._saucenaoUrl = `https://saucenao.com/search.php?url=${encodedUrl}`;
+                result._tineyeUrl = `https://tineye.com/search?url=${encodedUrl}`;
+                result._imageUrl = imageUrl;
+            }
+
+            setSearchResults(result);
+        } catch (err: any) {
+
+            setSearchError(err?.message || 'Search failed');
+        } finally {
+            setSearchLoading(false);
+            setPendingSearchId(null);
+            if (searchFileInputRef.current) searchFileInputRef.current.value = '';
+        }
+    };
+
+    const handleDeepSearch = async (fileBlob: Blob, fileName: string) => {
+        try {
+            const file = new File([fileBlob], fileName, { type: fileBlob.type || 'image/jpeg' });
+            const result = await apiClient.deepImageSearch(file);
+            setSearchResults((prev: any) => ({ ...(prev || {}), _deepResults: result }));
+        } catch (err: any) {
+
+            throw err;
+        }
+    };
+
+    const handleSearch = async (file: any) => {
+        setSearchFileName(file.name);
+        setSearchFileBlob(null);
+        setPendingSearchId(file.id);
+
+        try {
+            let blob: Blob | null = null;
+
+            const cached = fileBlobCache.current.get(file.id);
+            if (cached) {
+                blob = cached;
+            } else {
+                const token = localStorage.getItem('access_token');
+                let downloadOk = false;
+                if (token) {
+                    try {
+                        const downloadUrl = `${apiClient.getBaseUrl()}/vault/files/${file.id}/download`;
+                        const resp = await fetch(downloadUrl, {
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            signal: AbortSignal.timeout(15000),
+                        });
+                        if (resp.ok) {
+                            blob = await resp.blob();
+                            fileBlobCache.current.set(file.id, blob);
+                            downloadOk = true;
+                        }
+                    } catch (e) {
+                        // download failed, try DOM grab
+                    }
+                }
+
+                if (!downloadOk) {
+                    const domImg = document.querySelector<HTMLImageElement>('img[src]');
+                    if (domImg && domImg.complete && domImg.naturalWidth > 0) {
+                        const c = document.createElement('canvas');
+                        c.width = domImg.naturalWidth;
+                        c.height = domImg.naturalHeight;
+                        c.getContext('2d')!.drawImage(domImg, 0, 0);
+                        blob = await new Promise<Blob>((resolve) => c.toBlob(b => resolve(b!), 'image/png'));
+                    }
+                }
+
+                if (!blob) {
+                    throw new Error('Could not load file');
+                }
+            }
+
+            setSearchFileBlob(blob);
+            const fileToUpload = new File([blob], file.name, { type: blob.type || 'application/octet-stream' });
+            await performSearch(fileToUpload);
+            try {
+                await apiClient.registerHash(fileToUpload, file.id);
+            } catch { /* intentionally empty — fire-and-forget */ }
+        } catch (err) {
+
+            const msg = err instanceof Error ? err.message : 'Unknown error';
+            toast(`Could not search file: ${msg}`, 'error');
+        } finally {
+            setPendingSearchId(null);
+        }
+    };
+
+    const handleSearchFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0];
+        if (!selectedFile) return;
+        setSearchFileName(selectedFile.name);
+        setSearchFileBlob(selectedFile);
+        setPendingSearchId(null);
+        await performSearch(selectedFile);
     };
 
     return (
@@ -586,8 +773,8 @@ function DashboardInner() {
                             </div>
 
                             <div className="hidden lg:flex items-center gap-12">
-                                {(['monitor', 'provenance', 'investigator'] as const).map((tab) => {
-                                    const labels = { monitor: 'Collection', provenance: 'Ledger', investigator: 'Enquiry' };
+                                {(['monitor', 'provenance'] as const).map((tab) => {
+                                    const labels = { monitor: 'Collection', provenance: 'Ledger' };
                                     return (
                                         <button
                                             key={tab}
@@ -620,8 +807,8 @@ function DashboardInner() {
                     {/* Mobile Tab Switcher */}
                     <div className="lg:hidden border-b border-luxury-steel/30 px-8 md:px-16">
                         <div className="flex gap-6">
-                            {(['monitor', 'provenance', 'investigator'] as const).map((tab) => {
-                                const labels = { monitor: 'Collection', provenance: 'Ledger', investigator: 'Enquiry' };
+                            {(['monitor', 'provenance'] as const).map((tab) => {
+                                const labels = { monitor: 'Collection', provenance: 'Ledger' };
                                 return (
                                     <button
                                         key={tab}
@@ -680,13 +867,15 @@ function DashboardInner() {
                                                     onWatermark={handleWatermark}
                                                     onDelete={handleDelete}
                                                     onTimestamp={handleTimestamp}
+                                                    onSearch={handleSearch}
+                                                    onDMCA={handleDMCA}
                                                 />
                                             </motion.section>
                                         </div>
 
                                         {/* Sidebar Column */}
                                         <motion.div variants={itemVariants} className="space-y-8">
-                                            <SecurityMentor context={{ files }} />
+                                            <SecurityMentor context={{ files }} onSearchFile={handleSearch} />
                                             <motion.div
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
@@ -701,25 +890,17 @@ function DashboardInner() {
                                                     Our agent scours the open web for unauthorized reproductions of your work&mdash;social platforms, marketplaces, and beyond.
                                                 </p>
                                                 <button
-                                                    onClick={() => setActiveTab('investigator')}
-                                                    suppressHydrationWarning
-                                                    className="w-full py-3 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-gold/40 text-luxury-gold hover:bg-luxury-gold/10 transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
+                                                    onClick={() => indexVault(false)}
+                                                    disabled={isIndexing}
+                                                    className="w-full py-3 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-steel/30 text-luxury-muted/60 hover:text-luxury-gold hover:border-luxury-gold/40 transition-all duration-300 disabled:opacity-30"
                                                 >
-                                                    Open Enquiry
+                                                    {isIndexing ? 'Indexing Files...' : `Index Vault for Copy Detection (${files.length} files)`}
                                                 </button>
+                                                <div className="mt-3">
+                                                    <SearchTV fileBlob={searchFileBlob ?? undefined} fileName={searchFileName || undefined} />
+                                                </div>
                                             </motion.div>
                                         </motion.div>
-                                    </div>
-                                </motion.div>
-                            ) : activeTab === 'investigator' ? (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ duration: 0.15, ease: easeLuxury }}
-                                    className="flex-1 flex flex-col px-8 md:px-16 lg:px-24 py-6"
-                                >
-                                    <div className="flex-1 min-h-0">
-                                        <AIAgentChat />
                                     </div>
                                 </motion.div>
                             ) : (
@@ -756,7 +937,11 @@ function DashboardInner() {
                                             <motion.div variants={itemVariants} className="space-y-0 border border-luxury-steel/30 max-h-[500px] overflow-y-auto">
                                                 {files.length === 0 ? (
                                                     <div className="p-12 text-center border-b border-luxury-steel/30">
-                                                        <p className="text-xs text-luxury-muted/50 uppercase tracking-wider">Upload a work first to see it here</p>
+                                                        <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-4">
+                                                            <Upload className="w-5 h-5 text-purple-400" />
+                                                        </div>
+                                                        <p className="text-sm text-luxury-cream font-display mb-2">Your vault is empty</p>
+                                                        <p className="text-xs text-luxury-muted/50">Upload your first artwork above to get a C2PA certificate and start monitoring for theft.</p>
                                                     </div>
                                                 ) : files.map((f, idx) => (
                                                     <motion.div
@@ -780,9 +965,10 @@ function DashboardInner() {
                                                                 {f.hash && (
                                                                     <button
                                                                         onClick={(e) => { e.stopPropagation(); handleTimestamp(f); }}
-                                                                        className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-gold/30 text-luxury-gold hover:bg-luxury-gold/10 transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
+                                                                        disabled={timestampingId === f.id}
+                                                                        className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-gold/30 text-luxury-gold hover:bg-luxury-gold/10 transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] disabled:opacity-40 disabled:cursor-wait"
                                                                     >
-                                                                        Anchor
+                                                                        {timestampingId === f.id ? 'Anchoring...' : 'Anchor'}
                                                                     </button>
                                                                 )}
                                                                 <span className="text-[10px] text-luxury-muted/40 uppercase tracking-widest">
@@ -896,6 +1082,32 @@ function DashboardInner() {
                     file={selectedFile}
                     isOpen={isWatermarkOpen}
                     onClose={() => setIsWatermarkOpen(false)}
+                />
+
+                {dmcaAsset && (
+                    <DMCAGenerator
+                        asset={dmcaAsset}
+                        onClose={() => setDmcaAsset(null)}
+                    />
+                )}
+
+                <input
+                    type="file"
+                    ref={searchFileInputRef}
+                    onChange={handleSearchFileSelected}
+                    accept="image/*"
+                    className="hidden"
+                />
+
+                <SearchResultsModal
+                    isOpen={isSearchOpen}
+                    onClose={() => { setIsSearchOpen(false); setSearchResults(null); setSearchError(null); setSearchFileBlob(null); }}
+                    fileName={searchFileName}
+                    results={searchResults}
+                    loading={searchLoading}
+                    error={searchError}
+                    searchFileBlob={searchFileBlob}
+                    onDeepSearch={handleDeepSearch}
                 />
 
                 <FeedbackWidget />

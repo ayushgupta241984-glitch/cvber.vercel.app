@@ -1,0 +1,350 @@
+import io
+import base64
+import time
+import json
+import logging
+from typing import Optional, Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import httpx
+from PIL import Image
+from app.services.image_search import dhash
+
+logger = logging.getLogger(__name__)
+
+NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
+NVIDIA_MODEL = "google/gemma-3n-e4b-it"
+MAX_ITERATIONS = 1
+QUERIES_PER_BATCH = 3
+IMAGES_PER_QUERY = 5
+SIMILARITY_THRESHOLD = 26
+MAX_RESULTS = 5
+TIMEOUT_IMAGE_DL = 4
+TIMEOUT_NIM = 18
+
+
+def _nim_call(messages: list, api_key: str, max_tokens: int = 256, temp: float = 0.1) -> Optional[str]:
+    payload = {
+        "model": NVIDIA_MODEL,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": temp,
+    }
+    try:
+        r = httpx.post(
+            NVIDIA_API_URL,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=payload,
+            timeout=TIMEOUT_NIM,
+        )
+        if r.status_code != 200:
+            logger.warning(f"NIM API error {r.status_code}: {r.text[:200]}")
+            return None
+        data = r.json()
+        return data["choices"][0]["message"]["content"]
+    except Exception as e:
+        logger.warning(f"NIM call failed: {e}")
+        return None
+
+
+def describe_image(image_bytes: bytes, api_key: str) -> Optional[str]:
+    b64 = base64.b64encode(image_bytes).decode()
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                {"type": "text", "text": "Describe this image concisely: main subject, colors, composition, style, distinctive elements."}
+            ]
+        }
+    ]
+    return _nim_call(messages, api_key, max_tokens=200, temp=0.1)
+
+
+def generate_queries(description: str, api_key: str, iteration: int = 0) -> list[str]:
+    prompt = (
+        f"From this image description:\n{description}\n\n"
+        f"Generate {QUERIES_PER_BATCH} short image search queries (2-4 words each) to find visually similar images. "
+        "Focus on specific visual features. One per line."
+    )
+
+    messages = [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
+    result = _nim_call(messages, api_key, max_tokens=150, temp=0.3)
+    if not result:
+        return []
+    queries = [q.strip().strip('"').strip("'").strip("- ").lstrip("1234567890.") for q in result.strip().split("\n") if q.strip()]
+    return queries[:QUERIES_PER_BATCH]
+
+
+def _search_bing(query: str, max_results: int = IMAGES_PER_QUERY) -> list[dict]:
+    import re, urllib.parse
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
+    params = {"q": query, "form": "HDRSC2", "first": "1", "count": str(min(max_results * 2, 35))}
+    try:
+        r = httpx.get("https://www.bing.com/images/search", headers=headers, params=params, timeout=10.0, follow_redirects=True)
+        html = r.text if r.status_code == 200 else ""
+        if not html:
+            r2 = httpx.get("https://www.bing.com/images/async", headers=headers, params={"q": query, "first": "1", "count": str(min(max_results, 35)), "form": "IRFLHG"}, timeout=10.0, follow_redirects=True)
+            html = r2.text if r2.status_code == 200 else ""
+
+        seen_urls = set()
+        results = []
+
+        # Collect all candidate image URLs with their context
+        candidates = []
+
+        # 1. data-src attributes (main image URLs)
+        for m in re.finditer(r'data-src="(https?://[^"]+)"', html):
+            url = m.group(1).replace("\\u0026", "&").replace("\\/", "/")
+            if url in seen_urls:
+                continue
+            # Filter to real image hosts (skip SVGs, UI elements)
+            if not any(host in url for host in ["th.bing.com", "tse", ".bing.net", "mm.bing.net"]):
+                continue
+            seen_urls.add(url)
+            candidates.append({"url": url, "pos": m.start(), "len": len(url)})
+
+        # 2. <img src> with th.bing.com
+        for m in re.finditer(r'<img[^>]+src="(https?://[^"]+)"', html):
+            url = m.group(1).replace("\\u0026", "&").replace("\\/", "/")
+            if url in seen_urls and "th.bing.com" in url:
+                seen_urls.add(url)
+                candidates.append({"url": url, "pos": m.start(), "len": len(url)})
+
+        # Extract source links (lnkw) and alt texts from the page
+        lnkw_links = list(re.finditer(r'data-hookid="pgdom"[^>]+href="([^"]+)"', html))
+        alt_texts = list(re.finditer(r'alt="([^"]*)"', html))
+
+        for cand in candidates[:max_results * 2]:
+            if len(results) >= max_results:
+                break
+            url = cand["url"]
+            pos = cand["pos"]
+
+            # Find nearest alt text before this position
+            title = ""
+            for a in alt_texts:
+                if a.start() < pos and a.start() > pos - 300:
+                    title = a.group(1)
+                    break
+
+            # Find nearest source link after this position
+            source = ""
+            for l in lnkw_links:
+                if l.start() > pos and l.start() < pos + 800:
+                    source = l.group(1)
+                    break
+
+            if not source:
+                source = f"https://www.bing.com/images/search?view=detailV2&mediaurl={urllib.parse.quote(url, '')}"
+
+            results.append({
+                "url": url,
+                "title": title.replace("\\u0026", "&").replace("\\/", "/") if title else "",
+                "source": source,
+            })
+
+        if results:
+            logger.info(f"  Bing '{query[:50]}' → {len(results)} results")
+        return results[:max_results]
+    except Exception as e:
+        logger.warning(f"Bing search failed for '{query[:50]}': {e}")
+        return []
+
+
+def search_images(query: str, max_results: int = IMAGES_PER_QUERY) -> list[dict]:
+    return _search_bing(query, max_results)
+
+
+def compare_and_score(original_dhash: str, image_url: str) -> Optional[dict]:
+    try:
+        r = httpx.get(image_url, timeout=TIMEOUT_IMAGE_DL, follow_redirects=True)
+        if r.status_code != 200:
+            return None
+        content_type = r.headers.get("content-type", "")
+        if "image" not in content_type:
+            return None
+        img_bytes = r.content
+        if len(img_bytes) > 10 * 1024 * 1024:
+            return None
+        found_hash = dhash(img_bytes)
+        dist = bin(int(original_dhash, 16) ^ int(found_hash, 16)).count("1")
+        similarity = max(0, round((1 - dist / 64) * 100))
+        return {
+            "url": image_url,
+            "dhash": found_hash,
+            "distance": dist,
+            "similarity": similarity,
+        }
+    except Exception as e:
+        logger.debug(f"Image compare failed for {image_url[:60]}: {e}")
+        return None
+
+
+async def deep_search_stream(image_bytes: bytes, api_key: str):
+    """Async generator yielding SSE events for live TV display."""
+    import asyncio
+    original_dhash_val = dhash(image_bytes)
+    seen_urls: set[str] = set()
+    all_results: list[dict] = []
+    queries_used: list[str] = []
+
+    yield {"event": "start", "data": {"dhash": original_dhash_val}}
+
+    # Step 1: Describe
+    yield {"event": "describe", "data": {"status": "Analyzing image with NVIDIA AI..."}}
+    loop = asyncio.get_event_loop()
+    description = await loop.run_in_executor(None, describe_image, image_bytes, api_key)
+    if not description:
+        yield {"event": "error", "data": {"message": "Failed to describe image"}}
+        return
+    yield {"event": "describe_done", "data": {"description": description[:300]}}
+
+    # Step 2: Generate + execute queries
+    for iteration in range(MAX_ITERATIONS):
+        yield {"event": "thinking", "data": {"status": "Generating search queries..."}}
+        queries = await loop.run_in_executor(None, generate_queries, description, api_key, iteration)
+        if not queries:
+            break
+        queries_used.extend(queries)
+
+        for q in queries:
+            yield {"event": "query", "data": {"query": q}}
+            search_results = await loop.run_in_executor(None, search_images, q, IMAGES_PER_QUERY)
+            if not search_results:
+                yield {"event": "query_empty", "data": {"query": q}}
+                continue
+
+            # Collect unique URLs with metadata
+            batch_items = []
+            for sr in search_results:
+                url = sr["url"]
+                if url in seen_urls:
+                    continue
+                seen_urls.add(url)
+                batch_items.append(sr)
+
+            yield {"event": "query_results", "data": {"query": q, "count": len(batch_items), "total": len(search_results)}}
+
+            # Compare each image (sequential to show each one)
+            for i, item in enumerate(batch_items):
+                url = item["url"]
+                title = item.get("title", "")
+                source = item.get("source", "")
+                yield {"event": "checking", "data": {"url": url, "title": title, "source": source, "index": i + 1, "total": len(batch_items)}}
+
+                comparison = await loop.run_in_executor(None, compare_and_score, original_dhash_val, url)
+                if comparison and comparison["distance"] <= SIMILARITY_THRESHOLD:
+                    all_results.append({
+                        "url": comparison["url"],
+                        "title": title,
+                        "source": source,
+                        "similarity": comparison["similarity"],
+                        "hash_distance": comparison["distance"],
+                    })
+                    yield {"event": "match", "data": {"url": comparison["url"], "title": title, "source": source, "similarity": comparison["similarity"], "distance": comparison["distance"]}}
+                    await asyncio.sleep(0.1)
+                else:
+                    score = comparison["similarity"] if comparison else 0
+                    yield {"event": "reject", "data": {"url": url, "title": title, "source": source, "similarity": score, "reason": f"Below threshold (max {SIMILARITY_THRESHOLD} bits)" if not comparison else f"Only {score}% similar"}}
+
+                if len(all_results) >= MAX_RESULTS:
+                    break
+
+            yield {"event": "progress", "data": {"searched": len(seen_urls), "found": len(all_results)}}
+
+            if len(all_results) >= MAX_RESULTS:
+                break
+
+        if len(all_results) >= MAX_RESULTS:
+            break
+
+    all_results.sort(key=lambda r: r["similarity"], reverse=True)
+    all_results = all_results[:MAX_RESULTS]
+
+    yield {"event": "done", "data": {
+        "original_dhash": original_dhash_val,
+        "description": description,
+        "results": all_results,
+        "total_found": len(all_results),
+        "queries_used": queries_used,
+        "images_searched": len(seen_urls),
+    }}
+
+
+async def deep_search(image_bytes: bytes, api_key: str) -> dict:
+    original_dhash_val = dhash(image_bytes)
+    logger.info(f"Deep search starting — dhash: {original_dhash_val}")
+
+    description = describe_image(image_bytes, api_key)
+    if not description:
+        return {"error": "Failed to describe image", "results": [], "total_found": 0}
+    logger.info(f"Description: {description[:100]}...")
+
+    seen_urls: set[str] = set()
+    all_results: list[dict] = []
+    queries_used: list[str] = []
+
+    for iteration in range(MAX_ITERATIONS):
+        queries = generate_queries(description, api_key, iteration)
+        if not queries:
+            break
+        queries_used.extend(queries)
+        logger.info(f"Iteration {iteration + 1}: {queries}")
+
+        batch = search_and_score_batch(queries, original_dhash_val, seen_urls)
+        all_results.extend(batch)
+
+        all_results.sort(key=lambda r: r["similarity"], reverse=True)
+        if len(all_results) >= MAX_RESULTS:
+            all_results = all_results[:MAX_RESULTS]
+            break
+
+    all_results.sort(key=lambda r: r["similarity"], reverse=True)
+
+    logger.info(f"Complete — {len(all_results)} matches from {len(seen_urls)} images searched")
+
+    return {
+        "original_dhash": original_dhash_val,
+        "description": description,
+        "results": all_results[:MAX_RESULTS],
+        "total_found": min(len(all_results), MAX_RESULTS),
+        "queries_used": queries_used,
+        "images_searched": len(seen_urls),
+    }
+
+
+def search_and_score_batch(queries: list[str], original_dhash: str, seen_urls: set) -> list[dict]:
+    all_urls = []
+    for query in queries:
+        search_results = search_images(query)
+        if not search_results:
+            continue
+        logger.info(f"  '{query[:50]}' → {len(search_results)} results")
+        for sr in search_results:
+            url = sr["url"]
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            all_urls.append((url, sr.get("title", ""), sr.get("source", "")))
+
+    batch_results = []
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        fut_map = {pool.submit(compare_and_score, original_dhash, url): (url, title, source) for url, title, source in all_urls}
+        for fut in as_completed(fut_map):
+            url, title, source = fut_map[fut]
+            comparison = fut.result()
+            if comparison and comparison["distance"] <= SIMILARITY_THRESHOLD:
+                batch_results.append({
+                    "url": comparison["url"],
+                    "title": title,
+                    "source": source,
+                    "similarity": comparison["similarity"],
+                    "hash_distance": comparison["distance"],
+                })
+                logger.info(f"    ✓ {comparison['similarity']}% - {url[:70]}")
+    return batch_results

@@ -2,10 +2,13 @@
 Kill Switch Engine
 Instant content revocation and dispute management.
 """
-from datetime import datetime
+import logging
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 import hashlib
+
+logger = logging.getLogger(__name__)
 
 
 class DisputeStatus:
@@ -61,7 +64,7 @@ class KillSwitchEngine:
             claimant_id=None,
             reason=reason,
             status=DisputeStatus.PENDING,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             resolved_at=None,
             kill_switch_active=True,
             affected_urls=affected_urls or []
@@ -82,13 +85,13 @@ class KillSwitchEngine:
             }
             self.supabase.table("disputes").insert(db_data).execute()
         except Exception as e:
-            print(f"Database error activating kill switch: {e}")
+            logger.error(f"Database error activating kill switch: {e}")
             
         return dispute
     
     def _generate_dispute_id(self, asset_id: str, owner_id: str) -> str:
         """Generate unique dispute ID"""
-        data = f"{asset_id}{owner_id}{datetime.utcnow().isoformat()}"
+        data = f"{asset_id}{owner_id}{datetime.now(timezone.utc).isoformat()}"
         return f"DISPUTE-{hashlib.sha256(data.encode()).hexdigest()[:10].upper()}"
     
     def check_asset_status(self, asset_hash: str) -> Dict[str, Any]:
@@ -111,7 +114,7 @@ class KillSwitchEngine:
                     "show_warning": True
                 }
         except Exception as e:
-            print(f"Error checking asset status: {e}")
+            logger.error(f"Error checking asset status: {e}")
         
         return {
             "status": "active",
@@ -128,13 +131,13 @@ class KillSwitchEngine:
                 .update({
                     "kill_switch_active": False,
                     "status": resolution,
-                    "resolved_at": datetime.utcnow().isoformat()
+                    "resolved_at": datetime.now(timezone.utc).isoformat()
                 })\
                 .eq("dispute_id", dispute_id)\
                 .execute()
             return True
         except Exception as e:
-            print(f"Error deactivating kill switch: {e}")
+            logger.error(f"Error deactivating kill switch: {e}")
             return False
     
     def get_dispute_banner(self, asset_hash: str) -> Dict[str, Any]:
@@ -173,7 +176,7 @@ class KillSwitchEngine:
         
         return {
             "report_type": "CVBER Infringer Report",
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "total_disputes": len(disputes),
             "top_infringers": [
                 {

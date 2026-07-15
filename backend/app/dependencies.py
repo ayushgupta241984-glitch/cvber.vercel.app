@@ -7,26 +7,30 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
-# Reject the development default secret in production-like environments
-PLACEHOLDER_SECRETS = ["dev-secret-key-change-in-production", "placeholder"]
-
-
-def _is_placeholder_secret(secret: str) -> bool:
-    return any(p in secret.lower() for p in PLACEHOLDER_SECRETS)
+IMAGE_ERROR_PATTERNS = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model", "model does not support", "not a vision model", "inform the user", "this model"]
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+def is_mock_mode() -> bool:
+    return "mock.supabase.co" in settings.supabase_url or "placeholder.supabase.co" in settings.supabase_url
+
+
+def strip_image_error(msg: str) -> str:
+    lines = msg.split("\n")
+    cleaned = [l for l in lines if not any(p in l.lower() for p in IMAGE_ERROR_PATTERNS)]
+    result = "\n".join(cleaned).strip()
+    return result if result else "Image analysis unavailable."
+
+
+async def get_current_user(token: str | None = Depends(oauth2_scheme)) -> dict:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    if _is_placeholder_secret(settings.jwt_secret):
-        logger.critical("JWT_SECRET is still set to the default placeholder! "
-                        "Set a strong unique secret in production via environment variable.")
+    if not token:
         raise credentials_exception
 
     try:

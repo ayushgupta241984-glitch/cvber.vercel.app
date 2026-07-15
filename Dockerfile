@@ -2,7 +2,6 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Minimal system deps — no X11 libs, no build tools for torch
 RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
@@ -19,4 +18,4 @@ COPY backend/ .
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "python -c 'from app.main import app; print(\"Import OK\")' && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

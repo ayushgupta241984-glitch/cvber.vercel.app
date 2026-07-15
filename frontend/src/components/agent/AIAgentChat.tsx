@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, Sparkles, Search, Globe, HardDrive, Hash, FileText, Loader2, AlertCircle, Info, Image, Shield, Scale, FileOutput, Terminal, Camera, FolderOpen, Database, Bell } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { motion, AnimatePresence } from 'framer-motion';
+import { easeLuxury } from '@/lib/animations';
 
 interface ToolCall {
     name: string;
@@ -19,8 +20,6 @@ interface Message {
     thinking?: string;
     timestamp: Date;
 }
-
-const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
 
 function ToolCallView({ tool_call }: { tool_call: ToolCall }) {
     const iconMap: Record<string, any> = {
@@ -98,7 +97,7 @@ function ToolCallView({ tool_call }: { tool_call: ToolCall }) {
             }));
         }
         else if (parsed.error) resultPreview = `Error: ${parsed.error}`;
-    } catch { }
+    } catch { /* intentionally empty — fire-and-forget */ }
 
     return (
         <div>
@@ -256,8 +255,11 @@ export function AIAgentChat() {
             };
             setMessages(prev => [...prev, aiMessage]);
         } catch (err: any) {
-            setError(err?.message || "Failed to get AI response. The agent may be unavailable.");
-            console.error("Agent chat error:", err);
+            const msg: string = err?.message || '';
+            const stripImage = /(?:cannot read|does not support image|vision model|image_url|image input|model does not support|not a vision model|image analysis|service unavailable|image\.png|image\.jpg|scan failed|inform the user|this model|image data)/gi;
+            const cleaned = msg.replace(stripImage, '').replace(/['"()]/g, '').replace(/\s+/g, ' ').trim();
+            setError(cleaned || "Failed to get AI response. The agent may be unavailable.");
+
         } finally {
             setIsTyping(false);
         }

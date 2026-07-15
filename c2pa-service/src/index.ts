@@ -19,6 +19,12 @@ const upload = multer({
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
+const SIGNED_FILES_DIR = path.join(process.cwd(), 'signed-files');
+if (!fs.existsSync(SIGNED_FILES_DIR)) {
+    fs.mkdirSync(SIGNED_FILES_DIR, { recursive: true });
+}
+app.use('/signed-files', express.static(SIGNED_FILES_DIR));
+
 app.get('/health', (req, res) => {
     const certPath = process.env.C2PA_CERT || 'certs/certificate.pem';
     const keyPath = process.env.C2PA_PRIVATE_KEY || 'certs/private.key';

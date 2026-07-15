@@ -23,33 +23,7 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         value: "https://cvber.free.las.app,https://cvber.vercel.app"
+      - key: NVIDIA_NIM_API_KEY
+        sync: false
       - key: C2PA_SERVICE_URL
-        fromService:
-            name: cvber-c2pa
-            type: web
-            property: host
-      - key: BACKEND_URL
-        value: "https://cvber-backend.onrender.com"
-      - key: ACCESS_TOKEN_EXPIRE_MINUTES
-        value: "30"
-      - key: CLIP_ENABLED
-        value: "false"
-      - key: REVERSE_SEARCH_ENABLED
-        value: "false"
-
-  - type: web
-    name: cvber-c2pa
-    env: docker
-    dockerContext: c2pa-service
-    dockerfilePath: Dockerfile
-    plan: free
-    region: ohio
-    numInstances: 1
-    healthCheckPath: /health
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: "3001"
-      - key: C2PA_KEY_VERSION
-        value: "v1"
+        value: "http://localhost:3001"

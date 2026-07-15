@@ -4,7 +4,7 @@ Uses OpenTimestamps for free Bitcoin blockchain anchoring.
 """
 import hashlib
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
 import httpx
@@ -121,24 +121,31 @@ class BlockchainTimestampService:
 
         try:
             hash_bytes = bytes.fromhex(content_hash)
-            async with httpx.AsyncClient(timeout=self.DEFAULT_TIMEOUT) as client:
-                # Submit hash bytes to calendar
-                response = await client.post(
-                    f"{self.OTS_CALENDARS[0]}/digest",
-                    content=hash_bytes,
-                    headers={"Content-Type": "application/octet-stream"}
-                )
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                submitted = False
+                for calendar_url in self.OTS_CALENDARS:
+                    try:
+                        response = await client.post(
+                            f"{calendar_url}/digest",
+                            content=hash_bytes,
+                            headers={"Content-Type": "application/octet-stream"}
+                        )
+                        if response.status_code == 200:
+                            ots_proof = base64.b64encode(response.content).decode('utf-8')
+                            status = "pending"
+                            submitted = True
+                            logger.info(f"OpenTimestamps proof created via {calendar_url} for {asset_name}")
+                            break
+                        else:
+                            logger.warning(f"OTS calendar {calendar_url} returned {response.status_code}")
+                    except Exception as cal_err:
+                        logger.warning(f"OTS calendar {calendar_url} failed: {cal_err}")
+                        continue
 
-                if response.status_code == 200:
-                    # Get the timestamp proof (binary .ots file)
-                    ots_proof = base64.b64encode(response.content).decode('utf-8')
-                    status = "pending"  # Will be confirmed after Bitcoin inclusion
-                    logger.info(f"OpenTimestamps proof created for {asset_name}")
-                else:
-                    logger.warning(f"OpenTimestamps returned status {response.status_code}")
+                if not submitted:
+                    logger.warning("All OTS calendars failed, creating local proof")
                     status = "local_only"
         except Exception as e:
-            # Fallback: Create local proof (not blockchain-anchored but still verifiable)
             logger.error(f"OpenTimestamps submit failed: {e}. Creating local proof.")
             status = "local_only"
 
@@ -146,7 +153,7 @@ class BlockchainTimestampService:
             proof_id=proof_id,
             asset_hash=content_hash,
             asset_name=asset_name,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             blockchain="bitcoin",
             status=status,
             ots_proof=ots_proof,
@@ -251,7 +258,7 @@ class BlockchainTimestampService:
             raise ValueError("Asset name cannot be empty")
 
         content_hash = file_hash_hex.lower().strip()
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
 
         # Create proof document
         proof_document = {
@@ -311,19 +318,22 @@ class BlockchainTimestampService:
                 .execute()
 
             proofs = []
-            for row in result.data:
-                proofs.append(TimestampProof(
-                    proof_id=row['proof_id'],
-                    asset_hash=row['asset_hash'],
-                    asset_name=row['asset_name'],
-                    timestamp=row['created_at'],
-                    blockchain=row['blockchain'],
-                    status=row['status'],
-                    ots_proof=row.get('ots_proof'),
-                    verification_url=row['verification_url'],
-                    bitcoin_block=row.get('bitcoin_block'),
-                    vault_file_id=row.get('vault_file_id')
-                ))
+            for row in (result.data or []):
+                try:
+                    proofs.append(TimestampProof(
+                        proof_id=row.get('proof_id', ''),
+                        asset_hash=row.get('asset_hash', ''),
+                        asset_name=row.get('asset_name', ''),
+                        timestamp=row.get('created_at') or row.get('timestamp') or datetime.now(timezone.utc).isoformat(),
+                        blockchain=row.get('blockchain', 'bitcoin'),
+                        status=row.get('status', 'local_only'),
+                        ots_proof=row.get('ots_proof'),
+                        verification_url=row.get('verification_url', 'https://opentimestamps.org/'),
+                        bitcoin_block=row.get('bitcoin_block'),
+                        vault_file_id=row.get('vault_file_id')
+                    ))
+                except Exception as row_err:
+                    logger.warning(f"Skipping malformed proof row: {row_err}")
 
             logger.info(f"Retrieved {len(proofs)} proofs for user {user_id}")
             return proofs
@@ -403,7 +413,7 @@ class BlockchainTimestampService:
                 update_data['bitcoin_block'] = bitcoin_block
 
             if status == 'confirmed':
-                update_data['confirmed_at'] = datetime.utcnow().isoformat()
+                update_data['confirmed_at'] = datetime.now(timezone.utc).isoformat()
 
             self.supabase.table('blockchain_proofs')\
                 .update(update_data)\

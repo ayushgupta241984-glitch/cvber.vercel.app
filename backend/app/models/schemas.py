@@ -140,6 +140,11 @@ class VaultFile(BaseModel):
     is_screenshot: bool = False
     proof_required: bool = False
     ownership_proof_status: Optional[str] = None
+    ai_provider: Optional[str] = None
+    ai_model: Optional[str] = None
+    c2pa_signed_url: Optional[str] = None
+    c2pa_manifest: Optional[str] = None
+    c2pa_signature: Optional[str] = None
     storage_url: Optional[str] = None
     created_at: datetime
 
@@ -165,6 +170,12 @@ class VaultFileDetail(BaseModel):
 class VaultFileList(BaseModel):
     files: List[VaultFile]
     total: int
+
+
+class OwnershipProofRequest(BaseModel):
+    proof_type: str = "declaration"
+    proof_text: str = ""
+    proof_url: str = ""
 
 
 class AuditLog(BaseModel):

@@ -2,6 +2,7 @@ import os
 import time
 import json
 import logging
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request
@@ -12,16 +13,51 @@ from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
 from app.rate_limiter import limiter
-from app.routers import scan, auth, mentor, enforcement, diagnostics, vault, agent, leads, feedback
+from app.routers import scan, auth, mentor, enforcement, diagnostics, vault, agent, leads, feedback, image_search, watermark, ai
 from app.services.vertex_ai import vertex_ai_service
 from app.services.storage import storage_service
 
 logger = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Starting CVBER Free API...")
+    validate_environment()
+
+    gcp_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
+    if gcp_json:
+        try:
+            from supabase import create_client
+            from app.config import settings as s
+            gcp_storage = create_client(s.supabase_url, s.supabase_service_role_key)
+            gcp_storage.table("app_secrets").upsert({
+                "key": "gcp_service_account",
+                "value": gcp_json,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }).execute()
+            logger.info("GCP credentials stored in Supabase secrets table")
+        except Exception as e:
+            logger.warning(f"Could not store GCP credentials in secrets table: {e}")
+
+    try:
+        await storage_service.ensure_buckets_exist()
+        logger.info("Storage buckets verified")
+    except Exception as e:
+        logger.warning(f"Could not verify storage buckets: {e}")
+
+    provider_status = vertex_ai_service.get_provider_status()
+    logger.info(f"AI provider status: {json.dumps(provider_status, default=str)}")
+
+    app.state.start_time = time.time()
+    yield
+
+
 app = FastAPI(
     title="CVBER Free API",
     description="Cybersecurity platform with AI-powered threat detection and C2PA verification",
     version="1.0.1",
+    lifespan=lifespan,
 )
 
 app.state.limiter = limiter
@@ -35,32 +71,49 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; img-src 'self' https: data:; font-src 'self' https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["X-Response-Time-Ms"] = str(int((time.time() - start_time) * 1000))
     return response
 
+_IMAGE_ERROR_PATTERNS_MW = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model", "model does not support", "not a vision model", "inform the user", "image.png", "this model"]
+
+@app.middleware("http")
+async def strip_image_errors_middleware(request: Request, call_next):
+    response = await call_next(request)
+    if response.status_code >= 400 and "application/json" in (response.headers.get("content-type", "")):
+        try:
+            body = await response.body()
+            body_str = body.decode("utf-8")
+            if any(p in body_str.lower() for p in _IMAGE_ERROR_PATTERNS_MW):
+                logger.warning(f"Stripping image error from {request.method} {request.url.path}")
+                import json as json_lib
+                data = json_lib.loads(body_str)
+                detail = data.get("detail", "")
+                for p in _IMAGE_ERROR_PATTERNS_MW:
+                    detail = detail.lower().replace(p, "").strip()
+                detail = " ".join(detail.split()).strip()
+                data["detail"] = detail or "Service error"
+                body_str = json_lib.dumps(data)
+                from starlette.responses import Response
+                return Response(content=body_str, status_code=response.status_code, headers=dict(response.headers), media_type="application/json")
+        except Exception:
+            pass
+    return response
+
+trusted_hosts = ["cvber-free-las-app.onrender.com", "cvber.vercel.app", "localhost"]
+if settings.allowed_origins and settings.allowed_origins != "*":
+    trusted_hosts.append(settings.allowed_origins.replace("https://", "").replace("http://", ""))
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=[
-        "localhost", "127.0.0.1",
-        "*.cvber.app", "cvber.free.las.app",
-        "cvber-free-las-app.vercel.app",
-    ]
+    allowed_hosts=trusted_hosts,
 )
 
 cors_origins = settings.parsed_allowed_origins
-cors_regex = None
-
-if settings.allowed_origins == "*":
-    cors_origins = ["*"]
-else:
-    cors_regex = r"https://.*\.vercel\.app"
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
-    allow_origin_regex=cors_regex,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept"],
@@ -97,36 +150,6 @@ def validate_environment():
     return len(missing) == 0
 
 
-@app.on_event("startup")
-async def startup():
-    logger.info("Starting CVBER Free API...")
-    validate_environment()
-
-    gcp_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
-    if gcp_json:
-        try:
-            from supabase import create_client
-            from app.config import settings as s
-            gcp_storage = create_client(s.supabase_url, s.supabase_service_role_key)
-            gcp_storage.table("app_secrets").upsert({
-                "key": "gcp_service_account",
-                "value": gcp_json,
-                "updated_at": datetime.utcnow().isoformat()
-            }).execute()
-            logger.info("GCP credentials stored in Supabase secrets table")
-        except Exception as e:
-            logger.warning(f"Could not store GCP credentials in secrets table: {e}")
-
-    try:
-        await storage_service.ensure_buckets_exist()
-        logger.info("Storage buckets verified")
-    except Exception as e:
-        logger.warning(f"Could not verify storage buckets: {e}")
-
-    provider_status = vertex_ai_service.get_provider_status()
-    logger.info(f"AI provider status: {json.dumps(provider_status, default=str)}")
-
-
 app.include_router(scan.router)
 app.include_router(auth.router)
 app.include_router(mentor.router)
@@ -136,9 +159,12 @@ app.include_router(vault.router)
 app.include_router(agent.router)
 app.include_router(leads.router)
 app.include_router(feedback.router)
+app.include_router(image_search.router)
+app.include_router(watermark.router)
+app.include_router(ai.router)
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     return {"status": "online", "service": "CVBER Free API", "version": "1.0.1"}
 
@@ -163,16 +189,16 @@ async def ai_status():
     provider_status = vertex_ai_service.get_provider_status()
     return {
         "ai_service": provider_status,
-        "environment": {
-            "groq_key_present": bool(settings.groq_api_key),
-            "google_key_present": bool(settings.google_api_key),
-        }
     }
 
 
-@app.on_event("startup")
-async def record_start_time():
-    app.state.start_time = time.time()
+@app.get("/api/status")
+async def app_status():
+    from app.dependencies import is_mock_mode
+    return {
+        "mock_mode": is_mock_mode(),
+        "version": "1.0.0",
+    }
 
 
 if __name__ == "__main__":

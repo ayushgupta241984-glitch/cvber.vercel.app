@@ -1,7 +1,9 @@
 'use client';
 
-import { FileText, Shield, AlertTriangle, CheckCircle, Trash2, Anchor, Image } from 'lucide-react';
+import { FileText, Shield, AlertTriangle, CheckCircle, Trash2, Anchor, Image, Search, Scale, BadgeCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { easeLuxury } from '@/lib/animations';
 
 interface FileItem {
     id: string;
@@ -11,6 +13,13 @@ interface FileItem {
     riskScore?: number;
     originalityScore?: number;
     isScreenshot?: boolean;
+    proofRequired?: boolean;
+    ownershipProofStatus?: 'pending' | 'verified' | 'rejected' | null;
+    c2paSignedUrl?: string;
+    c2paManifest?: string;
+    c2paSignature?: string;
+    aiProvider?: string;
+    aiModel?: string;
     uploadedAt: string;
     previewUrl?: string;
 }
@@ -22,9 +31,9 @@ interface SafeVaultProps {
     onWatermark?: (file: FileItem) => void;
     onDelete?: (file: FileItem) => void;
     onTimestamp?: (file: FileItem) => void;
+    onSearch?: (file: FileItem) => void;
+    onDMCA?: (file: FileItem) => void;
 }
-
-const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
 
 function SkeletonCard() {
     return (
@@ -44,7 +53,13 @@ function SkeletonCard() {
     );
 }
 
-export function SafeVault({ files = [], loading = false, onView, onWatermark, onDelete, onTimestamp }: SafeVaultProps) {
+export function SafeVault({ files = [], loading = false, onView, onWatermark, onDelete, onTimestamp, onSearch, onDMCA }: SafeVaultProps) {
+    const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
+
+    const markBroken = (id: string) => {
+        setBrokenImages(prev => new Set(prev).add(id));
+    };
+
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'safe': return { label: 'Verified', class: 'text-luxury-gold/80' };
@@ -78,18 +93,13 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
 
     return (
         <div>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, ease: easeLuxury }}
-                className="flex items-center justify-between mb-8 pb-4 border-b border-luxury-steel/30"
-            >
-                <div>
-                    <p className="text-luxury-subheading mb-2">The Gallery</p>
-                    <h2 className="text-xl font-display text-luxury-cream">Your Collection</h2>
+                <div className="flex items-center justify-between mb-8 pb-4 border-b border-luxury-steel/30">
+                    <div>
+                        <p className="text-luxury-subheading mb-2">The Gallery</p>
+                        <h2 className="text-xl font-display text-luxury-cream">Your Collection</h2>
+                    </div>
+                    <span className="text-[10px] text-luxury-muted uppercase tracking-ultra-wide font-semibold">{files.length} {files.length === 1 ? 'piece' : 'pieces'}</span>
                 </div>
-                <span className="text-[10px] text-luxury-muted uppercase tracking-ultra-wide font-semibold">{files.length} {files.length === 1 ? 'piece' : 'pieces'}</span>
-            </motion.div>
 
             {loading && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0">
@@ -116,23 +126,31 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                     ease: easeLuxury,
                                     delay: index * 0.1,
                                 }}
-                                className="group relative border border-luxury-steel/30 bg-luxury-deep"
+                                className="group relative border border-luxury-steel/30 bg-luxury-deep flex flex-col"
                             >
                                 {/* Preview Area - Rolex style image zoom */}
                                 <div className="aspect-[4/3] bg-luxury-steel/10 flex items-center justify-center overflow-hidden relative">
-                                    {file.previewUrl ? (
+                                    {file.previewUrl && !brokenImages.has(file.id) ? (
                                         <img
                                             src={file.previewUrl}
                                             alt={file.name}
+                                            onError={() => markBroken(file.id)}
                                             className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] group-hover:scale-105"
                                         />
                                     ) : (
-                                        <div className="text-luxury-muted/20">
+                                        <div className="text-luxury-muted/20 flex flex-col items-center gap-2">
                                             <Image className="h-10 w-10" />
+                                            <span className="text-[9px] uppercase tracking-widest text-luxury-muted/10">{file.name}</span>
                                         </div>
                                     )}
                                     {/* Status overlay */}
-                                    <div className="absolute top-4 right-4">
+                                    <div className="absolute top-4 right-4 flex items-center gap-2">
+                                        {file.c2paSignedUrl && (
+                                            <span className="text-[8px] uppercase tracking-ultra-wide font-semibold text-cyan-400/80 flex items-center gap-1">
+                                                <BadgeCheck className="h-2.5 w-2.5" />
+                                                C2PA
+                                            </span>
+                                        )}
                                         <span className={`text-[9px] uppercase tracking-ultra-wide font-semibold ${badge.class}`}>
                                             {badge.label}
                                         </span>
@@ -140,7 +158,7 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                 </div>
 
                                 {/* Details */}
-                                <div className="p-6">
+                                <div className="p-6 flex flex-col flex-1">
                                     <div className="mb-4">
                                         <h3 className="font-display text-luxury-cream truncate pr-2 text-sm mb-1">
                                             {file.name}
@@ -167,7 +185,7 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                                         {file.riskScore.toFixed(0)}%
                                                     </span>
                                                 </div>
-                                                <div className="h-px bg-luxury-steel/30 relative">
+                                                <div className="h-[2px] bg-luxury-steel/30 relative">
                                                     <div
                                                         className={`absolute left-0 top-0 h-full transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${file.riskScore < 30 ? 'bg-luxury-gold/60' : 'bg-luxury-gold/30'}`}
                                                         style={{ width: `${file.riskScore}%` }}
@@ -183,7 +201,7 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                                         {file.originalityScore.toFixed(0)}%
                                                     </span>
                                                 </div>
-                                                <div className="h-px bg-luxury-steel/30 relative">
+                                                <div className="h-[2px] bg-luxury-steel/30 relative">
                                                     <div
                                                         className={`absolute left-0 top-0 h-full transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${file.originalityScore > 70 ? 'bg-luxury-gold/60' : 'bg-luxury-gold/30'}`}
                                                         style={{ width: `${file.originalityScore}%` }}
@@ -194,9 +212,9 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="flex items-center justify-between pt-4 border-t border-luxury-steel/20">
+                                    <div className="flex items-center justify-between pt-4 border-t border-luxury-steel/20 mt-auto">
                                         <span className="text-[9px] text-luxury-muted/40 uppercase tracking-widest">{new Date(file.uploadedAt).toLocaleDateString()}</span>
-                                        <div className="flex gap-1">
+                                        <div className="flex items-center gap-1">
                                             <button
                                                 onClick={() => onDelete?.(file)}
                                                 className="p-2 text-luxury-muted/40 hover:text-luxury-gold/60 transition-colors duration-300"
@@ -212,19 +230,50 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                                 <Anchor className="h-3.5 w-3.5" />
                                             </button>
                                             <button
+                                                onClick={() => onSearch?.(file)}
+                                                className="p-2 text-luxury-muted/40 hover:text-luxury-gold/60 transition-colors duration-300"
+                                                title="Search web for copies"
+                                            >
+                                                <Search className="h-3.5 w-3.5" />
+                                            </button>
+                                            {file.c2paSignedUrl && (
+                                                <a
+                                                    href={file.c2paSignedUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 text-cyan-400/60 hover:text-cyan-400 transition-colors duration-300"
+                                                    title="Download C2PA Signed File"
+                                                >
+                                                    <BadgeCheck className="h-3.5 w-3.5" />
+                                                </a>
+                                            )}
+                                            <button
+                                                onClick={() => onDMCA?.(file)}
+                                                className="p-2 text-luxury-muted/40 hover:text-purple-400/80 transition-colors duration-300"
+                                                title="Generate DMCA takedown notice"
+                                            >
+                                                <Scale className="h-3.5 w-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 mt-3">
+                                        {file.status !== 'scanning' && (
+                                            <button
                                                 onClick={() => onView?.(file)}
-                                                className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold text-luxury-cream border border-luxury-steel/40 hover:border-luxury-gold/40 hover:text-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
+                                                className="flex-1 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold text-luxury-cream border border-luxury-steel/40 hover:border-luxury-gold/40 hover:text-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
                                             >
                                                 View
                                             </button>
+                                        )}
+                                        {file.status === 'safe' && (!file.proofRequired || file.ownershipProofStatus === 'verified') && (
                                             <button
                                                 onClick={() => onWatermark?.(file)}
-                                                className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] flex items-center gap-2"
+                                                className="flex-1 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] flex items-center justify-center gap-2"
                                             >
                                                 <Shield className="h-3 w-3" />
                                                 Mark
                                             </button>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>

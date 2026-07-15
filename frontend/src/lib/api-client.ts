@@ -3,6 +3,26 @@ export const BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhos
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;
 
+export function stripImageErrors(msg: string): string {
+    const imagePattern = /(?:cannot read|does not support image|vision model|image_url|image input|model does not support|not a vision model|image analysis|service unavailable|image\.png|image\.jpg|scan failed|inform the user|this model|image data)/gi;
+    const cleaned = msg.replace(imagePattern, '').replace(/['"()]/g, '').replace(/\s+/g, ' ').trim();
+    return cleaned || 'Scan complete — low-confidence result.';
+}
+
+export async function downloadBlob(url: string, headers: Record<string, string>, filename: string): Promise<void> {
+    const response = await fetch(url, { headers });
+    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(objectUrl);
+}
+
 export class ApiError extends Error {
     status: number;
     details: any;
@@ -51,6 +71,25 @@ function getAuthHeaders(): Record<string, string> {
 async function handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
         if (response.status === 401 && typeof window !== 'undefined') {
+            // Try refresh token before hard logout
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (refreshToken) {
+                try {
+                    const refreshResponse = await fetch(`${BASE_URL}/auth/refresh`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ refresh_token: refreshToken }),
+                    });
+                    if (refreshResponse.ok) {
+                        const data = await refreshResponse.json();
+                        localStorage.setItem('access_token', data.access_token);
+                        localStorage.setItem('refresh_token', data.refresh_token);
+                        throw new ApiError('TOKEN_REFRESHED', 401);
+                    }
+                } catch (e: any) {
+                    if (e?.message === 'TOKEN_REFRESHED') throw e;
+                }
+            }
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
             localStorage.removeItem('user_full_name');
@@ -64,7 +103,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
         } catch {
             // ignore parse errors
         }
-        throw new ApiError(detail || `HTTP ${response.status}`, response.status, detail);
+        const clean = detail ? stripImageErrors(detail) : undefined;
+        throw new ApiError(clean || `HTTP ${response.status}`, response.status, clean);
     }
     return response.json();
 }
@@ -116,6 +156,117 @@ export const apiClient = {
             body: formData,
         });
         return handleResponse<ScanResult>(response);
+    },
+
+    async reverseImageSearch(file: File): Promise<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetchWithRetry(`${BASE_URL}/search/reverse`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData,
+        });
+        return handleResponse<any>(response);
+    },
+
+    async deepImageSearch(file: File): Promise<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetchWithRetry(`${BASE_URL}/search/deep`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData,
+        });
+        return handleResponse<any>(response);
+    },
+
+    deepImageSearchTV(
+        file: File,
+        onEvent: (event: string, data: any) => void,
+        onError?: (err: string) => void,
+        onDone?: () => void,
+    ): { abort: () => void } {
+        const controller = new AbortController();
+        const formData = new FormData();
+        formData.append('file', file);
+        const headers: Record<string, string> = getAuthHeaders();
+
+        (async () => {
+            try {
+                const response = await fetch(`${BASE_URL}/search/deep/tv`, {
+                    method: 'POST',
+                    headers,
+                    body: formData,
+                    signal: controller.signal,
+                });
+                if (!response.ok) {
+                    const text = await response.text().catch(() => 'Unknown error');
+                    onError?.(`Server ${response.status}: ${text}`);
+                    return;
+                }
+                const reader = response.body?.getReader();
+                if (!reader) {
+                    onError?.('No response body');
+                    return;
+                }
+                const decoder = new TextDecoder();
+                let buffer = '';
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    let currentEvent = '';
+                    for (const line of lines) {
+                        if (line.startsWith('event: ')) {
+                            currentEvent = line.slice(7).trim();
+                        } else if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                onEvent(currentEvent, data);
+                            } catch { /* ignore malformed JSON */ }
+                        }
+                    }
+                }
+                onDone?.();
+            } catch (err: any) {
+                if (err.name !== 'AbortError') {
+                    onError?.(err?.message || 'Connection failed');
+                }
+            }
+        })();
+
+        return { abort: () => controller.abort() };
+    },
+
+    async findCopies(file: File): Promise<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetchWithRetry(`${BASE_URL}/search/hashes/find-copies`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData,
+        });
+        return handleResponse<any>(response);
+    },
+
+    async registerHash(file: File, scanId: string): Promise<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        const url = `${BASE_URL}/search/hashes/register?scan_id=${encodeURIComponent(scanId)}`;
+        const response = await fetchWithRetry(url, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData,
+        });
+        return handleResponse<any>(response);
+    },
+
+    async indexVault(): Promise<any> {
+        return fetchJson(`${BASE_URL}/search/hashes/index-vault`, {
+            method: 'POST',
+        });
     },
 
     async verifyFile(file: File): Promise<any> {

@@ -113,11 +113,15 @@ export default function FeaturesPage() {
                 <div className="max-w-4xl mx-auto">
                     <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                         className="font-display text-4xl md:text-6xl font-bold text-luxury-cream mb-10 leading-tight gold-glow">
-                        Deploy your defense.
+                        Start protecting your art.
                     </motion.h2>
                     <Link href="/register" className="btn-primary inline-flex items-center gap-3 group">
                         Secure Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
+                    <p className="mt-4 text-xs text-zinc-500">Free — no credit card required</p>
+                    <p className="mt-2 text-sm text-zinc-500">
+                        <Link href="/blog" className="text-purple-400 hover:text-purple-300 transition-colors">Read more on our Blog →</Link>
+                    </p>
                 </div>
             </section>
         </div>

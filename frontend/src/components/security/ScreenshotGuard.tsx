@@ -19,7 +19,7 @@ function wipeClipboard() {
         el.select();
         document.execCommand('copy');
         document.body.removeChild(el);
-    } catch { }
+    } catch { /* intentionally empty — fire-and-forget */ }
 }
 
 function injectDefensiveCSS() {

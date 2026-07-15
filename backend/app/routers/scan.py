@@ -1,21 +1,23 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
 from uuid import uuid4, UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
+import asyncio
+import os
+import re
 from app.models.schemas import ScanResponse, VerifyResponse, VerifyRequest, ThreatCategory, DetailedFinding
 from app.services.vertex_ai import vertex_ai_service
 from app.services.c2pa_service import c2pa_service, embed_and_store_after_signing
 from app.services.storage import storage_service
 from app.services.metadata_engine import metadata_engine
-import os
 from app.services.web_search import web_search_service
 from app.supabase_client import get_supabase
 from app.config import settings
-from app.dependencies import get_current_user
-import re
+from app.dependencies import get_current_user, is_mock_mode, strip_image_error
 import logging
 
 logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/scan", tags=["scan"])
 
 supabase = get_supabase()
@@ -128,7 +130,32 @@ def validate_file(file: UploadFile):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
     if file.content_type and file.content_type not in ALLOWED_CONTENT_TYPES:
-        logger.warning(f"Unexpected content type: {file.content_type}")
+        raise HTTPException(status_code=400, detail=f"Content type '{file.content_type}' not allowed")
+
+
+def validate_image_content(file_buffer: bytes) -> dict:
+    """Full Pillow-based image validation — opens, parses, and verifies the image structure."""
+    try:
+        from PIL import Image
+        import io
+        img = Image.open(io.BytesIO(file_buffer))
+        img.verify()
+        img = Image.open(io.BytesIO(file_buffer))
+        img.load()
+        width, height = img.size
+        if width > 10000 or height > 10000:
+            raise HTTPException(status_code=400, detail=f"Image dimensions too large: {width}x{height} (max 10000)")
+        return {
+            "valid": True,
+            "width": width,
+            "height": height,
+            "format": img.format,
+            "mode": img.mode,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid or corrupted image: {str(e)}")
 
 
 async def read_file_safe(file: UploadFile) -> bytes:
@@ -154,6 +181,14 @@ async def scan_file(
         validate_file(file)
         file_buffer = await read_file_safe(file)
         file_size = len(file_buffer)
+
+        if file.content_type and file.content_type.startswith("image/"):
+            try:
+                validate_image_content(file_buffer)
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.warning(f"Image validation warning (non-blocking): {e}")
 
         user_email = current_user.get("email") or "Cvber User"
         creator_info = {
@@ -281,7 +316,7 @@ async def scan_file(
             )
         except Exception as store_err:
             logger.warning(f"Supabase storage failed, saving locally: {store_err}")
-            safe_name = re.sub(r'[^\w\.\-]', '_', file.filename)
+            safe_name = re.sub(r'[^\w]', '_', file.filename)
             local_dir = os.path.join(settings.local_storage_path or "uploads", str(current_user["id"]))
             os.makedirs(local_dir, exist_ok=True)
             local_path = os.path.join(local_dir, f"{scan_id}_{safe_name}")
@@ -291,33 +326,39 @@ async def scan_file(
             logger.info(f"Saved locally: {local_path}")
 
         try:
-            try:
-                # Require proof if screenshot or low originality
-                proof_required = risk_report.is_screenshot or risk_report.originality_score < 50
-                
-                vault_record = {
-                    "user_id": current_user["id"],
-                    "scan_id": str(scan_id),
-                    "file_name": file.filename,
-                    "file_size": file_size,
-                    "storage_path": storage_path,
-                    "bucket": storage_service.safe_vault_bucket,
-                    "content_type": file_type,
-                    "original_hash": original_hash,
-                    "risk_score": risk_report.overall_risk_score,
-                    "originality_score": risk_report.originality_score,
-                    "is_screenshot": risk_report.is_screenshot,
-                    "proof_required": proof_required,
-                    "ownership_proof_status": "pending" if proof_required else None,
-                }
-                vault_insert = supabase.table("vault_files").insert(vault_record).execute()
-                if not vault_insert.data:
-                    raise HTTPException(status_code=500, detail="Failed to save to vault")
-            except HTTPException:
-                raise
-            except Exception as vault_err:
-                logger.error(f"Failed to record vault file: {vault_err}")
-                raise HTTPException(status_code=500, detail=f"Vault save failed: {vault_err}")
+            # Require proof if screenshot or low originality
+            proof_required = risk_report.is_screenshot or risk_report.originality_score < 50
+
+            if not is_mock_mode():
+                try:
+                    file_meta = risk_report.file_metadata or {}
+                    ai_provider = file_meta.get("ai_provider", "unknown")
+                    ai_model = file_meta.get("ai_model", "unknown")
+                    vault_record = {
+                        "user_id": current_user["id"],
+                        "scan_id": str(scan_id),
+                        "file_name": file.filename,
+                        "file_size": file_size,
+                        "storage_path": storage_path,
+                        "bucket": storage_service.safe_vault_bucket,
+                        "content_type": file_type,
+                        "original_hash": original_hash,
+                        "risk_score": risk_report.overall_risk_score,
+                        "originality_score": risk_report.originality_score,
+                        "is_screenshot": risk_report.is_screenshot,
+                        "proof_required": proof_required,
+                        "ownership_proof_status": "pending" if proof_required else None,
+                        "ai_provider": ai_provider,
+                        "ai_model": ai_model,
+                    }
+                    vault_insert = supabase.table("vault_files").insert(vault_record).execute()
+                    if not vault_insert.data:
+                        raise HTTPException(status_code=500, detail="Failed to save to vault")
+                except HTTPException:
+                    raise
+                except Exception as vault_err:
+                    logger.error(f"Failed to record vault file: {vault_err}")
+                    raise HTTPException(status_code=500, detail=f"Vault save failed: {vault_err}")
 
             try:
                 storage_url = await storage_service.get_file_url(storage_path)
@@ -331,7 +372,8 @@ async def scan_file(
                         file_buffer=file_buffer,
                         file_name=file.filename,
                         scan_results=risk_report,
-                        user_id=current_user["id"]
+                        user_id=current_user["id"],
+                        scan_id=str(scan_id),
                     )
             except Exception as c2pa_err:
                 logger.warning(f"C2PA signing failed (non-critical): {c2pa_err}")
@@ -339,27 +381,28 @@ async def scan_file(
             logger.warning(f"Failed to upload to Storage: {storage_err}")
 
         # Write audit log with storage path populated
-        try:
-            audit_log = {
-                "id": str(uuid4()),
-                "user_id": current_user["id"],
-                "event_type": "scan",
-                "file_name": file.filename,
-                "risk_score": risk_report.overall_risk_score,
-                "storage_path": storage_path,
-                "bucket": "safe-vault",
-                "metadata": {
-                    "scan_id": str(scan_id),
-                    "file_size": file_size,
-                    "file_type": file_type,
-                    "confidence_level": risk_report.confidence_level,
-                    "threat_count": len(risk_report.threat_categories)
-                },
-                "created_at": datetime.utcnow().isoformat()
-            }
-            supabase.table("audit_logs").insert(audit_log).execute()
-        except Exception as db_err:
-            logger.warning(f"Failed to log to Supabase: {db_err}")
+        if not is_mock_mode():
+            try:
+                audit_log = {
+                    "id": str(uuid4()),
+                    "user_id": current_user["id"],
+                    "event_type": "scan",
+                    "file_name": file.filename,
+                    "risk_score": risk_report.overall_risk_score,
+                    "storage_path": storage_path,
+                    "bucket": "safe-vault",
+                    "metadata": {
+                        "scan_id": str(scan_id),
+                        "file_size": file_size,
+                        "file_type": file_type,
+                        "confidence_level": risk_report.confidence_level,
+                        "threat_count": len(risk_report.threat_categories)
+                    },
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                supabase.table("audit_logs").insert(audit_log).execute()
+            except Exception as db_err:
+                logger.warning(f"Failed to log to Supabase: {db_err}")
 
         return ScanResponse(
             scan_id=scan_id,
@@ -375,20 +418,22 @@ async def scan_file(
         raise
     except Exception as e:
         logger.error(f"Scan error: {e}")
-        try:
-            error_log = {
-                "id": str(uuid4()),
-                "user_id": current_user["id"],
-                "event_type": "scan",
-                "file_name": file.filename,
-                "risk_score": None,
-                "metadata": {"error": str(e), "status": "failed"},
-                "created_at": datetime.utcnow().isoformat()
-            }
-            supabase.table("audit_logs").insert(error_log).execute()
-        except Exception as log_error:
-            logger.warning(f"Failed to log scan error: {log_error}")
-        raise HTTPException(status_code=500, detail=f"Scan failed: {str(e)}")
+        if not is_mock_mode():
+            try:
+                error_log = {
+                    "id": str(uuid4()),
+                    "user_id": current_user["id"],
+                    "event_type": "scan",
+                    "file_name": file.filename,
+                    "risk_score": None,
+                    "metadata": {"error": str(e), "status": "failed"},
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                supabase.table("audit_logs").insert(error_log).execute()
+            except Exception as log_error:
+                logger.warning(f"Failed to log scan error: {log_error}")
+        clean_msg = strip_image_error(str(e))
+        raise HTTPException(status_code=500, detail=f"Scan failed: {clean_msg}")
 
 
 @router.post("/verify", response_model=VerifyResponse)
@@ -427,28 +472,29 @@ async def verify_file(
             "signed_hash": c2pa_result.get("signature", ""),
             "c2pa_manifest": c2pa_result.get("manifest", {}),
             "kms_key_version": c2pa_result.get("kms_key_version", ""),
-            "verified_at": datetime.utcnow().isoformat(),
-            "created_at": datetime.utcnow().isoformat()
+            "verified_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
 
-        try:
-            supabase.table("verification_meta").insert(verification_meta).execute()
-        except Exception as db_err:
-            logger.warning(f"Failed to store verification meta: {db_err}")
+        if not is_mock_mode():
+            try:
+                supabase.table("verification_meta").insert(verification_meta).execute()
+            except Exception as db_err:
+                logger.warning(f"Failed to store verification meta: {db_err}")
 
-        try:
-            audit_log = {
-                "id": str(uuid4()),
-                "user_id": current_user["id"],
-                "event_type": "verify",
-                "file_name": file.filename,
-                "risk_score": risk_report.overall_risk_score,
-                "metadata": {"verification_id": str(verification_id), "file_id": str(file_id)},
-                "created_at": datetime.utcnow().isoformat()
-            }
-            supabase.table("audit_logs").insert(audit_log).execute()
-        except Exception as db_err:
-            logger.warning(f"Failed to log verification: {db_err}")
+            try:
+                audit_log = {
+                    "id": str(uuid4()),
+                    "user_id": current_user["id"],
+                    "event_type": "verify",
+                    "file_name": file.filename,
+                    "risk_score": risk_report.overall_risk_score,
+                    "metadata": {"verification_id": str(verification_id), "file_id": str(file_id)},
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                supabase.table("audit_logs").insert(audit_log).execute()
+            except Exception as db_err:
+                logger.warning(f"Failed to log verification: {db_err}")
 
         background_tasks.add_task(
             embed_and_store_after_signing,
@@ -468,7 +514,7 @@ async def verify_file(
                 "signed_hash": c2pa_result.get("signature", ""),
                 "manifest": c2pa_result.get("manifest", {}),
                 "kms_key_version": c2pa_result.get("kms_key_version", ""),
-                "verified_at": datetime.utcnow()
+                "verified_at": datetime.now(timezone.utc)
             },
             status="verified"
         )
@@ -477,7 +523,8 @@ async def verify_file(
         raise
     except Exception as e:
         logger.error(f"Verification failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
+        clean_msg = strip_image_error(str(e))
+        raise HTTPException(status_code=500, detail=f"Verification failed: {clean_msg}")
 
 
 @router.get("/history")
@@ -485,6 +532,9 @@ async def get_scan_history(
     limit: int = 10,
     current_user: dict = Depends(get_current_user)
 ):
+    if is_mock_mode():
+        return {"scans": []}
+
     try:
         limit = min(max(limit, 1), 100)
         response = supabase.table("audit_logs")\

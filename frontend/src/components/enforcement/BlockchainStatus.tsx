@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link2, CheckCircle, Clock, AlertCircle, RefreshCw, ExternalLink, Copy, Check, Download } from 'lucide-react';
-import { apiClient, BASE_URL } from '@/lib/api-client';
+import { apiClient, BASE_URL, downloadBlob } from '@/lib/api-client';
 
 interface BlockchainProof {
     proof_id: string;
@@ -23,28 +23,31 @@ export function BlockchainStatus() {
 
     // Load proofs from backend on mount
     useEffect(() => {
+        let mounted = true;
+
         const loadProofs = async () => {
+            if (!mounted) return;
             try {
                 const result = await apiClient.getUserBlockchainProofs();
-                if (result.success) {
+                if (mounted && result && result.success && Array.isArray(result.proofs)) {
                     setProofs(result.proofs);
-                } else {
-                    console.error('Failed to load blockchain proofs:', result);
                 }
             } catch (e) {
-                console.error('Failed to load blockchain proofs:', e);
             }
         };
 
         loadProofs();
 
         // Listen for blockchain-update events (dispatched after creating a timestamp)
-        const handleUpdate = () => loadProofs();
+        const handleUpdate = () => {
+            setTimeout(() => loadProofs(), 500);
+        };
         window.addEventListener('blockchain-update', handleUpdate);
 
-        // Refresh every 30 seconds to check for status updates
-        const interval = setInterval(loadProofs, 30000);
+        // Refresh every 15 seconds to check for status updates
+        const interval = setInterval(loadProofs, 15000);
         return () => {
+            mounted = false;
             clearInterval(interval);
             window.removeEventListener('blockchain-update', handleUpdate);
         };
@@ -85,23 +88,10 @@ export function BlockchainStatus() {
     const downloadOtsProof = async (proofId: string, assetName: string) => {
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${BASE_URL}/vault/proofs/${proofId}/ots-proof`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-            if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-            const blob = await response.blob();
             const baseName = assetName.includes('.') ? assetName.split('.').slice(0, -1).join('.') : assetName;
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${baseName}.ots`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            await downloadBlob(`${BASE_URL}/vault/proofs/${proofId}/ots-proof`, { 'Authorization': `Bearer ${token}` }, `${baseName}.ots`);
         } catch (e) {
-            console.error('OTS proof download failed:', e);
-            alert('Failed to download OTS proof. The proof file may not be available.');
+            window.dispatchEvent(new CustomEvent('cvber:toast', { detail: { message: 'Failed to download OTS proof. The proof file may not be available.', type: 'error' } }));
         }
     };
 
@@ -113,7 +103,6 @@ export function BlockchainStatus() {
                 setProofs(result.proofs);
             }
         } catch (e) {
-            console.error('Failed to refresh blockchain proofs:', e);
         } finally {
             setIsLoading(false);
         }

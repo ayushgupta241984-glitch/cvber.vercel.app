@@ -2,7 +2,7 @@
 Trust Score Engine
 Calculates creator reputation based on history, originality, and verification.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 import hashlib
@@ -94,7 +94,7 @@ class TrustScoreEngine:
         grade, badge_color, _ = self._get_grade(final_score)
         
         # Generate badge URL
-        badge_hash = hashlib.sha256(f"{final_score}{datetime.utcnow().isoformat()}".encode()).hexdigest()[:8]
+        badge_hash = hashlib.sha256(f"{final_score}{datetime.now(timezone.utc).isoformat()}".encode()).hexdigest()[:8]
         badge_url = f"https://cvber.app/badge/{badge_hash}"
         
         return TrustScore(
@@ -104,7 +104,7 @@ class TrustScoreEngine:
             factors=factors,
             breakdown=breakdown,
             exportable_badge_url=badge_url,
-            last_updated=datetime.utcnow()
+            last_updated=datetime.now(timezone.utc)
         )
     
     def _get_grade(self, score: int) -> tuple:
@@ -123,7 +123,7 @@ class TrustScoreEngine:
             "grade": score.grade,
             "verified_originals": score.factors.verified_originals,
             "verification_level": score.factors.verification_level,
-            "issued_at": datetime.utcnow().isoformat(),
+            "issued_at": datetime.now(timezone.utc).isoformat(),
             "valid_until": "Perpetual",
             "verification_url": score.exportable_badge_url,
             "statement": f"{creator_name} is a {self._get_grade(score.score)[2]} with a CVBER Trust Score of {score.score}/1000."

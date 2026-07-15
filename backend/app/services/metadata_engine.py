@@ -49,7 +49,7 @@ class MetadataEngine:
             if 'exif' in img.info:
                 try:
                     exif_dict = piexif.load(img.info['exif'])
-                except:
+                except Exception:
                     exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
             else:
                 exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}

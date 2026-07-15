@@ -39,7 +39,7 @@ async def generate_dmca_notice(
     try:
         # Security: Override owner_email with authenticated user's email to prevent spoofing
         request.owner_email = current_user["email"]
-        dmca_request = DMCARequest(**request.dict())
+        dmca_request = DMCARequest(**request.model_dump())
         notice = enforcement_engine.generate_notice(dmca_request)
 
         # Log the event
@@ -52,7 +52,7 @@ async def generate_dmca_notice(
 
         return {
             "success": True,
-            "notice": notice.dict(),
+            "notice": notice.model_dump(),
             "instructions": enforcement_engine.get_submission_instructions(request.platform)
         }
     except Exception as e:
@@ -88,9 +88,9 @@ async def calculate_trust_score(
 ):
     """Calculate trust score for a creator"""
     try:
-        factors = TrustFactors(**request.dict())
+        factors = TrustFactors(**request.model_dump())
         score = trust_engine.calculate_score(factors)
-        return score.dict()
+        return score.model_dump()
     except Exception as e:
         logger.error(f"Failed to calculate trust score: {e}")
         raise HTTPException(status_code=500, detail="Failed to calculate trust score")
@@ -104,7 +104,7 @@ async def generate_trust_certificate(
 ):
     """Generate a Proof of Authenticity certificate"""
     try:
-        factors = TrustFactors(**request.dict())
+        factors = TrustFactors(**request.model_dump())
         score = trust_engine.calculate_score(factors)
         certificate = trust_engine.generate_proof_of_authenticity(score, creator_name)
         return certificate
@@ -150,7 +150,7 @@ async def create_license(
 
         return {
             "success": True,
-            "license": license.dict(),
+            "license": license.model_dump(),
             "metadata": licensing_engine.generate_license_metadata(license)
         }
     except Exception as e:
@@ -202,7 +202,7 @@ async def register_for_monitoring(
             asset_hash=request.asset_hash,
             priority=request.priority
         )
-        return {"success": True, "asset": asset.dict()}
+        return {"success": True, "asset": asset.model_dump()}
     except Exception as e:
         logger.error(f"Failed to register asset for monitoring: {e}")
         raise HTTPException(status_code=500, detail="Failed to register asset for monitoring")
@@ -231,7 +231,7 @@ async def report_theft(
             details={"alert_id": alert.alert_id, "url": request.found_url}
         )
         
-        return {"success": True, "alert": alert.dict()}
+        return {"success": True, "alert": alert.model_dump()}
     except ValueError as e:
         logger.warning(f"Theft report validation failed: {e}")
         raise HTTPException(status_code=400, detail="Invalid request data")
@@ -284,7 +284,7 @@ async def activate_kill_switch(
             details={"dispute_id": dispute.dispute_id, "reason": request.reason}
         )
 
-        return {"success": True, "dispute": dispute.dict()}
+        return {"success": True, "dispute": dispute.model_dump()}
     except Exception as e:
         logger.error(f"Failed to activate kill switch: {e}")
         raise HTTPException(status_code=500, detail="Failed to activate kill switch")
@@ -336,14 +336,30 @@ async def verify_chain_integrity(current_user: dict = Depends(get_current_user))
 
 @router.get("/audit/asset-history/{asset_id}")
 async def get_asset_history(asset_id: str, current_user: dict = Depends(get_current_user)):
-    """Get event history for an asset"""
+    """Get event history for an asset (user must own the asset)"""
+    try:
+        vault = supabase.table("vault_files").select("user_id").eq("scan_id", asset_id).single().execute()
+        if vault.data and vault.data.get("user_id") != current_user["id"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=404, detail="Asset not found")
     events = event_log.get_asset_history(asset_id)
-    return {"asset_id": asset_id, "events": [e.dict() for e in events]}
+    return {"asset_id": asset_id, "events": [e.model_dump() for e in events]}
 
 
 @router.get("/audit/evidence-packet/{asset_id}")
 async def export_evidence_packet(asset_id: str, current_user: dict = Depends(get_current_user)):
-    """Export evidence packet for legal proceedings"""
+    """Export evidence packet for legal proceedings (user must own the asset)"""
+    try:
+        vault = supabase.table("vault_files").select("user_id").eq("scan_id", asset_id).single().execute()
+        if vault.data and vault.data.get("user_id") != current_user["id"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=404, detail="Asset not found")
     return event_log.export_evidence_packet(asset_id)
 
 
@@ -352,7 +368,7 @@ async def download_evidence_pdf(current_user: dict = Depends(get_current_user)):
     """Download evidence log as PDF for legal proceedings"""
     try:
         from fpdf import FPDF
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         supabase = get_supabase()
 
@@ -386,7 +402,7 @@ async def download_evidence_pdf(current_user: dict = Depends(get_current_user)):
         pdf.set_font("Helvetica", "B", 24)
         pdf.cell(0, 15, "CVBER Evidence Log", new_x="LMARGIN", new_y="NEXT", align="C")
         pdf.set_font("Helvetica", "", 10)
-        pdf.cell(0, 8, f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}", new_x="LMARGIN", new_y="NEXT", align="C")
+        pdf.cell(0, 8, f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}", new_x="LMARGIN", new_y="NEXT", align="C")
         pdf.cell(0, 8, f"User ID: {current_user['id']}", new_x="LMARGIN", new_y="NEXT", align="C")
         pdf.ln(10)
 
@@ -452,13 +468,13 @@ async def download_evidence_pdf(current_user: dict = Depends(get_current_user)):
         pdf.set_font("Helvetica", "I", 8)
         pdf.multi_cell(0, 4, "This evidence log was generated by CVBER (cvber.app). The information contained herein is provided for legal and evidentiary purposes. Blockchain proofs can be independently verified via OpenTimestamps.")
 
-        pdf_content = pdf.output()
+        pdf_content = bytes(pdf.output())
         from fastapi.responses import Response
         return Response(
             content=pdf_content,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f"attachment; filename=cvber_evidence_log_{datetime.utcnow().strftime('%Y%m%d')}.pdf"
+                "Content-Disposition": f"attachment; filename=cvber_evidence_log_{datetime.now(timezone.utc).strftime('%Y%m%d')}.pdf"
             }
         )
     except Exception as e:
@@ -522,7 +538,7 @@ async def create_blockchain_timestamp(
 
         return {
             "success": True,
-            "proof": proof.dict(),
+            "proof": proof.model_dump(),
             "message": "Timestamp submitted to Bitcoin blockchain via OpenTimestamps",
             "note": "Proof will be confirmed after next Bitcoin block (~10 min to 2 hours)"
         }
@@ -568,7 +584,7 @@ async def get_user_blockchain_proofs(current_user: dict = Depends(get_current_us
         proofs = await blockchain_service.get_user_proofs(current_user["id"])
         return {
             "success": True,
-            "proofs": [proof.dict() for proof in proofs],
+            "proofs": [proof.model_dump() for proof in proofs],
             "total": len(proofs),
             "pending": len([p for p in proofs if p.status == "pending"]),
             "confirmed": len([p for p in proofs if p.status == "confirmed"])

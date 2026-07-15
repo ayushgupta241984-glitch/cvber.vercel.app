@@ -4,12 +4,11 @@ import { useState, useCallback } from 'react';
 import { Upload, FileCheck, AlertCircle } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { motion, AnimatePresence } from 'framer-motion';
+import { easeLuxury } from '@/lib/animations';
 
 interface FileUploaderProps {
     onUploadComplete?: (result: any, file: File) => void;
 }
-
-const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
 
 export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     const [uploading, setUploading] = useState(false);
@@ -52,7 +51,10 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
                 setProgress(0);
             }, 1000);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Upload failed');
+            const imagePatterns = /does not support image|cannot read |vision model|image_url|image input|model does not support|not a vision model|image analysis|service unavailable|scan failed/i;
+            const msg = err instanceof Error ? err.message : '';
+            const cleaned = msg.replace(imagePatterns, '').replace(/\s+/g, ' ').trim();
+            setError(cleaned || 'Upload failed');
             setUploading(false);
             setProgress(0);
         }

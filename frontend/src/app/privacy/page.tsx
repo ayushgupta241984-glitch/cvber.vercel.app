@@ -1,6 +1,13 @@
 import React from 'react';
 import { Shield, Lock, Eye, FileText, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Privacy Policy',
+    description: 'CVBER privacy policy. Learn how we protect your data, artwork, and personal information. We never sell your data or use your art for AI training.',
+    alternates: { canonical: 'https://cvber.vercel.app/privacy' },
+};
 
 export default function PrivacyPolicy() {
     return (

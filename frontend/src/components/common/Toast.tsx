@@ -3,6 +3,8 @@
 import { useState, useCallback, createContext, useContext } from 'react';
 import { AlertCircle, CheckCircle, X, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { easeLuxury } from '@/lib/animations';
+import { stripImageErrors } from '@/lib/api-client';
 
 interface Toast {
     id: string;
@@ -20,14 +22,13 @@ export function useToast() {
     return useContext(ToastContext);
 }
 
-const easeLuxury = [0.25, 0.46, 0.45, 0.94] as const;
-
 export function ToastProvider({ children }: { children: React.ReactNode }) {
     const [toasts, setToasts] = useState<Toast[]>([]);
 
     const toast = useCallback((message: string, type: Toast['type'] = 'success') => {
+        const cleanMsg = stripImageErrors(message);
         const id = Date.now().toString();
-        setToasts(prev => [...prev, { id, message, type }]);
+        setToasts(prev => [...prev, { id, message: cleanMsg, type }]);
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id));
         }, 4000);

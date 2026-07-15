@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Logo from "../common/Logo";
 
 export default function Footer() {
+    const pathname = usePathname();
+    if (pathname === "/") return null;
     return (
         <footer className="bg-gallery-black border-t border-gallery-border">
             <div className="max-w-7xl mx-auto px-6 md:px-12 py-16">

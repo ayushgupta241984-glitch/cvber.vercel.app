@@ -3,7 +3,7 @@ import json
 import logging
 import asyncio
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 from enum import Enum
 
@@ -176,7 +176,7 @@ def _analyze_image_for_screenshot(file_buffer: bytes, file_name: str = "") -> Di
                     if similar > 0.6:
                         screenshot_score += 2
                         reasons.append("uniform_edges")
-            except:
+            except Exception:
                 pass
         
         # Check for notch/status bar region - more lenient
@@ -195,7 +195,7 @@ def _analyze_image_for_screenshot(file_buffer: bytes, file_name: str = "") -> Di
                 if dark_rows >= top_region_height * 0.5:
                     screenshot_score += 2
                     reasons.append("notch_bar")
-            except:
+            except Exception:
                 pass
         
         # NEW: Check for bottom bar (home indicator)
@@ -213,7 +213,7 @@ def _analyze_image_for_screenshot(file_buffer: bytes, file_name: str = "") -> Di
                 if dark_rows >= bottom_region_height * 0.5:
                     screenshot_score += 2
                     reasons.append("home_bar")
-            except:
+            except Exception:
                 pass
         
         # NEW: Very small image size check (screenshots often have specific sizes)
@@ -271,7 +271,7 @@ def _generate_mock_report(file_name: str, file_type: str, file_size: int,
         recommendations=[Recommendation(priority="high", action="Configure AI",
                                         rationale="Connect Google AI or Groq to enable pixel-level forensics.")],
         confidence_level=0.5,
-        scan_timestamp=datetime.utcnow(),
+        scan_timestamp=datetime.now(timezone.utc),
         file_metadata={
             "file_name": file_name, "file_type": file_type, "file_size": file_size,
             "ai_provider": "local_pre_scanner", "ai_model": "rule_v1",
@@ -351,7 +351,7 @@ def _build_risk_from_data(data: dict, rules: dict, has_c2pa: bool, provider: str
         detailed_findings=[DetailedFinding(**f) for f in data.get("detailed_findings", [])],
         recommendations=[Recommendation(**r) for r in data.get("recommendations", [])],
         confidence_level=data.get("confidence_level", 0.9),
-        scan_timestamp=datetime.utcnow(),
+        scan_timestamp=datetime.now(timezone.utc),
         file_metadata={
             "file_name": file_name, "file_type": file_type, "file_size": file_size,
             "ai_provider": provider, "ai_model": model,
@@ -366,6 +366,7 @@ class VertexAIService:
     def __init__(self):
         self.model = None
         self.groq_client = None
+        self.nim_client = None
         self.initialized = False
         self.provider: Optional[str] = None
         self._setup_attempted = False
@@ -373,6 +374,7 @@ class VertexAIService:
         self.google_cb = CircuitBreaker("google-ai", failure_threshold=3, recovery_timeout=60)
         self.groq_cb = CircuitBreaker("groq", failure_threshold=3, recovery_timeout=60)
         self.vertex_cb = CircuitBreaker("vertex", failure_threshold=2, recovery_timeout=120)
+        self.nim_cb = CircuitBreaker("nim", failure_threshold=3, recovery_timeout=60)
 
         self._config_models()
         self.ensure_initialized()
@@ -382,6 +384,8 @@ class VertexAIService:
         self.groq_model_name = settings.groq_model or "llama-3.3-70b-versatile"
         self.groq_vision_model = settings.groq_vision_model or "llama-3.2-90b-vision-preview"
         self.vertex_model_name = settings.vertex_ai_model or "gemini-1.5-flash-002"
+        self.nim_model_name = settings.nvidia_nim_model or "google/gemma-3n-e4b-it"
+        self.nim_base_url = settings.nvidia_nim_base_url
 
     @staticmethod
     def is_valid_key(key: Optional[str]) -> bool:
@@ -407,6 +411,11 @@ class VertexAIService:
                 "creds_present": bool(settings.google_application_credentials and os.path.exists(settings.google_application_credentials)),
                 "circuit_breaker": self.vertex_cb.state.value,
             },
+            "nim": {
+                "available": True,
+                "key_present": self.is_valid_key(settings.nvidia_nim_api_key),
+                "circuit_breaker": self.nim_cb.state.value,
+            },
             "active_provider": self.provider,
             "initialized": self.initialized,
         }
@@ -431,6 +440,24 @@ class VertexAIService:
                 except Exception as e:
                     logger.error(f"Groq init failed: {e}")
                     self.groq_cb.record_failure()
+                    self.provider = None
+
+        if self.is_valid_key(settings.nvidia_nim_api_key) and self.nim_cb.can_attempt():
+            if self.provider != "nim":
+                try:
+                    from openai import AsyncOpenAI
+                    self.nim_client = AsyncOpenAI(
+                        api_key=settings.nvidia_nim_api_key,
+                        base_url=settings.nvidia_nim_base_url,
+                    )
+                    self.initialized = True
+                    self.provider = "nim"
+                    self.nim_cb.record_success()
+                    logger.info(f"NVIDIA NIM ({self.nim_model_name}) initialized")
+                    return True
+                except Exception as e:
+                    logger.error(f"NVIDIA NIM init failed: {e}")
+                    self.nim_cb.record_failure()
                     self.provider = None
 
         if GENAI_AVAILABLE and self.is_valid_key(settings.google_api_key) and self.google_cb.can_attempt():
@@ -481,7 +508,7 @@ class VertexAIService:
             recommendations=[Recommendation(priority="high", action="Use Google AI Studio",
                                             rationale="Switch to Google AI Studio for reliable Vision & Search.")],
             confidence_level=0.5,
-            scan_timestamp=datetime.utcnow(),
+            scan_timestamp=datetime.now(timezone.utc),
             file_metadata={
                 "file_name": file_name, "file_type": file_type, "file_size": len(file_buffer),
                 "ai_provider": f"{self.provider or 'none'}_fallback", "ai_model": "rule_based_v1",
@@ -552,6 +579,20 @@ class VertexAIService:
                 response_text = response.text
                 self.vertex_cb.record_success()
 
+            elif self.provider == "nim":
+                if is_image:
+                    return await self._fallback_image_analysis(file_name, file_type, file_buffer, rules, has_c2pa)
+                active_model = self.nim_model_name
+                sample = file_buffer[:5000].decode('utf-8', errors='replace')
+                messages = [{"role": "user", "content": f"{prompt}\n\nFile Content:\n{sample[:3000]}"}]
+                completion = await self.nim_client.chat.completions.create(
+                    model=active_model, messages=messages,
+                    response_format={"type": "json_object"},
+                    max_tokens=2000,
+                )
+                response_text = completion.choices[0].message.content
+                self.nim_cb.record_success()
+
             data = json.loads(_clean_json_response(response_text))
             return _build_risk_from_data(data, rules, has_c2pa, self.provider, active_model,
                                          file_name, file_type, len(file_buffer))
@@ -560,7 +601,7 @@ class VertexAIService:
             err_str = str(e)
             logger.error(f"Analysis failed for provider={self.provider}: {err_str}")
 
-            image_errors = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model"]
+            image_errors = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model", "inform the user", "image.png", "this model"]
             if any(e in err_str.lower() for e in image_errors):
                 logger.warning("Model does not support image input. Falling back to rule-based analysis.")
                 return await self._fallback_image_analysis(file_name, file_type, file_buffer, rules, has_c2pa)
@@ -570,7 +611,7 @@ class VertexAIService:
     @staticmethod
     def _strip_image_errors(text: str) -> str:
         lines = text.split("\n")
-        patterns = ["does not support image", "cannot read", "vision model", "image_url"]
+        patterns = ["does not support image", "cannot read", "vision model", "image_url", "image input", "model does not support", "inform the user", "image.png", "image data"]
         cleaned = [l for l in lines if not any(p in l.lower() for p in patterns)]
         result = "\n".join(cleaned).strip()
         if not result:
@@ -614,6 +655,15 @@ RULES:
                 messages.append({"role": "user", "content": message})
                 completion = await self.groq_client.chat.completions.create(
                     messages=messages, model=self.groq_model_name,
+                )
+                return self._strip_image_errors(completion.choices[0].message.content)
+            elif self.provider == "nim":
+                messages = [{"role": "system", "content": system_prompt}]
+                for h in history:
+                    messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+                messages.append({"role": "user", "content": message})
+                completion = await self.nim_client.chat.completions.create(
+                    messages=messages, model=self.nim_model_name,
                 )
                 return self._strip_image_errors(completion.choices[0].message.content)
         except Exception as e:
