@@ -14,7 +14,7 @@ export default function Footer() {
                     <div className="md:col-span-2">
                         <div className="flex items-center gap-3 mb-6">
                             <Logo size="sm" alt="CVBER" />
-                            <span className="font-display text-xl font-bold text-luxury-cream tracking-tight">Cvber</span>
+                            <span className="font-display text-xl font-bold text-luxury-cream tracking-tight">CVBER</span>
                         </div>
                         <p className="text-luxury-muted text-sm font-sans leading-relaxed max-w-sm">
                             Professional-grade content security for the AI era.
@@ -41,7 +41,7 @@ export default function Footer() {
                 <div className="divider-gold" />
                 <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-xs text-luxury-muted/60 font-sans">
-                        © {new Date().getFullYear()} Cvber. All rights reserved.
+                        © {new Date().getFullYear()} CVBER. All rights reserved.
                     </p>
                     <div className="flex gap-8 text-xs text-luxury-muted/60 font-sans">
                         <Link href="/privacy" className="hover:text-luxury-cream transition-colors">Privacy Policy</Link>

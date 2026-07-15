@@ -14,6 +14,22 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const getPasswordStrength = (pw: string) => {
+        if (!pw) return { score: 0, label: '', color: '' };
+        let score = 0;
+        if (pw.length >= 8) score++;
+        if (pw.length >= 12) score++;
+        if (/[A-Z]/.test(pw)) score++;
+        if (/[0-9]/.test(pw)) score++;
+        if (/[^A-Za-z0-9]/.test(pw)) score++;
+        if (score <= 1) return { score, label: 'Weak', color: 'bg-red-500' };
+        if (score <= 2) return { score, label: 'Fair', color: 'bg-orange-500' };
+        if (score <= 3) return { score, label: 'Good', color: 'bg-yellow-500' };
+        if (score <= 4) return { score, label: 'Strong', color: 'bg-green-500' };
+        return { score, label: 'Very Strong', color: 'bg-emerald-500' };
+    };
+    const passwordStrength = getPasswordStrength(password);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -75,12 +91,12 @@ export default function RegisterPage() {
                 <div className="w-full max-w-[380px] relative z-10">
                     {/* Mobile logo */}
                     <div className="lg:hidden text-center mb-10">
-                    <Link href="/" className="inline-flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-[#a855f7]/10 border border-[#a855f7]/20 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-[#a855f7]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    </div>
-                    <span className="text-sm font-bold text-white tracking-tight uppercase">CVBER</span>
-                    </Link>
+                        <Link href="/" className="inline-flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-[#a855f7]/10 border border-[#a855f7]/20 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-[#a855f7]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            </div>
+                            <span className="text-sm font-bold text-white tracking-tight uppercase">CVBER</span>
+                        </Link>
                     </div>
 
                     <div className="mb-8">
@@ -99,7 +115,7 @@ export default function RegisterPage() {
                                     onChange={(e) => setFullName(e.target.value)}
                                     required
                                     suppressHydrationWarning
-                                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/15 focus:outline-none focus:border-purple-500/40 focus:bg-white/[0.05] transition-all text-sm"
+                                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/15 focus:outline-none focus:border-[#a855f7]/40 focus:bg-white/[0.05] transition-all text-sm"
                                     placeholder="John Doe"
                                 />
                             </div>
@@ -115,7 +131,7 @@ export default function RegisterPage() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
                                     suppressHydrationWarning
-                                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/15 focus:outline-none focus:border-purple-500/40 focus:bg-white/[0.05] transition-all text-sm"
+                                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/15 focus:outline-none focus:border-[#a855f7]/40 focus:bg-white/[0.05] transition-all text-sm"
                                     placeholder="you@example.com"
                                 />
                             </div>
@@ -131,10 +147,20 @@ export default function RegisterPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     suppressHydrationWarning
-                                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/15 focus:outline-none focus:border-purple-500/40 focus:bg-white/[0.05] transition-all text-sm"
+                                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/15 focus:outline-none focus:border-[#a855f7]/40 focus:bg-white/[0.05] transition-all text-sm"
                                     placeholder="••••••••"
                                 />
                             </div>
+                            {password && (
+                                <div className="mt-2">
+                                    <div className="flex gap-1 mb-1">
+                                        {[1, 2, 3, 4, 5].map(i => (
+                                            <div key={i} className={`h-0.5 flex-1 rounded-full transition-colors ${i <= passwordStrength.score ? passwordStrength.color : 'bg-white/10'}`} />
+                                        ))}
+                                    </div>
+                                    <p className="text-[10px] text-white/30">{passwordStrength.label}</p>
+                                </div>
+                            )}
                         </div>
 
                         {error && (
@@ -175,7 +201,7 @@ export default function RegisterPage() {
 
                     <p className="text-center text-white/20 mt-8 text-xs">
                         Already have an account?{' '}
-                        <Link href="/login" className="text-purple-400/70 hover:text-purple-400 font-semibold transition-colors">
+                        <Link href="/login" className="text-[#a855f7]/70 hover:text-[#a855f7] font-semibold transition-colors">
                             Sign in
                         </Link>
                     </p>

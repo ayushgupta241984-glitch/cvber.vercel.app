@@ -68,26 +68,25 @@ function getAuthHeaders(): Record<string, string> {
     return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+async function handleResponse<T>(response: Response, _retried = false): Promise<T> {
     if (!response.ok) {
-        if (response.status === 401 && typeof window !== 'undefined') {
-            // Try refresh token before hard logout
+        if (response.status === 401 && typeof window !== 'undefined' && !_retried) {
             const refreshToken = localStorage.getItem('refresh_token');
             if (refreshToken) {
                 try {
-                    const refreshResponse = await fetch(`${BASE_URL}/auth/refresh`, {
+                    const refreshResp = await fetchWithRetry(`${BASE_URL}/auth/refresh`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ refresh_token: refreshToken }),
-                    });
-                    if (refreshResponse.ok) {
-                        const data = await refreshResponse.json();
+                    }, 1);
+                    if (refreshResp.ok) {
+                        const data = await refreshResp.json();
                         localStorage.setItem('access_token', data.access_token);
-                        localStorage.setItem('refresh_token', data.refresh_token);
-                        throw new ApiError('TOKEN_REFRESHED', 401);
+                        if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+                        return response.clone().json() as Promise<T>;
                     }
-                } catch (e: any) {
-                    if (e?.message === 'TOKEN_REFRESHED') throw e;
+                } catch {
+                    // refresh failed, fall through to logout
                 }
             }
             localStorage.removeItem('access_token');

@@ -12,6 +12,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
+from app.dependencies import is_mock_mode
 from app.rate_limiter import limiter
 from app.routers import scan, auth, mentor, enforcement, diagnostics, vault, agent, leads, feedback, image_search, watermark, ai
 from app.services.vertex_ai import vertex_ai_service
@@ -71,7 +72,7 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    response.headers["Content-Security-Policy"] = "default-src 'self'; img-src 'self' https: data:; font-src 'self' https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:"
+    response.headers["Content-Security-Policy"] = "default-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["X-Response-Time-Ms"] = str(int((time.time() - start_time) * 1000))
     return response
@@ -171,7 +172,10 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    ai_status = vertex_ai_service.get_provider_status()
+    try:
+        ai_status = vertex_ai_service.get_provider_status()
+    except Exception:
+        ai_status = {"status": "unknown"}
     return {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -179,7 +183,6 @@ async def health_check():
         "services": {
             "api": "operational",
             "vertex_ai": ai_status,
-            "c2pa": "operational",
         }
     }
 
@@ -193,11 +196,10 @@ async def ai_status():
 
 
 @app.get("/api/status")
-async def app_status():
-    from app.dependencies import is_mock_mode
+async def api_status():
     return {
         "mock_mode": is_mock_mode(),
-        "version": "1.0.0",
+        "version": "1.0.1",
     }
 
 

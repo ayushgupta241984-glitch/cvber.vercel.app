@@ -119,7 +119,7 @@ function LoginForm() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
                                     suppressHydrationWarning
-                                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/15 focus:outline-none focus:border-purple-500/40 focus:bg-white/[0.05] transition-all text-sm"
+                                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/15 focus:outline-none focus:border-[#a855f7]/40 focus:bg-white/[0.05] transition-all text-sm"
                                     placeholder="you@example.com"
                                 />
                             </div>
@@ -128,7 +128,7 @@ function LoginForm() {
                         <div>
                             <div className="flex justify-between mb-2">
                                 <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.15em]">Password</label>
-                                <a href="#" className="text-[10px] text-purple-400/60 hover:text-purple-400 transition-colors uppercase tracking-wider font-semibold">Forgot?</a>
+                                <a href="mailto:support@cvber.app" className="text-[10px] text-[#a855f7]/60 hover:text-[#a855f7] transition-colors uppercase tracking-wider font-semibold">Forgot?</a>
                             </div>
                             <div className="relative">
                                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
@@ -138,7 +138,7 @@ function LoginForm() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     suppressHydrationWarning
-                                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/15 focus:outline-none focus:border-purple-500/40 focus:bg-white/[0.05] transition-all text-sm"
+                                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/15 focus:outline-none focus:border-[#a855f7]/40 focus:bg-white/[0.05] transition-all text-sm"
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -182,7 +182,7 @@ function LoginForm() {
 
                     <p className="text-center text-white/20 mt-8 text-xs">
                         Don&apos;t have an account?{' '}
-                        <Link href="/register" className="text-purple-400/70 hover:text-purple-400 font-semibold transition-colors">
+                        <Link href="/register" className="text-[#a855f7]/70 hover:text-[#a855f7] font-semibold transition-colors">
                             Create one
                         </Link>
                     </p>
@@ -196,7 +196,7 @@ export default function LoginPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-                <div className="w-5 h-5 border-2 border-white/10 border-t-purple-400 rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/10 border-t-[#a855f7] rounded-full animate-spin" />
             </div>
         }>
             <LoginForm />

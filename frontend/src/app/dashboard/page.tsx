@@ -105,6 +105,9 @@ function DashboardInner() {
     const [proofUrl, setProofUrl] = useState('');
     const [submittingProof, setSubmittingProof] = useState(false);
 
+    const [isUploading, setIsUploading] = useState(false);
+    const [lastUploadResult, setLastUploadResult] = useState<{ name: string; scanId: string } | null>(null);
+
     const [searchResults, setSearchResults] = useState<any>(null);
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchError, setSearchError] = useState<string | null>(null);
@@ -213,7 +216,7 @@ function DashboardInner() {
                     });
                 }
             } catch (err) {
-
+                toast('Could not load vault. Check your connection.', 'error');
             } finally {
                 setVaultLoading(false);
                 if (!indexedRef.current) {
@@ -224,6 +227,16 @@ function DashboardInner() {
         };
         fetchVault();
     }, []);
+
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && proofModalFile) {
+                setProofModalFile(null);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [proofModalFile]);
 
     useEffect(() => {
         localStorage.setItem('cvber_vault_memory', JSON.stringify(files));
@@ -355,51 +368,56 @@ function DashboardInner() {
     };
 
     const handleUploadComplete = async (result: UploadResult, rawFile: File) => {
-        const previewUrl = result.storage_url || URL.createObjectURL(rawFile);
-
-        fileBlobCache.current.set(result.scan_id, rawFile);
-
-        const arrayBuffer = await rawFile.arrayBuffer();
-        const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        let fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        if (result.original_hash) fileHash = result.original_hash;
-
-        const status: 'safe' | 'warning' | 'scanning' | 'danger' = result.risk_report
-            ? (result.risk_report.overall_risk_score < 30 ? 'safe' : result.risk_report.overall_risk_score < 70 ? 'warning' : 'danger')
-            : 'scanning';
-
-        const newFile: FileData = {
-            id: result.scan_id,
-            name: rawFile.name,
-            size: rawFile.size,
-            hash: fileHash,
-            status,
-            riskScore: result.risk_report?.overall_risk_score,
-            originalityScore: result.risk_report?.originality_score,
-            isScreenshot: result.risk_report?.is_screenshot,
-            forensicSummary: result.risk_report?.file_metadata?.forensic_summary,
-            aiProvider: result.risk_report?.file_metadata?.ai_provider,
-            aiModel: result.risk_report?.file_metadata?.ai_model,
-            uploadedAt: new Date().toISOString(),
-            previewUrl: previewUrl,
-            storageUrl: result.storage_url
-        };
-
-        setFiles(prev => [newFile, ...prev]);
-
+        setIsUploading(true);
         try {
-            const timestampResult = await apiClient.createBlockchainTimestamp(
+            const previewUrl = result.storage_url || URL.createObjectURL(rawFile);
+
+            fileBlobCache.current.set(result.scan_id, rawFile);
+
+            const arrayBuffer = await rawFile.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            let fileHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            if (result.original_hash) fileHash = result.original_hash;
+
+            const status: 'safe' | 'warning' | 'scanning' | 'danger' = result.risk_report
+                ? (result.risk_report.overall_risk_score < 30 ? 'safe' : result.risk_report.overall_risk_score < 70 ? 'warning' : 'danger')
+                : 'scanning';
+
+            const newFile: FileData = {
+                id: result.scan_id,
+                name: rawFile.name,
+                size: rawFile.size,
+                hash: fileHash,
+                status,
+                riskScore: result.risk_report?.overall_risk_score,
+                originalityScore: result.risk_report?.originality_score,
+                isScreenshot: result.risk_report?.is_screenshot,
+                forensicSummary: result.risk_report?.file_metadata?.forensic_summary,
+                aiProvider: result.risk_report?.file_metadata?.ai_provider,
+                aiModel: result.risk_report?.file_metadata?.ai_model,
+                uploadedAt: new Date().toISOString(),
+                previewUrl: previewUrl,
+                storageUrl: result.storage_url
+            };
+
+            setFiles(prev => [newFile, ...prev]);
+            setLastUploadResult({ name: rawFile.name, scanId: result.scan_id });
+            setTimeout(() => setLastUploadResult(null), 4000);
+
+            apiClient.createBlockchainTimestamp(
                 rawFile.name,
                 fileHash,
                 result.scan_id
-            );
-            window.dispatchEvent(new Event('blockchain-update'));
-        } catch (error: any) {
-
-            if (error?.message) {
-                toast(`Blockchain timestamp failed: ${error.message}`, 'error');
-            }
+            ).then(() => {
+                window.dispatchEvent(new Event('blockchain-update'));
+            }).catch((error: any) => {
+                if (error?.message) {
+                    toast(`Blockchain timestamp failed: ${error.message}`, 'error');
+                }
+            });
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -731,6 +749,17 @@ function DashboardInner() {
                             )}
                         </div>
                     </motion.div>
+                </motion.div>
+            )}
+
+            {lastUploadResult && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed bottom-6 right-6 z-50 bg-luxury-gold/90 text-black px-6 py-3 text-xs font-semibold uppercase tracking-wider"
+                >
+                    Uploaded: {lastUploadResult.name}
                 </motion.div>
             )}
 

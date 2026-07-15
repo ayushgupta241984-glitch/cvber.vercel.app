@@ -5,6 +5,7 @@ import "./globals.css";
 import LenisProvider from "@/providers/LenisProvider";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { DemoModeBanner } from "@/components/common/DemoModeBanner";
 import GlobalSchema from "@/components/seo/GlobalSchema";
 import DemoModeBanner from "@/components/DemoModeBanner";
 import { cn } from "@/lib/utils";
