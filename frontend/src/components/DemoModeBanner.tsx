@@ -6,7 +6,9 @@ export default function DemoModeBanner() {
     const [isMock, setIsMock] = useState(false);
 
     useEffect(() => {
-        fetch("/api/status")
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/status`, {
+            signal: AbortSignal.timeout(5000),
+        })
             .then((r) => r.json())
             .then((data) => {
                 if (data.mock_mode) setIsMock(true);
