@@ -24,10 +24,9 @@ const socialLinks = [
 interface Props {
     open: boolean;
     onClose: () => void;
-    onStartOnboarding?: () => void;
 }
 
-export default function SidebarNav({ open, onClose, onStartOnboarding }: Props) {
+export default function SidebarNav({ open, onClose }: Props) {
     useEffect(() => {
         if (open) {
             document.body.style.overflow = "hidden";
@@ -59,7 +58,7 @@ export default function SidebarNav({ open, onClose, onStartOnboarding }: Props) 
                     >
                         <div className="flex items-center justify-between px-8 py-6 border-b border-white/[0.04]">
                             <Link href="/" onClick={onClose} className="flex items-center gap-2.5">
-                                <Shield className="w-4 h-4 text-purple-400" />
+                                <Shield className="w-4 h-4 text-white" />
                                 <span className="text-[10px] font-black tracking-[0.25em] uppercase text-white/60">CVBER</span>
                             </Link>
                             <button onClick={onClose} className="w-10 h-10 rounded-full border border-white/[0.08] flex items-center justify-center hover:border-white/20 transition-colors">
@@ -105,13 +104,14 @@ export default function SidebarNav({ open, onClose, onStartOnboarding }: Props) 
                                 >
                                     Log In
                                 </Link>
-                                <button
-                                    onClick={() => { onClose(); onStartOnboarding?.(); }}
+                                <Link
+                                    href="/gate"
+                                    onClick={onClose}
                                     className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black rounded-xl font-bold text-sm hover:bg-zinc-200 transition-all active:scale-95"
                                 >
-                                    Get Started
+                                    Apply for Access
                                     <span className="text-lg">→</span>
-                                </button>
+                                </Link>
                             </motion.div>
                         </nav>
 

@@ -205,14 +205,14 @@ export default function HowToProtectYourArt() {
 
                     {/* CTA */}
                     <section className="text-center">
-                        <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-[3rem] p-16 md:p-24 shadow-[0_40px_100px_rgba(168,85,247,0.3)]">
+                        <div className="bg-gradient-to-br from-[#0D3D3D] to-[#1a5a5a] rounded-[3rem] p-16 md:p-24 shadow-[0_40px_100px_rgba(0,240,255,0.1)]">
                             <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase italic text-white">Start Protecting Your Art Today</h2>
-                            <p className="text-lg text-purple-100/70 max-w-xl mx-auto mb-12 font-medium">Join thousands of creators using C2PA certificates and automated DMCA enforcement to protect their work from AI scraping and theft.</p>
+                            <p className="text-lg text-zinc-300/70 max-w-xl mx-auto mb-12 font-medium">Join thousands of creators using C2PA certificates and automated DMCA enforcement to protect their work from AI scraping and theft.</p>
                             <Link
-                                href="/register"
+                                href="/gate"
                                 className="inline-flex items-center gap-3 px-12 py-6 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all active:scale-95 shadow-xl shadow-black/20"
                             >
-                                Create Free Account
+                                Apply for Access
                                 <ArrowRight className="w-5 h-5" />
                             </Link>
                         </div>

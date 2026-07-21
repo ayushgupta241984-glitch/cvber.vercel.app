@@ -156,7 +156,7 @@ export default function Navbar() {
                                             className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-[0.2em] transition-colors">
                                             Log In
                                         </Link>
-                                        <GoldButton href="/register">Get Started</GoldButton>
+                                        <GoldButton href="/gate">Apply for Access</GoldButton>
                                     </>
                                 )}
                             </div>
@@ -203,9 +203,9 @@ export default function Navbar() {
                                             className="block text-sm font-bold uppercase tracking-[0.2em] text-white/50 hover:text-white">
                                             Log In
                                         </Link>
-                                        <Link href="/register" onClick={() => setMenuOpen(false)}
+                                        <Link href="/gate" onClick={() => setMenuOpen(false)}
                                             className="block text-center bg-[#C9A962] hover:bg-[#D4B97A] text-black font-bold py-3 uppercase tracking-[0.2em] text-xs">
-                                            Get Started
+                                            Apply for Access
                                         </Link>
                                     </div>
                                 )}

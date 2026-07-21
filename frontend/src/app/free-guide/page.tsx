@@ -107,7 +107,7 @@ export default function FreeGuide() {
                         <>
                             <h2 className="text-2xl font-bold mb-4">Guide Sent!</h2>
                             <p className="text-purple-100/70 mb-8">Check your inbox for the PDF guide. It should arrive within 1 minute.</p>
-                            <Link href="/register" className="inline-block px-8 py-4 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all">
+                            <Link href="/gate" className="inline-block px-8 py-4 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all">
                                 Start Protecting Your Art
                             </Link>
                         </>

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Shield, ChevronDown, X, ArrowLeft, Check, Scan, Upload, Globe, AlertTriangle, Lock, FileText, Eye, Zap } from "lucide-react";
+import { ArrowRight, Shield, ChevronDown, X, Check, Scan, Upload, Globe, AlertTriangle, Lock, FileText, Eye, Zap } from "lucide-react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import StructuredData from "@/components/seo/StructuredData";
 import Preloader from "@/components/Preloader";
@@ -11,7 +11,7 @@ import SidebarNav from "@/components/nav/SidebarNav";
 
 // ─── Hero ──────────────────────────────────────────
 
-function Hero({ onGetStarted }: { onGetStarted: () => void }) {
+function Hero() {
     const sectionRef = useRef<HTMLDivElement>(null);
     const textRef = useRef<HTMLDivElement>(null);
 
@@ -40,8 +40,8 @@ function Hero({ onGetStarted }: { onGetStarted: () => void }) {
                 </p>
 
                 <div className="hero-actions flex flex-col sm:flex-row items-center gap-4">
-                    <Link href="/register" data-hover className="px-10 py-4 bg-white text-black rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all active:scale-[0.97] shadow-[0_0_30px_rgba(255,255,255,0.05)] hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]">
-                        Get Started Free
+                    <Link href="/gate" data-hover className="px-10 py-4 bg-white text-black rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all active:scale-[0.97] shadow-[0_0_30px_rgba(255,255,255,0.05)] hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+                        Apply for Access
                     </Link>
                     <Link href="/how-to-protect-your-art" data-hover className="px-8 py-4 rounded-full font-bold text-xs uppercase tracking-[0.2em] text-zinc-400 hover:text-white border border-white/[0.08] hover:border-white/20 transition-all">
                         Read the Guide
@@ -102,7 +102,7 @@ function TrustSignals() {
                 <div className="bg-[#0D0D10] border border-white/5 rounded-[2rem] p-10 md:p-16">
                     <div className="grid md:grid-cols-2 gap-12 items-center">
                         <div>
-                            <p className="text-purple-400 font-bold text-xs uppercase tracking-[0.2em] mb-4">Trusted by Creators Worldwide</p>
+                            <p className="text-zinc-400 font-bold text-xs uppercase tracking-[0.2em] mb-4">Trusted by Creators Worldwide</p>
                             <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white mb-6 leading-tight">Artists Choose CVBER to Protect What Matters Most</h2>
                             <p className="text-zinc-400 leading-relaxed mb-6">Join thousands of illustrators, photographers, and digital creators who trust CVBER for provenance certificates and automated enforcement.</p>
                             <div className="flex items-center gap-2 text-zinc-500 text-sm">
@@ -139,8 +139,8 @@ function GeoAnswerBlock() {
     return (
         <section className="relative z-10 py-16 px-6 border-t border-white/[0.04]">
             <div className="max-w-3xl mx-auto">
-                <div className="bg-purple-950/20 border border-purple-500/20 rounded-2xl p-8">
-                    <p className="text-purple-400 font-bold text-xs uppercase tracking-[0.2em] mb-4">According to CVBER</p>
+                <div className="bg-[#0D0D10] border border-white/5 rounded-2xl p-8">
+                    <p className="text-zinc-400 font-bold text-xs uppercase tracking-[0.2em] mb-4">According to CVBER</p>
                     <h2 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-snug">
                         How do I protect my art from AI theft?
                     </h2>
@@ -151,8 +151,8 @@ function GeoAnswerBlock() {
                         According to the Stanford AI Index Report (2026), 92% of AI companies scrape public images for training without explicit consent. Only 3% of artists have any form of protection in place.
                     </p>
                     <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                        <Link href="/register" className="px-6 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-[0.15em] text-center hover:bg-zinc-200 transition-all">
-                            Get Started Free
+                        <Link href="/gate" className="px-6 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-[0.15em] text-center hover:bg-zinc-200 transition-all">
+                            Apply for Access
                         </Link>
                         <Link href="/blog/how-to-protect-art-from-ai" className="px-6 py-3 rounded-full font-bold text-xs uppercase tracking-[0.15em] text-zinc-400 hover:text-white border border-white/[0.08] hover:border-white/20 transition-all text-center">
                             Read Full Guide
@@ -602,80 +602,11 @@ const products = [
     { id: "sdk", num: "05", title: "Universal SDK", desc: "Protect your entire portfolio with two lines of code. Works with React, Vue, WordPress, and more.", img: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=900&h=1200&fit=crop&q=80", tag: "Developer API" },
 ];
 
-// ─── Inline Onboarding ─────────────────────────────
-
-function InlineOnboarding({ onComplete }: { onComplete: () => void }) {
-    const [step, setStep] = useState(0);
-    const [email, setEmail] = useState("");
-    const [answer, setAnswer] = useState("");
-    const questions = [
-        { q: "What kind of artist are you?", options: ["Digital Illustrator", "Photographer", "3D Artist", "AI Artist"] },
-        { q: "Where do you publish your work?", options: ["Instagram", "DeviantArt", "ArtStation", "TikTok", "YouTube"] },
-        { q: "What worries you most?", options: ["AI scraping", "Art theft", "Proving ownership", "DMCA hassle"] },
-    ];
-
-    const createAccount = (e: React.FormEvent) => {
-        e.preventDefault();
-        localStorage.setItem("cvber_onboarding_complete", "true");
-        onComplete();
-    };
-
-    return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-[#050505] flex items-center justify-center">
-            <div className="w-full max-w-lg px-6">
-                <AnimatePresence mode="wait">
-                    {step < questions.length ? (
-                        <motion.div key={`q-${step}`} initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
-                            <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-600 mb-6">Step {step + 1} of {questions.length + 2}</div>
-                            <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-8">{questions[step].q}</h2>
-                            <div className="space-y-3">
-                                {questions[step].options.map((opt) => (
-                                    <button key={opt} onClick={() => { setAnswer(opt); setTimeout(() => setStep(step + 1), 200); }} className={`w-full p-4 rounded-xl border text-left text-sm font-medium transition-all ${answer === opt ? "bg-white/10 border-white/20 text-white" : "bg-white/[0.02] border-white/[0.06] text-zinc-400 hover:border-white/[0.12]"}`}>
-                                        {opt}
-                                    </button>
-                                ))}
-                            </div>
-                            {step > 0 && <button onClick={() => setStep(step - 1)} className="mt-6 text-xs text-zinc-500 hover:text-white flex items-center gap-2"><ArrowLeft className="w-3 h-3" /> Back</button>}
-                        </motion.div>
-                    ) : step === questions.length ? (
-                        <motion.div key="email" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
-                            <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-600 mb-6">Step {step + 1} of {step + 2}</div>
-                            <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-3">Create your account</h2>
-                            <p className="text-zinc-500 text-sm mb-8">Free forever. No credit card.</p>
-                            <form onSubmit={createAccount} className="space-y-3">
-                                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" required className="w-full p-4 bg-white/[0.03] border border-white/[0.06] rounded-xl text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-white/20" />
-                                <button type="submit" className="w-full py-4 bg-white text-black rounded-xl font-bold text-sm hover:bg-zinc-200 flex items-center justify-center gap-2 active:scale-[0.98]">Create Account <ArrowRight className="w-4 h-4" /></button>
-                            </form>
-                            <button onClick={() => setStep(step - 1)} className="mt-6 text-xs text-zinc-500 hover:text-white flex items-center gap-2"><ArrowLeft className="w-3 h-3" /> Back</button>
-                        </motion.div>
-                    ) : (
-                        <motion.div key="done" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
-                            <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ duration: 0.6 }} className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-8">
-                                <Check className="w-10 h-10 text-white" />
-                            </motion.div>
-                            <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-4">You&apos;re all set.</h2>
-                            <Link href="/dashboard" className="px-10 py-5 bg-white text-black rounded-xl font-bold text-sm hover:bg-zinc-200 inline-flex items-center gap-3 active:scale-95">
-                                Go to Dashboard <ArrowRight className="w-5 h-5" />
-                            </Link>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-                {step <= questions.length && (
-                    <button onClick={() => step === 0 ? onComplete() : setStep(step - 1)} className="absolute top-6 right-6 w-10 h-10 rounded-full border border-white/[0.08] flex items-center justify-center hover:border-white/20">
-                        <X className="w-4 h-4 text-zinc-400" />
-                    </button>
-                )}
-            </div>
-        </motion.div>
-    );
-}
-
 // ─── Page ───────────────────────────────────────────
 
 export default function Home() {
     const [loaded, setLoaded] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
-    const [onboardingOpen, setOnboardingOpen] = useState(false);
     const gridRef = useRef<HTMLDivElement>(null);
     const mainRef = useRef<HTMLDivElement>(null);
 
@@ -709,8 +640,7 @@ export default function Home() {
                 {loaded && (
                     <motion.div ref={mainRef} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative bg-[#050505] text-white overflow-x-hidden">
                         <div className="fixed inset-0 z-[1] pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-                        <SidebarNav open={menuOpen} onClose={() => setMenuOpen(false)} onStartOnboarding={() => setOnboardingOpen(true)} />
-                        <AnimatePresence>{onboardingOpen && <InlineOnboarding onComplete={() => setOnboardingOpen(false)} />}</AnimatePresence>
+                        <SidebarNav open={menuOpen} onClose={() => setMenuOpen(false)} />
 
                         {/* ─── HEADER ─── */}
                         <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-6 mix-blend-exclusion" style={{ zIndex: 60 }}>
@@ -718,15 +648,22 @@ export default function Home() {
                                 <Shield className="w-5 h-5" />
                                 <span className="text-sm font-black tracking-tight uppercase italic">CVBER</span>
                             </Link>
+                            <div className="hidden md:flex items-center gap-8">
+                                <Link href="/features" className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity">Features</Link>
+                                <Link href="/how-it-works" className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity">How It Works</Link>
+                                <Link href="/art-hub" className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity">Art Hub</Link>
+                                <Link href="/blog" className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity">Blog</Link>
+                                <Link href="/verify" className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity">Verify</Link>
+                            </div>
                             <div className="flex items-center gap-8">
                                 <Link href="/login" className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity">Log In</Link>
-                                <button onClick={() => setOnboardingOpen(true)} className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity">Get Started</button>
-                                <button onClick={() => setMenuOpen(true)} className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity">Menu</button>
+                                <Link href="/gate" className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity">Apply for Access</Link>
+                                <button onClick={() => setMenuOpen(true)} className="text-[10px] font-bold uppercase tracking-[0.25em] hover:opacity-60 transition-opacity md:hidden">Menu</button>
                             </div>
                         </header>
 
                         {/* ─── HERO ─── */}
-                        <Hero onGetStarted={() => setOnboardingOpen(true)} />
+                        <Hero />
 
                         {/* ─── STATS ─── */}
                         <Stats />
@@ -793,9 +730,9 @@ export default function Home() {
                                 <h2 className="text-6xl md:text-8xl lg:text-[100px] font-black tracking-tighter leading-[0.85] mb-6 uppercase italic" data-child>Join the<br />Resistance.</h2>
                                 <p className="text-zinc-500 text-xs max-w-md mx-auto mb-14 tracking-widest uppercase font-bold" data-child>Reclaim your digital sovereignty today.</p>
                                 <div data-child>
-                                    <button onClick={() => setOnboardingOpen(true)} data-hover className="px-12 py-4 bg-white text-black rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-zinc-100 transition-all active:scale-[0.97] shadow-[0_0_30px_rgba(255,255,255,0.05)] hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]">
-                                        Secure Your Art
-                                    </button>
+                                    <Link href="/gate" data-hover className="px-12 py-4 bg-white text-black rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-zinc-100 transition-all active:scale-[0.97] shadow-[0_0_30px_rgba(255,255,255,0.05)] hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+                                        Apply for Access
+                                    </Link>
                                 </div>
                             </div>
                         </section>
@@ -842,9 +779,13 @@ export default function Home() {
                                     <span className="text-xs font-black tracking-tighter uppercase italic">CVBER</span>
                                 </div>
                                 <div className="flex flex-wrap justify-center gap-8">
+                                    <Link href="/features" className="hover:text-white">Features</Link>
+                                    <Link href="/how-it-works" className="hover:text-white">How It Works</Link>
+                                    <Link href="/art-hub" className="hover:text-white">Art Hub</Link>
+                                    <Link href="/blog" className="hover:text-white">Blog</Link>
+                                    <Link href="/verify" className="hover:text-white">Verify</Link>
                                     <Link href="/terms" className="hover:text-white">Terms</Link>
                                     <Link href="/privacy" className="hover:text-white">Privacy</Link>
-                                    <Link href="/art-hub" className="hover:text-white">Help</Link>
                                 </div>
                                 <div className="opacity-40">&copy; 2026 CVBER</div>
                             </div>

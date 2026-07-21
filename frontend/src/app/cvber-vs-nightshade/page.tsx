@@ -78,7 +78,7 @@ export default function CvberVsNightshade() {
                         <h3 className="text-xl font-bold text-white mb-4">Protect Your Art With Both Tools</h3>
                         <p className="text-zinc-400 mb-6">Start with CVBER free C2PA certificates and automated DMCA takedowns.</p>
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                            <Link href="/register" className="px-6 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-wider hover:bg-zinc-200 transition-all">Get Started Free</Link>
+                            <Link href="/gate" className="px-6 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-wider hover:bg-zinc-200 transition-all">Apply for Access</Link>
                             <Link href="/how-to-protect-your-art" className="px-6 py-3 border border-white/10 text-white rounded-full font-bold text-xs uppercase tracking-wider hover:bg-white/5 transition-all">Read Full Guide</Link>
                         </div>
                     </div>

@@ -89,10 +89,10 @@ Disallow: /`}
                         <li><strong>DMCA</strong> — Enforcement</li>
                     </ol>
 
-                    <div className="mt-16 p-8 rounded-3xl bg-purple-500/10 border border-purple-500/20">
+                    <div className="mt-16 p-8 rounded-3xl bg-[#0D3D3D]/30 border border-[#00f0ff]/20">
                         <h3 className="text-xl font-bold mb-4">Start Opting Out Today</h3>
                         <p className="mb-6">CVBER provides free C2PA certificates with opt-out signals recognized by major AI companies.</p>
-                        <Link href="/register" className="inline-block px-8 py-4 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all">Get Started Free</Link>
+                        <Link href="/gate" className="inline-block px-8 py-4 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all">Apply for Access</Link>
                     </div>
                 </div>
                 {/* --- Related Articles --- */}
@@ -107,7 +107,7 @@ Disallow: /`}
                         <h4 className="text-sm font-bold text-white mb-2 uppercase tracking-wider">Protect Your Art Now</h4>
                         <p className="text-sm text-zinc-400 mb-4">Get free C2PA certificates and DMCA takedowns for your digital work.</p>
                         <div className="flex flex-col sm:flex-row gap-3">
-                            <Link href="/register" className="px-5 py-2.5 bg-white text-black rounded-full font-bold text-xs uppercase tracking-wide hover:bg-zinc-200 transition-all text-center">Get Started Free</Link>
+                            <Link href="/gate" className="px-5 py-2.5 bg-white text-black rounded-full font-bold text-xs uppercase tracking-wide hover:bg-zinc-200 transition-all text-center">Apply for Access</Link>
                             <Link href="/how-to-protect-your-art" className="px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wide text-zinc-400 hover:text-white border border-white/[0.08] hover:border-white/20 transition-all text-center">Read Full Guide</Link>
                         </div>
                     </div>

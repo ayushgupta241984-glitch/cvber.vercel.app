@@ -216,10 +216,10 @@ export default function AboutPage() {
                     </motion.p>
                     <motion.div variants={fadeIn}>
                         <Link
-                            href="/register"
+                            href="/gate"
                             className="inline-flex items-center px-10 py-4 bg-white text-black rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all"
                         >
-                            Get Started Free
+                            Apply for Access
                         </Link>
                     </motion.div>
                 </motion.div>

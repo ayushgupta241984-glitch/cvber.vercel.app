@@ -150,8 +150,8 @@ export default function HowItWorksPage() {
                         className="font-display text-4xl md:text-6xl font-bold text-luxury-cream mb-12 leading-tight gold-glow">
                         Ready to start?
                     </motion.h2>
-                    <Link href="/register" className="btn-primary inline-flex items-center gap-3 group">
-                        Secure Your Legacy <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    <Link href="/gate" className="btn-primary inline-flex items-center gap-3 group">
+                        Apply for Access <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                     <p className="mt-6 text-sm text-zinc-500">
                         <Link href="/how-to-protect-your-art" className="text-purple-400 hover:text-purple-300 transition-colors">Read our complete guide to protecting your art →</Link>

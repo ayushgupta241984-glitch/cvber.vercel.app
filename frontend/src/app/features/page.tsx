@@ -115,8 +115,8 @@ export default function FeaturesPage() {
                         className="font-display text-4xl md:text-6xl font-bold text-luxury-cream mb-10 leading-tight gold-glow">
                         Start protecting your art.
                     </motion.h2>
-                    <Link href="/register" className="btn-primary inline-flex items-center gap-3 group">
-                        Secure Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    <Link href="/gate" className="btn-primary inline-flex items-center gap-3 group">
+                        Apply for Access <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                     <p className="mt-4 text-xs text-zinc-500">Free — no credit card required</p>
                     <p className="mt-2 text-sm text-zinc-500">

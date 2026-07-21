@@ -99,10 +99,10 @@ export default function CVBERVsGlaze() {
                 </p>
 
                 <div className="grid md:grid-cols-2 gap-8">
-                    <div className="p-8 rounded-3xl bg-purple-500/10 border border-purple-500/20">
+                    <div className="p-8 rounded-3xl bg-[#0D3D3D]/30 border border-[#00f0ff]/20">
                         <h3 className="text-xl font-bold mb-4">Start with CVBER</h3>
                         <p className="text-zinc-400 mb-6">Free C2PA certificates, DMCA automation, and monitoring.</p>
-                        <Link href="/register" className="inline-block px-8 py-4 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all">Get Started Free</Link>
+                        <Link href="/gate" className="inline-block px-8 py-4 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all">Apply for Access</Link>
                     </div>
                     <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5">
                         <h3 className="text-xl font-bold mb-4">Add Glaze</h3>

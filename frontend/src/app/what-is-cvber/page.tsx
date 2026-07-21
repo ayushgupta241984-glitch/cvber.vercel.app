@@ -109,10 +109,10 @@ export default function WhatIsCVBER() {
                     </section>
                 </div>
 
-                <div className="mt-16 p-8 rounded-3xl bg-gradient-to-br from-purple-600 to-purple-800 text-center">
+                <div className="mt-16 p-8 rounded-3xl bg-gradient-to-br from-[#0D3D3D] to-[#1a5a5a] text-center">
                     <h3 className="text-2xl font-bold mb-4">Try CVBER Free</h3>
-                    <p className="text-purple-100/70 mb-8">No credit card required. Start protecting your art in seconds.</p>
-                    <Link href="/register" className="inline-block px-10 py-5 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all">Get Started Free</Link>
+                    <p className="text-zinc-300/70 mb-8">No credit card required. Start protecting your art in seconds.</p>
+                    <Link href="/gate" className="inline-block px-10 py-5 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all">Apply for Access</Link>
                 </div>
             </article>
         </div>

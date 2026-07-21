@@ -145,8 +145,8 @@ export default function SEOLandingPage({
                 <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">{h1}</h1>
                 <p className="text-xl text-zinc-400 max-w-3xl leading-relaxed mb-8">{description}</p>
                 <div className="flex gap-4">
-                    <a href="/register" className="px-8 py-4 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all">
-                        Start Free Protection
+                    <a href="/gate" className="px-8 py-4 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all">
+                        Apply for Access
                     </a>
                     <a href="/features" className="px-8 py-4 border border-white/20 rounded-full font-bold text-sm uppercase tracking-widest hover:bg-white/5 transition-all">
                         See Features
@@ -210,11 +210,11 @@ export default function SEOLandingPage({
 
             {/* CTA */}
             <section className="py-20 px-6 max-w-5xl mx-auto">
-                <div className="p-12 rounded-[3rem] bg-gradient-to-br from-purple-600 to-purple-800 text-center">
+                <div className="p-12 rounded-[3rem] bg-gradient-to-br from-[#0D3D3D] to-[#1a5a5a] text-center">
                     <h2 className="text-4xl font-black tracking-tight mb-4">Protect Your Art Today</h2>
-                    <p className="text-purple-100/70 mb-8 max-w-xl mx-auto">Join thousands of artists using CVBER to protect their creative work from AI theft and unauthorized use.</p>
-                    <a href="/register" className="px-10 py-5 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all inline-block">
-                        Get Started Free
+                    <p className="text-zinc-300/70 mb-8 max-w-xl mx-auto">Join thousands of artists using CVBER to protect their creative work from AI theft and unauthorized use.</p>
+                    <a href="/gate" className="px-10 py-5 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all inline-block">
+                        Apply for Access
                     </a>
                 </div>
             </section>

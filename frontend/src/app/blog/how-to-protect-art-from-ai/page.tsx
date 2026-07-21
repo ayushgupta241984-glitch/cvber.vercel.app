@@ -90,7 +90,7 @@ export default function HowToProtectArtFromAI() {
                         <strong>Why it works:</strong> Major AI companies (OpenAI, Google, Adobe, Microsoft) have committed to respecting C2PA opt-out signals. When your art has a C2PA certificate, AI companies know they can&apos;t legally train on it.
                     </p>
                     <p>
-                        <strong>How to get one:</strong> Sign up for <Link href="/register" className="text-purple-400 hover:text-purple-300">CVBER</Link> (free), upload your art, and get a C2PA certificate in seconds.
+                        <strong>How to get one:</strong> Sign up for <Link href="/gate" className="text-[#00f0ff] hover:text-[#00f0ff]/70">CVBER</Link> (free), upload your art, and get a C2PA certificate in seconds.
                     </p>
 
                     <h2 className="text-2xl font-bold text-white mt-12">Method 2: Glaze & Nightshade</h2>
@@ -152,11 +152,11 @@ Disallow: /`}
                         <li><strong>Robots.txt</strong> — Opt-out signals (free, add to your site)</li>
                     </ol>
 
-                    <div className="mt-16 p-8 rounded-3xl bg-purple-500/10 border border-purple-500/20">
+                    <div className="mt-16 p-8 rounded-3xl bg-[#0D3D3D]/30 border border-[#00f0ff]/20">
                         <h3 className="text-xl font-bold mb-4">Start Protecting Your Art Today</h3>
                         <p className="mb-6">CVBER is free. No credit card required. Upload your art and get C2PA certificates in seconds.</p>
-                        <Link href="/register" className="inline-block px-8 py-4 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all">
-                            Get Started Free
+                        <Link href="/gate" className="inline-block px-8 py-4 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all">
+                            Apply for Access
                         </Link>
                     </div>
                 </div>
@@ -172,7 +172,7 @@ Disallow: /`}
                         <h4 className="text-sm font-bold text-white mb-2 uppercase tracking-wider">Protect Your Art Now</h4>
                         <p className="text-sm text-zinc-400 mb-4">Get free C2PA certificates and DMCA takedowns for your digital work.</p>
                         <div className="flex flex-col sm:flex-row gap-3">
-                            <Link href="/register" className="px-5 py-2.5 bg-white text-black rounded-full font-bold text-xs uppercase tracking-wide hover:bg-zinc-200 transition-all text-center">Get Started Free</Link>
+                            <Link href="/gate" className="px-5 py-2.5 bg-white text-black rounded-full font-bold text-xs uppercase tracking-wide hover:bg-zinc-200 transition-all text-center">Apply for Access</Link>
                             <Link href="/how-to-protect-your-art" className="px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wide text-zinc-400 hover:text-white border border-white/[0.08] hover:border-white/20 transition-all text-center">Read Full Guide</Link>
                         </div>
                     </div>

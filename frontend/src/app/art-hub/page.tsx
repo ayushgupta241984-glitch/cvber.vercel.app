@@ -111,8 +111,8 @@ export default function FAQPage() {
                     <div className="relative z-10">
                         <h2 className="font-display text-3xl md:text-5xl font-bold text-luxury-cream mb-6 leading-tight gold-glow">Need more help?</h2>
                         <p className="text-luxury-muted font-sans mb-10 max-w-xl mx-auto">Our security mentors can help you navigate specific copyright issues and content protection scenarios.</p>
-                        <Link href="/register" className="btn-primary inline-flex items-center gap-3">
-                            Secure Your Portfolio <ArrowRight className="w-4 h-4" />
+                        <Link href="/gate" className="btn-primary inline-flex items-center gap-3">
+                            Apply for Access <ArrowRight className="w-4 h-4" />
                         </Link>
                     </div>
                 </motion.div>
