@@ -71,4 +71,18 @@
 
 @layer utilities {
     .text-balance { text-wrap: balance; }
+    .bg-fixed-mona {
+        background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCf7gvB9TPVurApCRKFD7_qSFPs1D7QKSznj5XT3j_6Ph0fx2_KMKnxzB-Tyug8OqRCiq2TeFRH_tKI7Mt6KEbEKFvhu_z7sDG9G7c4VxXtR_ZsiEMT6DNnLrIMP6VtlHNGkJIp8g-7j7ZDyS6mzBoOZ6Cjx_pPd64sj3DDxa5IBvPDaNAtOHFgDN_IsLmacpxmEY1t7Qg73RJY_RqKjsbuLRL4doRYVbQY7b_VgXNbHGxPlDY8RBZ9zXadvvZcsfnK6w");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+    }
+    .bg-fixed-mona::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.82);
+        z-index: 0;
+    }
 }
