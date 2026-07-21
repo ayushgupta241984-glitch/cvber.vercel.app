@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const { withReticle } = require('@reticlehq/next');
+
 const nextConfig = {
     experimental: {
         serverActions: {
@@ -91,4 +93,4 @@ const nextConfig = {
     },
 }
 
-module.exports = nextConfig
+module.exports = withReticle(nextConfig)
