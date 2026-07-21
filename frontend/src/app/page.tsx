@@ -640,6 +640,7 @@ export default function Home() {
                 {loaded && (
                     <motion.div ref={mainRef} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative bg-[#050505] text-white overflow-x-hidden">
                         <div className="fixed inset-0 z-[1] pointer-events-none" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+                        <div className="fixed bottom-8 left-8 z-[2] pointer-events-none text-[9px] text-white/20 font-mono tracking-wider">Mona Lisa — Leonardo da Vinci, c. 1503</div>
                         <SidebarNav open={menuOpen} onClose={() => setMenuOpen(false)} />
 
                         {/* ─── HEADER ─── */}
@@ -665,8 +666,9 @@ export default function Home() {
                         {/* ─── HERO ─── */}
                         <section className="relative z-10 h-screen flex flex-col items-center justify-center px-6 snap-start overflow-hidden">
                             <div className="absolute inset-0 z-0">
-                                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkS2ZMyPfVAk-ZQDoCq9HqsCcxRUvDZW3VE3p8ZorqDvX6CfHVYDzx_4_MiYIGXXZOLV58oNJVTg5qrzQXkpk4ufMwXmMUfnY1ubYjerze6W1T4VnfMqANJuTLf5LiRPUyi3568imHoPl7T3yZ2kHBBVlqjG162vG7iObOqVAeL0drw3xdtinJ3kMgS99dwknnRXOAjKOAi4fgGmzd5-sQz4DVMcw-vK_0B4s2Xwn_G6RFZYjNVNAt" alt="" className="w-full h-full object-cover opacity-20" />
-                                <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/60 via-[#050505]/40 to-[#050505]/90" />
+                                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkS2ZMyPfVAk-ZQDoCq9HqsCcxRUvDZW3VE3p8ZorqDvX6CfHVYDzx_4_MiYIGXXZOLV58oNJVTg5qrzQXkpk4ufMwXmMUfnY1ubYjerze6W1T4VnfMqANJuTLf5LiRPUyi3568imHoPl7T3yZ2kHBBVlqjG162vG7iObOqVAeL0drw3xdtinJ3kMgS99dwknnRXOAjKOAi4fgGmzd5-sQz4DVMcw-vK_0B4s2Xwn_G6RFZYjNVNAt" alt="" className="w-full h-full object-cover opacity-40" />
+                                <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/30 via-transparent to-[#050505]/70" />
+                                <div className="absolute bottom-8 right-8 z-10 text-[9px] text-white/30 font-mono tracking-wider">The Concert — Vermeer, c. 1664</div>
                             </div>
                             <Hero />
                         </section>
@@ -683,8 +685,9 @@ export default function Home() {
                         {/* ─── PRODUCT WALKTHROUGH (scroll-driven) ─── */}
                         <section className="relative z-10 snap-start">
                             <div className="absolute inset-0 z-0">
-                                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRVqZHy5VcnFaUDqXaLiHA1ucNKUws9Kl_gb9nPiPTkTN9-D9PMdZLE6J33UBem9ysE5U2vWCBH3vvDEPlVPPUXdFfdpKCWCblS22KPA-s96mUmYXSNQat6lE-6AxhiC-WJUnjMDhmUczTccOJjrO_VKYgWtQDVXBkrk-YnrVfTu_Qgg-ElAyPWFNtylWg2I8cTYmU5kG5nkTcqCFa-6Nzgug42dHA3Ko9r88n_XaIeKotwxxeuJtqT1mNJQ4_BZi26A" alt="" className="w-full h-full object-cover opacity-15" />
-                                <div className="absolute inset-0 bg-[#050505]/70" />
+                                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRVqZHy5VcnFaUDqXaLiHA1ucNKUws9Kl_gb9nPiPTkTN9-D9PMdZLE6J33UBem9ysE5U2vWCBH3vvDEPlVPPUXdFfdpKCWCblS22KPA-s96mUmYXSNQat6lE-6AxhiC-WJUnjMDhmUczTccOJjrO_VKYgWtQDVXBkrk-YnrVfTu_Qgg-ElAyPWFNtylWg2I8cTYmU5kG5nkTcqCFa-6Nzgug42dHA3Ko9r88n_XaIeKotwxxeuJtqT1mNJQ4_BZi26A" alt="" className="w-full h-full object-cover opacity-30" />
+                                <div className="absolute inset-0 bg-[#050505]/50" />
+                                <div className="absolute bottom-8 right-8 z-10 text-[9px] text-white/30 font-mono tracking-wider">Nativity — El Greco, c. 1600</div>
                             </div>
                             <ProductWalkthrough />
                         </section>
@@ -738,8 +741,9 @@ export default function Home() {
                         {/* ─── CTA ─── */}
                         <section className="relative z-10 h-screen flex items-center justify-center px-6 snap-start border-t border-white/[0.04] overflow-hidden" data-anim="cta">
                             <div className="absolute inset-0 z-0">
-                                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKmv6IpYjFsMLWhrEHuX35GKsJ71aTZKVy2QnBsEF_ZrBtjIWX6ytGvhLzFaGrXTmpx292BH7s5DDIqY2hA9oGfTodmmUg_UZ9abKAGkG2vhMtBAT42KzepFpA7MHOGwekzsIj3qh_OWO_aiiOEu13MCfpiWXYrrNDohPBF8Ecm8i8GGn-llDyGQUSq9Zh-hnrbjkXWuGtZAj2z9b8mJYTGivSRVnfj2e1Eahv__ZA8VFKLduPTz39tajySirD8Gwl4g" alt="" className="w-full h-full object-cover opacity-20" />
-                                <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/70 via-[#050505]/50 to-[#050505]/90" />
+                                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKmv6IpYjFsMLWhrEHuX35GKsJ71aTZKVy2QnBsEF_ZrBtjIWX6ytGvhLzFaGrXTmpx292BH7s5DDIqY2hA9oGfTodmmUg_UZ9abKAGkG2vhMtBAT42KzepFpA7MHOGwekzsIj3qh_OWO_aiiOEu13MCfpiWXYrrNDohPBF8Ecm8i8GGn-llDyGQUSq9Zh-hnrbjkXWuGtZAj2z9b8mJYTGivSRVnfj2e1Eahv__ZA8VFKLduPTz39tajySirD8Gwl4g" alt="" className="w-full h-full object-cover opacity-40" />
+                                <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/40 via-transparent to-[#050505]/70" />
+                                <div className="absolute bottom-8 right-8 z-10 text-[9px] text-white/30 font-mono tracking-wider">Christ in the Storm — Rubens, c. 1635</div>
                             </div>
                             <div className="text-center max-w-3xl relative z-10">
                                 <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-6" data-child>CVBER</div>
