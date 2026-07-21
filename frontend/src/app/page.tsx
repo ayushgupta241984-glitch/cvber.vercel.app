@@ -4,8 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Shield, ArrowRight, X, Menu, Eye, Scan, Lock, Zap, ChevronRight, ArrowUpRight } from "lucide-react";
 
-const VIDEO_URL = "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4";
-
 const PAINTINGS = {
   adoration: "https://lh3.googleusercontent.com/aida-public/AB6AXuDRVqZHy5VcnFaUDqXaLiHA1ucNKUws9Kl_gb9nPiPTkTN9-D9PMdZLE6J33UBem9ysE5U2vWCBH3vvDEPlVPPUXdFfdpKCWCblS22KPA-s96mUmYXSNQat6lE-6AxhiC-WJUnjMDhmUczTccOJjrO_VKYgWtQDVXBkrk-YnrVfTu_Qgg-ElAyPWFNtylWg2I8cTYmU5kG5nkTcqCFa-6Nzgug42dHA3Ko9r88n_XaIeKotwxxeuJtqT1mNJQ4_BZi26A",
   vermeer: "https://lh3.googleusercontent.com/aida-public/AB6AXuDkS2ZMyPfVAk-ZQDoCq9HqsCcxRUvDZW3VE3p8ZorqDvX6CfHVYDzx_4_MiYIGXXZOLV58oNJVTg5qrzQXkpk4ufMwXmMUfnY1ubYjerze6W1T4VnfMqANJuTLf5LiRPUyi3568imHoPl7T3yZ2kHBBVlqjG162vG7iObOqVAeL0drw3xdtinJ3kMgS99dwknnRXOAjKOAi4fgGmzd5-sQz4DVMcw-vK_0B4s2Xwn_G6RFZYjNVNAt",
@@ -100,19 +98,8 @@ function Hero() {
         className="absolute inset-0 w-full h-full object-cover object-center z-0"
       />
 
-      {/* Video overlay — plays on top of painting */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover z-[1] opacity-40"
-      >
-        <source src={VIDEO_URL} type="video/mp4" />
-      </video>
-
       {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 z-[2] bg-gradient-to-b from-background/70 via-background/40 to-background/90" />
+      <div className="absolute inset-0 z-[1] bg-gradient-to-b from-background/70 via-background/40 to-background/90" />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center px-6 pt-32 pb-40">
