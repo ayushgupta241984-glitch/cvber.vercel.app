@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { Playfair_Display, Plus_Jakarta_Sans, Geist } from "next/font/google";
+import { Playfair_Display, Plus_Jakarta_Sans, Geist, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import LenisProvider from "@/providers/LenisProvider";
 import Navbar from "@/components/layout/Navbar";
@@ -10,6 +10,14 @@ import DemoModeBanner from "@/components/DemoModeBanner";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+
+const instrumentSerif = Instrument_Serif({
+    subsets: ["latin"],
+    variable: "--font-instrument",
+    display: "swap",
+    weight: "400",
+    style: ["normal", "italic"],
+});
 
 const playfair = Playfair_Display({
     subsets: ["latin"],
@@ -100,7 +108,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className={cn(playfair.variable, jakarta.variable, "font-sans", geist.variable)}>
+        <html lang="en" className={cn(playfair.variable, jakarta.variable, "font-sans", geist.variable, instrumentSerif.variable)}>
             <head>
                 <Script
                     src="https://www.googletagmanager.com/gtag/js?id=G-EW5JZREK1V"
