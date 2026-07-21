@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -8,7 +8,7 @@ import { Shield, ArrowRight, Check, Clock, Loader2 } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "https://cvber.free.las.app";
 
-export default function ClaimPage() {
+function ClaimForm() {
     const searchParams = useSearchParams();
     const emailParam = searchParams.get("email") || "";
 
@@ -193,5 +193,17 @@ export default function ClaimPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function ClaimPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+            </div>
+        }>
+            <ClaimForm />
+        </Suspense>
     );
 }
