@@ -102,7 +102,7 @@ async def strip_image_errors_middleware(request: Request, call_next):
             pass
     return response
 
-trusted_hosts = ["cvber-free-las-app.onrender.com", "cvber.vercel.app", "localhost"]
+trusted_hosts = ["cvber-free-las-app.onrender.com", "cvber.vercel.app", "cvber.free.las.app", "localhost"]
 if settings.allowed_origins and settings.allowed_origins != "*":
     trusted_hosts.append(settings.allowed_origins.replace("https://", "").replace("http://", ""))
 app.add_middleware(
