@@ -14,7 +14,7 @@ from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.dependencies import is_mock_mode
 from app.rate_limiter import limiter
-from app.routers import scan, auth, mentor, enforcement, diagnostics, vault, agent, leads, feedback, image_search, watermark, ai
+from app.routers import scan, auth, mentor, enforcement, diagnostics, vault, agent, leads, feedback, image_search, watermark, ai, gate
 from app.services.vertex_ai import vertex_ai_service
 from app.services.storage import storage_service
 
@@ -164,6 +164,7 @@ app.include_router(feedback.router)
 app.include_router(image_search.router)
 app.include_router(watermark.router)
 app.include_router(ai.router)
+app.include_router(gate.router)
 
 
 @app.api_route("/", methods=["GET", "HEAD"])
