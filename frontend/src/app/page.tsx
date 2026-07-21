@@ -27,7 +27,7 @@ function Hero() {
                 <img
                     src={PAINTINGS.monaLisa}
                     alt="Mona Lisa by Leonardo da Vinci"
-                    className="w-full h-full object-cover object-bottom opacity-50"
+                    className="w-full h-full object-cover object-top opacity-50"
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
             </div>
@@ -194,7 +194,7 @@ function FeaturedPaintingSection() {
                         alt="The Concert by Johannes Vermeer"
                         className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
                     {/* Bottom overlay content */}
                     <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 flex flex-col md:flex-row items-end md:items-center justify-between gap-6">
@@ -252,7 +252,7 @@ function PhilosophySection() {
                             alt="Nativity by El Greco"
                             className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                         <div className="absolute bottom-4 right-4 text-[9px] text-white/30 font-mono tracking-wider">
                             Nativity — El Greco, c. 1600
                         </div>
@@ -346,7 +346,7 @@ function ServicesSection() {
                                     alt={s.title}
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                                 <div className="absolute bottom-3 right-3 text-[9px] text-white/30 font-mono tracking-wider">
                                     {s.label}
                                 </div>
