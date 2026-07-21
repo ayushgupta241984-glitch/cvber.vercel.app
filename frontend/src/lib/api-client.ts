@@ -1,4 +1,4 @@
-export const BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/+$/, '');
+export const BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'https://cvber-free-las-app.onrender.com').replace(/\/+$/, '');
 
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/+$/, '');
+const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'https://cvber-free-las-app.onrender.com').replace(/\/+$/, '');
 
 export async function GET(request: NextRequest) {
     const fileId = request.nextUrl.searchParams.get('fileId');

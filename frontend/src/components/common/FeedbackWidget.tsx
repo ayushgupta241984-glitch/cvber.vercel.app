@@ -17,7 +17,7 @@ export function FeedbackWidget() {
         try {
             const token = localStorage.getItem("access_token");
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"}/api/feedback/submit`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL || "https://cvber-free-las-app.onrender.com"}/api/feedback/submit`,
                 {
                     method: "POST",
                     headers: {

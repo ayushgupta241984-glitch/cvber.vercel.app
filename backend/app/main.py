@@ -1,6 +1,7 @@
 import os
 import time
 import json
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -19,6 +20,29 @@ from app.services.vertex_ai import vertex_ai_service
 from app.services.storage import storage_service
 
 logger = logging.getLogger(__name__)
+
+
+async def _gate_sweep_loop():
+    """Background loop: auto-accept pending gate applications every 60s."""
+    await asyncio.sleep(120)
+    while True:
+        try:
+            from app.routers.gate import _applications
+            now = datetime.now(timezone.utc)
+            accepted = 0
+            for email, app_data in _applications.items():
+                if app_data["status"] == "pending":
+                    created = datetime.fromisoformat(app_data["created_at"])
+                    if (now - created).total_seconds() >= 120:
+                        app_data["status"] = "accepted"
+                        app_data["reviewed_at"] = now.isoformat()
+                        app_data["accepted_at"] = now.isoformat()
+                        accepted += 1
+            if accepted:
+                logger.info(f"Gate sweep: auto-accepted {accepted} applications")
+        except Exception as e:
+            logger.warning(f"Gate sweep error: {e}")
+        await asyncio.sleep(60)
 
 
 @asynccontextmanager
@@ -50,8 +74,17 @@ async def lifespan(app: FastAPI):
     provider_status = vertex_ai_service.get_provider_status()
     logger.info(f"AI provider status: {json.dumps(provider_status, default=str)}")
 
+    sweep_task = asyncio.create_task(_gate_sweep_loop())
+    logger.info("Gate sweep background task started")
+
     app.state.start_time = time.time()
     yield
+
+    sweep_task.cancel()
+    try:
+        await sweep_task
+    except asyncio.CancelledError:
+        pass
 
 
 app = FastAPI(

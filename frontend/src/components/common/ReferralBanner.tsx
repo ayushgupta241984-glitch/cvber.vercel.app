@@ -15,7 +15,7 @@ export function ReferralBanner() {
             if (!token) return;
             try {
                 const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"}/api/feedback/referral/generate`,
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL || "https://cvber-free-las-app.onrender.com"}/api/feedback/referral/generate`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 if (res.ok) {

@@ -92,7 +92,7 @@ class Settings(BaseSettings):
     c2pa_service_url: str = "http://localhost:3001"
     
     # CORS - stored as comma-separated string
-    allowed_origins: str = "http://localhost:3000,http://localhost:3002,https://cvber.vercel.app,https://cvber.app,https://cvber.free.las.app,https://cvber-free-las-app.vercel.app"
+    allowed_origins: str = "http://localhost:3000,http://localhost:3002,https://cvber.vercel.app,https://cvber.app,https://cvber.free.las.app,https://cvber-free-las-app.onrender.com"
     
     @property
     def parsed_allowed_origins(self) -> list:

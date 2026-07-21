@@ -21,7 +21,7 @@ function LoginForm() {
             (async () => {
                 try {
                     const resp = await fetch(
-                        `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/auth/me`,
+                        `${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://cvber-free-las-app.onrender.com'}/auth/me`,
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
                     if (!resp.ok) return;

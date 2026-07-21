@@ -6,7 +6,7 @@ export default function DemoModeBanner() {
     const [isMock, setIsMock] = useState(false);
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/status`, {
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://cvber-free-las-app.onrender.com'}/api/status`, {
             signal: AbortSignal.timeout(5000),
         })
             .then((r) => r.json())
