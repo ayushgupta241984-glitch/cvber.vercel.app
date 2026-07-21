@@ -1,34 +1,22 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { Playfair_Display, Plus_Jakarta_Sans, Geist, Instrument_Serif } from "next/font/google";
+import { Inter, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import LenisProvider from "@/providers/LenisProvider";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import RouteWrapper from "./RouteWrapper";
 import GlobalSchema from "@/components/seo/GlobalSchema";
 import DemoModeBanner from "@/components/DemoModeBanner";
+import { ReticleDev } from "./reticle-dev";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
 
 const instrumentSerif = Instrument_Serif({
     subsets: ["latin"],
-    variable: "--font-instrument",
+    variable: "--font-display",
     display: "swap",
     weight: "400",
     style: ["normal", "italic"],
-});
-
-const playfair = Playfair_Display({
-    subsets: ["latin"],
-    variable: "--font-playfair",
-    display: "swap",
-});
-
-const jakarta = Plus_Jakarta_Sans({
-    subsets: ["latin"],
-    variable: "--font-jakarta",
-    display: "swap",
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://cvber.vercel.app";
@@ -108,7 +96,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className={cn(playfair.variable, jakarta.variable, "font-sans", geist.variable, instrumentSerif.variable)}>
+        <html lang="en" className={cn(inter.variable, instrumentSerif.variable, "font-sans")}>
             <head>
                 <Script
                     src="https://www.googletagmanager.com/gtag/js?id=G-EW5JZREK1V"
@@ -123,15 +111,12 @@ export default function RootLayout({
                     `}
                 </Script>
             </head>
-            <body className="font-sans antialiased bg-fixed-mona">
+            <body className="font-sans antialiased">
+                {process.env.NODE_ENV === "development" ? <ReticleDev /> : null}
                 <GlobalSchema />
                 <DemoModeBanner />
                 <LenisProvider>
-                    <Navbar />
-                    <main className="min-h-screen">
-                        {children}
-                    </main>
-                    <Footer />
+                    <RouteWrapper>{children}</RouteWrapper>
                 </LenisProvider>
             </body>
         </html>
