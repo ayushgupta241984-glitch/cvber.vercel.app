@@ -93,20 +93,26 @@ function Navbar() {
 function Hero() {
   return (
     <section className="relative w-full h-screen min-h-[700px] flex flex-col items-center justify-center text-center overflow-hidden">
-      {/* Background video */}
+      {/* Painting — fullscreen background */}
+      <img
+        src={PAINTINGS.adoration}
+        alt="Adoration of the Shepherds by Murillo"
+        className="absolute inset-0 w-full h-full object-cover object-center z-0"
+      />
+
+      {/* Video overlay — plays on top of painting */}
       <video
         autoPlay
         loop
         muted
         playsInline
-        className="absolute inset-0 w-full h-full object-cover z-0"
-        poster={PAINTINGS.adoration}
+        className="absolute inset-0 w-full h-full object-cover z-[1] opacity-40"
       >
         <source src={VIDEO_URL} type="video/mp4" />
       </video>
 
       {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 z-[1] bg-gradient-to-b from-background/60 via-background/30 to-background/80" />
+      <div className="absolute inset-0 z-[2] bg-gradient-to-b from-background/70 via-background/40 to-background/90" />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center px-6 pt-32 pb-40">
