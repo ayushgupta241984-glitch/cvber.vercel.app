@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const PAINTING_URLS: Record<string, string> = {
-  'mona-lisa': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Mona_Lisa.jpg/1200px-Mona_Lisa.jpg',
-  'the-concert': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Vermeer_The_Concert.jpg/1200px-Vermeer_The_Concert.jpg',
-  'the-scream': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg/1200px-Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg',
-  'poppy-flowers': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Van_Gogh_-_Vase_mit_Pechnelken.jpeg/1200px-Van_Gogh_-_Vase_mit_Pechnelken.jpeg',
+  'mona-lisa': 'https://upload.wikimedia.org/wikipedia/commons/6/6a/Mona_Lisa.jpg',
+  'the-concert': 'https://upload.wikimedia.org/wikipedia/commons/7/7f/Vermeer_The_Concert.jpg',
+  'the-scream': 'https://upload.wikimedia.org/wikipedia/commons/c/c5/Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg',
+  'poppy-flowers': 'https://upload.wikimedia.org/wikipedia/commons/4/46/Van_Gogh_-_Vase_mit_Pechnelken.jpeg',
 };
 
 export async function GET(
@@ -22,6 +22,7 @@ export async function GET(
     const resp = await fetch(url, {
       headers: {
         'User-Agent': 'CVBER/1.0 (https://cvber.vercel.app; educational art protection project)',
+        'Accept': 'image/jpeg,image/png,image/*,*/*',
       },
       signal: AbortSignal.timeout(30000),
     });
