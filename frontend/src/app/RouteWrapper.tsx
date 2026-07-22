@@ -6,9 +6,9 @@ import Footer from "@/components/layout/Footer";
 
 export default function RouteWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  const hasOwnNav = pathname === "/" || pathname === "/gate";
 
-  if (isHome) {
+  if (hasOwnNav) {
     return <>{children}</>;
   }
 
