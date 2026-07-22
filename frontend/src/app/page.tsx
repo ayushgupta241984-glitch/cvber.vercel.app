@@ -5,10 +5,10 @@ import Link from "next/link";
 import { Shield, ArrowRight, X, Menu, Eye, Scan, Lock, Zap, ChevronRight, ArrowUpRight } from "lucide-react";
 
 const PAINTINGS = {
-  adoration: "https://lh3.googleusercontent.com/aida-public/AB6AXuDRVqZHy5VcnFaUDqXaLiHA1ucNKUws9Kl_gb9nPiPTkTN9-D9PMdZLE6J33UBem9ysE5U2vWCBH3vvDEPlVPPUXdFfdpKCWCblS22KPA-s96mUmYXSNQat6lE-6AxhiC-WJUnjMDhmUczTccOJjrO_VKYgWtQDVXBkrk-YnrVfTu_Qgg-ElAyPWFNtylWg2I8cTYmU5kG5nkTcqCFa-6Nzgug42dHA3Ko9r88n_XaIeKotwxxeuJtqT1mNJQ4_BZi26A",
-  vermeer: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Vermeer_-_The_Concert.jpg/1280px-Vermeer_-_The_Concert.jpg",
-  scan1: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Girl_with_a_Pearl_Earring.jpg/800px-Girl_with_a_Pearl_Earring.jpg",
-  scan2: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1024px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg",
+  adoration: "/paintings/the-concert.jpg",
+  vermeer: "/paintings/mona-lisa.jpg",
+  scan1: "/paintings/the-scream.jpg",
+  scan2: "/paintings/poppy-flowers.jpg",
 };
 
 /* ═══════════════════════════════════════════════════════
