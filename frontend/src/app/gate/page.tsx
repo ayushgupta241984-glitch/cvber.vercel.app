@@ -9,9 +9,9 @@ const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "https://cvber-free-las-
 
 const PAINTINGS = [
   { src: "https://lh3.googleusercontent.com/aida-public/AB6AXuDRVqZHy5VcnFaUDqXaLiHA1ucNKUws9Kl_gb9nPiPTkTN9-D9PMdZLE6J33UBem9ysE5U2vWCBH3vvDEPlVPPUXdFfdpKCWCblS22KPA-s96mUmYXSNQat6lE-6AxhiC-WJUnjMDhmUczTccOJjrO_VKYgWtQDVXBkrk-YnrVfTu_Qgg-ElAyPWFNtylWg2I8cTYmU5kG5nkTcqCFa-6Nzgug42dHA3Ko9r88n_XaIeKotwxxeuJtqT1mNJQ4_BZi26A", label: "Adoration of the Shepherds — Murillo, c. 1650" },
-  { src: "https://lh3.googleusercontent.com/aida-public/AB6AXuDkS2ZMyPfVAk-ZQDoCq9HqsCcxRUvDZW3VE3p8ZorqDvX6CfHVYDzx_4_MiYIGXXZOLV58oNJVTg5qrzQXkpk4ufMwXmMUfnY1ubYjerze6W1T4VnfMqANJuTLf5LiRPUyi3568imHoPl7T3yZ2kHBBVlqjG162vG7iObOqVAeL0drw3xdtinJ3kMgS99dwknnRXOAjKOAi4fgGmzd5-sQz4DVMcw-vK_0B4s2Xwn_G6RFZYjNVNAt", label: "The Concert — Vermeer, c. 1664" },
-  { src: "https://lh3.googleusercontent.com/aida-public/AB6AXuCf7gvB9TPVurApCRKFD7_qSFPs1D7QKSznj5XT3j_6Ph0fx2_KMKnxzB-Tyug8OqRCiq2TeFRH_tKI7Mt6KEbEKFvhu_z7sDG9G7c4VxXtR_ZsiEMT6DNnLrIMP6VtlHNGkJIp8g-7j7ZDyS6mzBoOZ6Cjx_pPd64sj3DDxa5IBvPDaNAtOHFgDN_IsLmacpxmEY1t7Qg73RJY_RqKjsbuLRL4doRYVbQY7b_VgXNbHGxPlDY8RBZ9zXadvvZcsfnK6w", label: "Mona Lisa — Leonardo da Vinci, c. 1503" },
-  { src: "https://lh3.googleusercontent.com/aida-public/AB6AXuAmLFKzjEQhlrwUneQJRX6az04iqOoawPZjbzYerPLFYzwFprZ8nsAthOx2WRya71NlylVG5vrJkaoUuVDwsi6Jg5-uLJGzLeKdNpkVo3h9ZVbUKubuWfZPm5JUa7-zMg6YKzkbtuWe45YNpNYmIYxCgJF_rssR3gM1wZl9CQ0cxex8TBMiU7-OOCrIGyDoME2F_pDhmL5HsMKd9g_asvTzIGmAOw3wJAV1Z1LgY67e1a7RUklD4uLbiaMMQVnbAV3iOw", label: "The Art of Painting — Vermeer, c. 1666" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Vermeer_-_The_Concert.jpg/1280px-Vermeer_-_The_Concert.jpg", label: "The Concert — Vermeer, c. 1664" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Mona_Lisa.jpg/800px-Mona_Lisa.jpg", label: "Mona Lisa — Leonardo da Vinci, c. 1503" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Johannes_Vermeer_-_The_Art_of_Painting_-_Google_Art_Project.jpg/1024px-Johannes_Vermeer_-_The_Art_of_Painting_-_Google_Art_Project.jpg", label: "The Art of Painting — Vermeer, c. 1666" },
 ];
 
 const questions = [

@@ -6,9 +6,9 @@ import { Shield, ArrowRight, X, Menu, Eye, Scan, Lock, Zap, ChevronRight, ArrowU
 
 const PAINTINGS = {
   adoration: "https://lh3.googleusercontent.com/aida-public/AB6AXuDRVqZHy5VcnFaUDqXaLiHA1ucNKUws9Kl_gb9nPiPTkTN9-D9PMdZLE6J33UBem9ysE5U2vWCBH3vvDEPlVPPUXdFfdpKCWCblS22KPA-s96mUmYXSNQat6lE-6AxhiC-WJUnjMDhmUczTccOJjrO_VKYgWtQDVXBkrk-YnrVfTu_Qgg-ElAyPWFNtylWg2I8cTYmU5kG5nkTcqCFa-6Nzgug42dHA3Ko9r88n_XaIeKotwxxeuJtqT1mNJQ4_BZi26A",
-  vermeer: "https://lh3.googleusercontent.com/aida-public/AB6AXuDkS2ZMyPfVAk-ZQDoCq9HqsCcxRUvDZW3VE3p8ZorqDvX6CfHVYDzx_4_MiYIGXXZOLV58oNJVTg5qrzQXkpk4ufMwXmMUfnY1ubYjerze6W1T4VnfMqANJuTLf5LiRPUyi3568imHoPl7T3yZ2kHBBVlqjG162vG7iObOqVAeL0drw3xdtinJ3kMgS99dwknnRXOAjKOAi4fgGmzd5-sQz4DVMcw-vK_0B4s2Xwn_G6RFZYjNVNAt",
-  scan1: "https://lh3.googleusercontent.com/aida-public/AB6AXuAmLFKzjEQhlrwUneQJRX6az04iqOoawPZjbzYerPLFYzwFprZ8nsAthOx2WRya71NlylVG5vrJkaoUuVDwsi6Jg5-uLJGzLeKdNpkVo3h9ZVbUKubuWfZPm5JUa7-zMg6YKzkbtuWe45YNpNYmIYxCgJF_rssR3gM1wZl9CQ0cxex8TBMiU7-OOCrIGyDoME2F_pDhmL5HsMKd9g_asvTzIGmAOw3wJAV1Z1LgY67e1a7RUklD4uLbiaMMQVnbAV3iOw",
-  scan2: "https://lh3.googleusercontent.com/aida-public/AB6AXuByvqicUjLaLsB5QZsVD8CqR2v4oTpItY4t_UlzhFAm1hDsCGC_naGPgmVPpCMKot61JpZgX8F53giD3btenfOZNcA39RG3DtqdiY7HMCfEeiFOTgIQDeia1OHBmR3ABwz8JN7ZpSUv7O3hpOhdAEpxxiC5GADNTC1NPRva4KMlVAbJutLMJN8JGR-VJM3_1qRysLap8ozvh66D7N5yDCPg0En61pfx_pjbbFWX_W-rOxmZiFg3XPE8MVaKubFRr-QjLw",
+  vermeer: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Vermeer_-_The_Concert.jpg/1280px-Vermeer_-_The_Concert.jpg",
+  scan1: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Girl_with_a_Pearl_Earring.jpg/800px-Girl_with_a_Pearl_Earring.jpg",
+  scan2: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1024px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg",
 };
 
 /* ═══════════════════════════════════════════════════════
