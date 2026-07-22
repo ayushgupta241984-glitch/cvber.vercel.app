@@ -207,10 +207,10 @@ export default function GatePage() {
                     className="text-4xl md:text-6xl tracking-tight text-white mb-4"
                     style={{ fontFamily: "'Instrument Serif', serif" }}
                   >
-                    You&apos;re in the queue.
+                    Application received.
                   </h1>
-                  <p className="text-white/50 mb-12 text-base" style={{ fontFamily: "system-ui, sans-serif" }}>
-                    #{position} of 10,000 spots. Auto-accepting in 2 minutes.
+                  <p className="text-white/50 mb-12 text-base max-w-md mx-auto" style={{ fontFamily: "system-ui, sans-serif" }}>
+                    Your application is being reviewed. We accept a limited number of creators each week to ensure quality access for everyone.
                   </p>
 
                   {/* ─── GLASSMORPHIC TIMER ─── */}
@@ -259,13 +259,13 @@ export default function GatePage() {
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
                       <span className="text-white/40 text-sm" style={{ fontFamily: "system-ui, sans-serif" }}>
-                        AI reviewing your application...
+                        Reviewing your application...
                       </span>
                     </div>
                   </div>
 
                   <p className="text-white/20 text-xs" style={{ fontFamily: "system-ui, sans-serif" }}>
-                    This page updates automatically when you&apos;re accepted.
+                    You&apos;ll be notified the moment a spot opens for you.
                   </p>
                 </motion.div>
               ) : step <= questions.length ? (
