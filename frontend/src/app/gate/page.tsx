@@ -84,8 +84,18 @@ export default function GatePage() {
     };
 
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center px-6">
-            <div className="w-full max-w-lg">
+        <div className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden">
+            {/* Painting — fullscreen background */}
+            <img
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRVqZHy5VcnFaUDqXaLiHA1ucNKUws9Kl_gb9nPiPTkTN9-D9PMdZLE6J33UBem9ysE5U2vWCBH3vvDEPlVPPUXdFfdpKCWCblS22KPA-s96mUmYXSNQat6lE-6AxhiC-WJUnjMDhmUczTccOJjrO_VKYgWtQDVXBkrk-YnrVfTu_Qgg-ElAyPWFNtylWg2I8cTYmU5kG5nkTcqCFa-6Nzgug42dHA3Ko9r88n_XaIeKotwxxeuJtqT1mNJQ4_BZi26A"
+                alt="Adoration of the Shepherds by Murillo"
+                className="absolute inset-0 w-full h-full object-cover object-center z-0"
+            />
+
+            {/* Dark overlay for text readability */}
+            <div className="absolute inset-0 z-[1] bg-gradient-to-b from-background/70 via-background/50 to-background/90" />
+
+            <div className="relative z-10 w-full max-w-lg">
                 <AnimatePresence mode="wait">
                     {status === "accepted" ? (
                         /* ─── ACCEPTED ─── */
