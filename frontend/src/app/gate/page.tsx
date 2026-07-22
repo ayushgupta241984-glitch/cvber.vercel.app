@@ -8,10 +8,10 @@ import { Shield, ArrowRight, Check, Clock, ArrowLeft, Loader2 } from "lucide-rea
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "https://cvber-free-las-app.onrender.com";
 
 const PAINTINGS = [
-  { src: "https://lh3.googleusercontent.com/aida-public/AB6AXuDRVqZHy5VcnFaUDqXaLiHA1ucNKUws9Kl_gb9nPiPTkTN9-D9PMdZLE6J33UBem9ysE5U2vWCBH3vvDEPlVPPUXdFfdpKCWCblS22KPA-s96mUmYXSNQat6lE-6AxhiC-WJUnjMDhmUczTccOJjrO_VKYgWtQDVXBkrk-YnrVfTu_Qgg-ElAyPWFNtylWg2I8cTYmU5kG5nkTcqCFa-6Nzgug42dHA3Ko9r88n_XaIeKotwxxeuJtqT1mNJQ4_BZi26A", label: "Adoration of the Shepherds — Murillo, c. 1650" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Vermeer_-_The_Concert.jpg/1280px-Vermeer_-_The_Concert.jpg", label: "The Concert — Vermeer, c. 1664" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Mona_Lisa.jpg/800px-Mona_Lisa.jpg", label: "Mona Lisa — Leonardo da Vinci, c. 1503" },
-  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Johannes_Vermeer_-_The_Art_of_Painting_-_Google_Art_Project.jpg/1024px-Johannes_Vermeer_-_The_Art_of_Painting_-_Google_Art_Project.jpg", label: "The Art of Painting — Vermeer, c. 1666" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Mona_Lisa.jpg/800px-Mona_Lisa.jpg", label: "Mona Lisa — Da Vinci, stolen 1911 (recovered)" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Vermeer_-_The_Concert.jpg/1280px-Vermeer_-_The_Concert.jpg", label: "The Concert — Vermeer, stolen 1990 (still missing)" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg/800px-Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg", label: "The Scream — Munch, stolen 1994 (recovered)" },
+  { src: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1024px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg", label: "Poppy Flowers — Van Gogh, stolen 2010 (still missing)" },
 ];
 
 const questions = [
