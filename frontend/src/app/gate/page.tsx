@@ -8,10 +8,10 @@ import { Shield, ArrowRight, Check, Clock, ArrowLeft, Loader2 } from "lucide-rea
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "https://cvber-free-las-app.onrender.com";
 
 const PAINTINGS = [
-  { src: "/paintings/mona-lisa.jpg", label: "Mona Lisa — Da Vinci, stolen 1911 (recovered)" },
-  { src: "/paintings/the-concert.jpg", label: "The Concert — Vermeer, stolen 1990 (still missing)" },
-  { src: "/paintings/the-scream.jpg", label: "The Scream — Munch, stolen 1994 (recovered)" },
-  { src: "/paintings/poppy-flowers.jpg", label: "Poppy Flowers — Van Gogh, stolen 2010 (still missing)" },
+  { src: "/api/paintings/mona-lisa", label: "Mona Lisa — Da Vinci, stolen 1911 (recovered)" },
+  { src: "/api/paintings/the-concert", label: "The Concert — Vermeer, stolen 1990 (still missing)" },
+  { src: "/api/paintings/the-scream", label: "The Scream — Munch, stolen 1994 (recovered)" },
+  { src: "/api/paintings/poppy-flowers", label: "Poppy Flowers — Van Gogh, stolen 2010 (still missing)" },
 ];
 
 const questions = [

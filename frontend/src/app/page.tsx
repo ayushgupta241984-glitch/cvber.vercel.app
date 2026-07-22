@@ -5,10 +5,10 @@ import Link from "next/link";
 import { Shield, ArrowRight, X, Menu, Eye, Scan, Lock, Zap, ChevronRight, ArrowUpRight } from "lucide-react";
 
 const PAINTINGS = {
-  adoration: "/paintings/the-concert.jpg",
-  vermeer: "/paintings/mona-lisa.jpg",
-  scan1: "/paintings/the-scream.jpg",
-  scan2: "/paintings/poppy-flowers.jpg",
+  adoration: "/api/paintings/the-concert",
+  vermeer: "/api/paintings/mona-lisa",
+  scan1: "/api/paintings/the-scream",
+  scan2: "/api/paintings/poppy-flowers",
 };
 
 /* ═══════════════════════════════════════════════════════
