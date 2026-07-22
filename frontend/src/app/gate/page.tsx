@@ -203,47 +203,69 @@ export default function GatePage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="text-center"
                 >
-                  <div className="flex items-center justify-center gap-3 mb-6">
-                    <Shield className="w-8 h-8 text-white" />
-                    <span
-                      className="text-sm tracking-tight uppercase text-white/50"
-                      style={{ fontFamily: "'Instrument Serif', serif" }}
-                    >
-                      CVBER
-                    </span>
-                  </div>
                   <h1
-                    className="text-3xl md:text-5xl tracking-tight text-white mb-3"
+                    className="text-4xl md:text-6xl tracking-tight text-white mb-4"
                     style={{ fontFamily: "'Instrument Serif', serif" }}
                   >
-                    Application submitted.
+                    You&apos;re in the queue.
                   </h1>
-                  <p className="text-white/50 mb-10 text-base" style={{ fontFamily: "system-ui, sans-serif" }}>
-                    You&apos;re #{position} in line. Processing automatically.
+                  <p className="text-white/50 mb-12 text-base" style={{ fontFamily: "system-ui, sans-serif" }}>
+                    #{position} of 10,000 spots. Auto-accepting in 2 minutes.
                   </p>
 
-                  <div className="relative w-40 h-40 mx-auto mb-10">
-                    <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                      <circle cx="60" cy="60" r="54" stroke="rgba(255,255,255,0.06)" strokeWidth="4" fill="none" />
-                      <circle
-                        cx="60" cy="60" r="54"
-                        stroke="white"
-                        strokeWidth="4"
-                        fill="none"
-                        strokeDasharray={`${2 * Math.PI * 54}`}
-                        strokeDashoffset={`${2 * Math.PI * 54 * (1 - remaining / 120)}`}
-                        strokeLinecap="round"
-                        className="transition-all duration-1000"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <Clock className="w-5 h-5 text-white/40 mb-1" />
-                      <span className="text-3xl font-black text-white font-mono">{formatTime(remaining)}</span>
+                  {/* ─── GLASSMORPHIC TIMER ─── */}
+                  <div className="liquid-glass rounded-3xl p-10 md:p-14 max-w-md mx-auto mb-10">
+                    {/* Ring */}
+                    <div className="relative w-48 h-48 mx-auto mb-8">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
+                        {/* Background track */}
+                        <circle cx="100" cy="100" r="88" stroke="rgba(255,255,255,0.06)" strokeWidth="3" fill="none" />
+                        {/* Progress ring */}
+                        <circle
+                          cx="100" cy="100" r="88"
+                          stroke="white"
+                          strokeWidth="3"
+                          fill="none"
+                          strokeDasharray={`${2 * Math.PI * 88}`}
+                          strokeDashoffset={`${2 * Math.PI * 88 * (1 - remaining / 120)}`}
+                          strokeLinecap="round"
+                          className="transition-all duration-1000 ease-linear"
+                        />
+                        {/* Glow dot at the tip */}
+                        <circle
+                          cx={100 + 88 * Math.cos((2 * Math.PI * (remaining / 120)) - Math.PI / 2)}
+                          cy={100 + 88 * Math.sin((2 * Math.PI * (remaining / 120)) - Math.PI / 2)}
+                          r="4"
+                          fill="white"
+                          className="transition-all duration-1000"
+                          style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.6))" }}
+                        />
+                      </svg>
+                      {/* Center display */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span
+                          className="text-5xl md:text-6xl text-white tracking-tight"
+                          style={{ fontFamily: "'Instrument Serif', serif" }}
+                        >
+                          {formatTime(remaining)}
+                        </span>
+                        <span className="text-white/30 text-xs mt-2 tracking-widest uppercase" style={{ fontFamily: "system-ui, sans-serif" }}>
+                          remaining
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Status text */}
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                      <span className="text-white/40 text-sm" style={{ fontFamily: "system-ui, sans-serif" }}>
+                        AI reviewing your application...
+                      </span>
                     </div>
                   </div>
 
-                  <p className="text-white/30 text-xs" style={{ fontFamily: "system-ui, sans-serif" }}>
-                    This page will update automatically when you&apos;re accepted.
+                  <p className="text-white/20 text-xs" style={{ fontFamily: "system-ui, sans-serif" }}>
+                    This page updates automatically when you&apos;re accepted.
                   </p>
                 </motion.div>
               ) : step <= questions.length ? (
