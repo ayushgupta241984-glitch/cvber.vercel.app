@@ -4,7 +4,7 @@ const PAINTING_URLS: Record<string, string> = {
   'mona-lisa': 'https://upload.wikimedia.org/wikipedia/commons/6/6a/Mona_Lisa.jpg',
   'the-concert': 'https://upload.wikimedia.org/wikipedia/commons/7/7f/Vermeer_The_Concert.jpg',
   'the-scream': 'https://upload.wikimedia.org/wikipedia/commons/c/c5/Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg',
-  'poppy-flowers': 'https://upload.wikimedia.org/wikipedia/commons/f/f4/Poppy_Flowers_by_Vincent_van_Gogh_1.jpg',
+  'poppy-flowers': 'https://upload.wikimedia.org/wikipedia/commons/9/92/Poppy_Flowers_by_Vincent_van_Gogh_1.jpg',
 };
 
 export async function GET(
