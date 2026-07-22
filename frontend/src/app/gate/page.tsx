@@ -111,21 +111,21 @@ export default function GatePage() {
   };
 
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-[hsl(222,47%,11%)]">
+    <section className="relative w-full h-screen overflow-hidden">
       {/* ─── PAINTINGS ─── */}
       {PAINTINGS.map((p, i) => (
         <img
           key={i}
           src={p.src}
           alt={p.label}
-          className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-[1200ms] ease-in-out ${
+          className={`absolute inset-0 w-full h-full object-cover object-center z-0 transition-opacity duration-[1200ms] ease-in-out ${
             i === activePainting ? "opacity-100" : "opacity-0"
           }`}
         />
       ))}
 
       {/* ─── DARK OVERLAY (matches hero) ─── */}
-      <div className="absolute inset-0 z-[1] bg-gradient-to-b from-[hsl(222,47%,11%)]/60 via-[hsl(222,47%,11%)]/30 to-[hsl(222,47%,11%)]/80" />
+      <div className="absolute inset-0 z-[1] bg-gradient-to-b from-background/70 via-background/40 to-background/90" />
 
       {/* ─── PAINTING LABEL ─── */}
       <div className="absolute bottom-6 right-8 z-[3] text-[9px] text-white/25 font-mono tracking-wider">
