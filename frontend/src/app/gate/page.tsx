@@ -134,28 +134,30 @@ export default function GatePage() {
 
       {/* ─── CONTENT ─── */}
       <div className="relative z-10 w-full h-full flex flex-col">
-        {/* ─── NAV (matches hero exactly) ─── */}
-        <nav className="flex items-center justify-between px-6 md:px-12 py-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Shield className="w-5 h-5 text-white" />
-            <span className="text-white text-xl md:text-2xl" style={{ fontFamily: "'Instrument Serif', serif" }}>
-              CVBER<sup className="text-[9px] ml-0.5 opacity-60">&reg;</sup>
-            </span>
-          </Link>
-          <div className="hidden md:flex items-center gap-8 text-sm text-white/50">
-            <Link href="/" className="hover:text-white transition-colors">Home</Link>
-            <Link href="/features" className="hover:text-white transition-colors">Features</Link>
-            <Link href="/how-it-works" className="hover:text-white transition-colors">How It Works</Link>
-            <Link href="/art-hub" className="hover:text-white transition-colors">Art Hub</Link>
-            <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm text-white/50 hover:text-white transition-colors hidden md:block">
-              Log In
+        {/* ─── NAV (liquid glass pill, matches hero) ─── */}
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? "py-3" : "py-6"}`}>
+          <div className={`max-w-7xl mx-auto px-6 flex items-center justify-between transition-all duration-500 ${scrolled ? "liquid-glass rounded-full px-8 py-3 mx-4 max-w-none shadow-lg shadow-black/20" : ""}`}>
+            <Link href="/" className="flex items-center gap-2.5">
+              <Shield className="w-5 h-5 text-white" />
+              <span className="text-white text-xl md:text-2xl" style={{ fontFamily: "'Instrument Serif', serif" }}>
+                CVBER<sup className="text-[9px] ml-0.5 opacity-60">&reg;</sup>
+              </span>
             </Link>
-            <Link href="/gate" className="liquid-glass rounded-full px-6 py-2.5 text-sm text-white hover:scale-[1.03] transition-transform">
-              Apply for Access
-            </Link>
+            <div className="hidden md:flex items-center gap-8 text-sm text-white/50">
+              <Link href="/" className="hover:text-white transition-colors">Home</Link>
+              <Link href="/features" className="hover:text-white transition-colors">Features</Link>
+              <Link href="/how-it-works" className="hover:text-white transition-colors">How It Works</Link>
+              <Link href="/art-hub" className="hover:text-white transition-colors">Art Hub</Link>
+              <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link href="/login" className="text-sm text-white/50 hover:text-white transition-colors hidden md:block">
+                Log In
+              </Link>
+              <Link href="/gate" className="liquid-glass rounded-full px-6 py-2.5 text-sm text-white hover:scale-[1.03] transition-transform">
+                Apply for Access
+              </Link>
+            </div>
           </div>
         </nav>
 
