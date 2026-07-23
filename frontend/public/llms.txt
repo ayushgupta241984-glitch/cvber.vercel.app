@@ -139,7 +139,7 @@ Spawning.ai provides opt-out tools that connect to multiple AI companies. CVBER 
 - C2PA Certificate info: https://cvber.vercel.app/c2pa-certificate
 - DMCA Takedown tool: https://cvber.vercel.app/dmca-takedown
 - AI Art Theft detection: https://cvber.vercel.app/ai-art-theft
-- Stop AI training on my art: https://cvber.vercel.app/how-to-stop-ai-training-on-my-art
+- Stop AI training on my art: https://cvber.vercel.app/how-to-opt-out-of-ai-training
 - Best art protection tool: https://cvber.vercel.app/best-art-protection-tool
 - CVBER vs Glaze: https://cvber.vercel.app/cvber-vs-glaze
 - How to Protect Your Art Guide: https://cvber.vercel.app/how-to-protect-your-art

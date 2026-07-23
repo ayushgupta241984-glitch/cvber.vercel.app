@@ -86,7 +86,7 @@ export default function HowToProtectYourArt() {
 
                     {/* Step 1 */}
                     <section>
-                        <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">Why Is Protecting Your Art from AI More Urgent Than Ever?</h2>
+                        <h2 id="why-protect-art-ai" className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">Why Is Protecting Your Art from AI More Urgent Than Ever?</h2>
                         <div className="prose prose-invert max-w-none space-y-6">
                             <p className="text-zinc-400 text-lg leading-relaxed">
                                 How to protect your art from AI scraping has become the defining challenge for digital creators in 2025. Every major AI image generator — Stable Diffusion, Midjourney, DALL-E, and Flux — was trained on billions of images scraped from portfolios, social media, and stock sites without artist consent. If you have published artwork online, there is a high probability it has already been ingested into one or more AI training datasets.
@@ -102,7 +102,7 @@ export default function HowToProtectYourArt() {
 
                     {/* Step 2 */}
                     <section>
-                        <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">How Can C2PA Certificates Prove You Own Your Art?</h2>
+                        <h2 id="c2pa-certificates-ownership" className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">How Can C2PA Certificates Prove You Own Your Art?</h2>
                         <div className="prose prose-invert max-w-none space-y-6">
                             <p className="text-zinc-400 text-lg leading-relaxed">
                                 What is a C2PA certificate and how does it protect your art? A C2PA (Coalition for Content Provenance and Authenticity) certificate is a cryptographic digital signature embedded directly into your image file. It records the creator identity, creation timestamp, tools used, and modification history in an tamper-evident manifest that survives file sharing, social media compression, and light editing.
@@ -118,7 +118,7 @@ export default function HowToProtectYourArt() {
 
                     {/* Step 3 */}
                     <section>
-                        <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">What Is the Best Way to Detect Stolen Art Across the Web?</h2>
+                        <h2 id="detect-stolen-art-web" className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">What Is the Best Way to Detect Stolen Art Across the Web?</h2>
                         <div className="prose prose-invert max-w-none space-y-6">
                             <p className="text-zinc-400 text-lg leading-relaxed">
                                 How can you find stolen art across social media, NFT marketplaces, and stock sites? CVBER Watchtower uses AI-powered digital fingerprinting to scan the web continuously for unauthorized copies of your protected work. The system analyzes visual similarity, metadata matching, and contextual signals to detect theft across Instagram, TikTok, YouTube, X, DeviantArt, ArtStation, and major NFT platforms.
@@ -134,7 +134,7 @@ export default function HowToProtectYourArt() {
 
                     {/* Step 4 */}
                     <section>
-                        <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">How Do I File a DMCA Takedown for Stolen Digital Art?</h2>
+                        <h2 id="dmca-takedown-stolen-art" className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">How Do I File a DMCA Takedown for Stolen Digital Art?</h2>
                         <div className="prose prose-invert max-w-none space-y-6">
                             <p className="text-zinc-400 text-lg leading-relaxed">
                                 What is the fastest way to file a DMCA takedown for stolen art? CVBER's automated DMCA generator creates legally formatted takedown notices in seconds. When Watchtower detects stolen art, click File Takedown and the platform generates a complete DMCA notice including your C2PA proof of ownership, identification of the infringing content, and the legal statement required under 17 U.S.C. 512(c)(3).
@@ -150,7 +150,7 @@ export default function HowToProtectYourArt() {
 
                     {/* Step 5 */}
                     <section>
-                        <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">Can I Opt Out of AI Training Datasets With My Art?</h2>
+                        <h2 id="opt-out-ai-training" className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">Can I Opt Out of AI Training Datasets With My Art?</h2>
                         <div className="prose prose-invert max-w-none space-y-6">
                             <p className="text-zinc-400 text-lg leading-relaxed">
                                 How do you stop AI companies from training on your art? Several opt-out mechanisms now exist, but they require proactive participation. The Spawning AI's Have I Been Trained tool lets you search major training datasets and request removal. The Opt-Out Agent by Glaze provides automated submission to multiple platforms. And C2PA certificates embedded by CVBER signal to responsible AI developers that your work is not available for training.
@@ -166,7 +166,7 @@ export default function HowToProtectYourArt() {
 
                     {/* Step 6 */}
                     <section>
-                        <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">How Do I Build Evidence for an Art Theft Lawsuit?</h2>
+                        <h2 id="build-evidence-lawsuit" className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">How Do I Build Evidence for an Art Theft Lawsuit?</h2>
                         <div className="prose prose-invert max-w-none space-y-6">
                             <p className="text-zinc-400 text-lg leading-relaxed">
                                 What documentation do you need to pursue legal action for art theft? If automated takedowns are not sufficient and you need to pursue litigation, CVBER maintains a complete evidence portfolio for each protected asset. This includes the C2PA certificate with cryptographic proof of original creation, monitoring reports showing when and where stolen copies were detected, DMCA takedown history with platform responses, and timestamps establishing your prior ownership.
@@ -182,22 +182,22 @@ export default function HowToProtectYourArt() {
 
                     {/* FAQ */}
                     <section>
-                        <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">Frequently Asked Questions About Art Protection</h2>
+                        <h2 id="faq-art-protection" className="text-3xl md:text-5xl font-black tracking-tighter mb-8 uppercase italic">Frequently Asked Questions About Art Protection</h2>
                         <div className="space-y-6">
                             <div className="bg-[#0D0D10] border border-white/5 rounded-3xl p-8">
-                                <h3 className="text-xl font-black mb-4 text-white">Is CVBER better than Glaze or Nightshade?</h3>
+                                <h3 id="cvber-vs-glaze-nightshade" className="text-xl font-black mb-4 text-white">Is CVBER better than Glaze or Nightshade?</h3>
                                 <p className="text-zinc-400 font-medium leading-relaxed">CVBER and Glaze/Nightshade solve different problems. Glaze and Nightshade add pixel-level noise to disrupt AI training, but they do not provide legal proof of ownership or enforcement tools. CVBER creates legally enforceable C2PA provenance certificates, automated DMCA takedowns, and continuous theft monitoring — making it a complete protection ecosystem rather than just a deterrent. The strongest approach combines both: use Glaze/Nightshade to disrupt training and CVBER to enforce your rights.</p>
                             </div>
                             <div className="bg-[#0D0D10] border border-white/5 rounded-3xl p-8">
-                                <h3 className="text-xl font-black mb-4 text-white">How much does it cost to protect my art with CVBER?</h3>
+                                <h3 id="cvber-cost-pricing" className="text-xl font-black mb-4 text-white">How much does it cost to protect my art with CVBER?</h3>
                                 <p className="text-zinc-400 font-medium leading-relaxed">CVBER is free to start with no credit card required. You can upload files, generate C2PA certificates, access DMCA templates, and use the Art Hub resources at no cost. Premium features like unlimited Watchtower monitoring and priority DMCA processing are available on paid plans starting at $9/month.</p>
                             </div>
                             <div className="bg-[#0D0D10] border border-white/5 rounded-3xl p-8">
-                                <h3 className="text-xl font-black mb-4 text-white">What file formats does CVBER support for art protection?</h3>
+                                <h3 id="cvber-file-formats" className="text-xl font-black mb-4 text-white">What file formats does CVBER support for art protection?</h3>
                                 <p className="text-zinc-400 font-medium leading-relaxed">CVBER supports all major image formats including PNG, JPEG, TIFF, BMP, and WebP for C2PA certificate generation. The platform also supports PSD, AI, and SVG files for metadata extraction and fingerprinting. Video support for MP4 and MOV files is available on premium plans.</p>
                             </div>
                             <div className="bg-[#0D0D10] border border-white/5 rounded-3xl p-8">
-                                <h3 className="text-xl font-black mb-4 text-white">Does a C2PA certificate hold up in court?</h3>
+                                <h3 id="c2pa-court-evidence" className="text-xl font-black mb-4 text-white">Does a C2PA certificate hold up in court?</h3>
                                 <p className="text-zinc-400 font-medium leading-relaxed">C2PA certificates provide strong evidence of original creation and modification history. While no single piece of evidence guarantees a legal outcome, C2PA certificates backed by the trust registry used by Adobe, Microsoft, and the BBC carry significant weight in establishing provenance. Combined with monitoring reports and DMCA history, CVBER documentation creates a comprehensive evidence portfolio for intellectual property litigation.</p>
                             </div>
                         </div>
