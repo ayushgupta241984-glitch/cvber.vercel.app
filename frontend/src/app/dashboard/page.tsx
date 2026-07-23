@@ -697,31 +697,31 @@ function DashboardInner() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.15, ease: easeLuxury, delay: 0.02 }}
-                        className="bg-black border border-luxury-gold/30 max-w-lg w-full"
+                        className="bg-black border var(--border) max-w-lg w-full"
                     >
                         <div className="px-8 pt-10 pb-6">
                             <div className="flex items-center gap-4 mb-6">
-                                <div className="w-10 h-10 border border-luxury-gold/50 flex items-center justify-center">
-                                    <Shield className="h-4 w-4 text-luxury-gold" />
+                                <div className="w-10 h-10 border border-[var(--border)] flex items-center justify-center">
+                                    <Shield className="h-4 w-4 var(--text-secondary)" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-display text-luxury-cream">Ownership Verification</h2>
-                                    <p className="text-xs text-luxury-gold/60 uppercase tracking-wider mt-1">Proof of authorship required</p>
+                                    <h2 className="text-lg var(--text-primary)">Ownership Verification</h2>
+                                    <p className="text-xs var(--text-tertiary) uppercase tracking-wider mt-1">Proof of authorship required</p>
                                 </div>
                             </div>
 
-                            <p className="text-sm text-luxury-muted/70 mb-8 leading-relaxed">
+                            <p className="text-sm var(--text-tertiary) mb-8 leading-relaxed">
                                 This file appears to be a screenshot or was already found online.
                                 To use any features, you must prove you&apos;re the original creator.
                             </p>
 
                             <div className="space-y-6 mb-8">
                                 <div>
-                                    <label className="text-[10px] text-luxury-muted/50 uppercase tracking-ultra-wide font-semibold mb-3 block">Method of verification</label>
+                                    <label className="text-[10px] var(--text-quaternary) uppercase tracking-ultra-wide font-semibold mb-3 block">Method of verification</label>
                                     <select
                                         value={proofType}
                                         onChange={(e) => setProofType(e.target.value as any)}
-                                        className="w-full bg-luxury-deep border border-luxury-steel/40 text-luxury-cream px-4 py-3 text-sm focus:border-luxury-gold/40 outline-none                                                     transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] appearance-none"
+                                        className="w-full var(--bg-surface) border var(--border) var(--text-primary) px-4 py-3 text-sm focus:var(--border) outline-none                                                     transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] appearance-none"
                                     >
                                         <option value="declaration">Legal Declaration</option>
                                         <option value="source">Link to Original Work</option>
@@ -730,57 +730,57 @@ function DashboardInner() {
                                 </div>
 
                                 {proofType === 'declaration' && (
-                                    <div className="border border-luxury-steel/30 p-6">
-                                        <p className="text-luxury-gold/70 text-xs uppercase tracking-wider mb-4">Legal Declaration</p>
-                                        <p className="text-luxury-muted/50 text-xs leading-relaxed mb-4">
+                                    <div className="border var(--border) p-6">
+                                        <p className="text-xs uppercase tracking-wider mb-4" style={{ color: 'var(--text-tertiary)' }}>Legal Declaration</p>
+                                        <p className="var(--text-quaternary) text-xs leading-relaxed mb-4">
                                             By submitting, you declare under legal penalty of perjury that you are the original creator of this work.
                                         </p>
-                                        <label className="text-[10px] text-luxury-muted/50 uppercase tracking-ultra-wide font-semibold mb-3 block">Full legal name</label>
+                                        <label className="text-[10px] var(--text-quaternary) uppercase tracking-ultra-wide font-semibold mb-3 block">Full legal name</label>
                                         <input
                                             type="text"
                                             value={proofText}
                                             onChange={(e) => setProofText(e.target.value)}
                                             placeholder="Enter your full legal name"
-                                            className="w-full bg-luxury-deep border border-luxury-steel/40 text-luxury-cream px-4 py-3 text-sm focus:border-luxury-gold/40 outline-none transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] placeholder-luxury-muted/30"
+                                            className="w-full var(--bg-surface) border var(--border) var(--text-primary) px-4 py-3 text-sm focus:var(--border) outline-none transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] placeholder-[var(--text-quaternary)]"
                                         />
                                     </div>
                                 )}
 
                                 {proofType === 'source' && (
                                     <div>
-                                        <label className="text-[10px] text-luxury-muted/50 uppercase tracking-ultra-wide font-semibold mb-3 block">Link to original work</label>
+                                        <label className="text-[10px] var(--text-quaternary) uppercase tracking-ultra-wide font-semibold mb-3 block">Link to original work</label>
                                         <input
                                             type="url"
                                             value={proofUrl}
                                             onChange={(e) => setProofUrl(e.target.value)}
                                             placeholder="https://your-portfolio.com/original"
-                                            className="w-full bg-luxury-deep border border-luxury-steel/40 text-luxury-cream px-4 py-3 text-sm focus:border-luxury-gold/40 outline-none transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] placeholder-luxury-muted/30"
+                                            className="w-full var(--bg-surface) border var(--border) var(--text-primary) px-4 py-3 text-sm focus:var(--border) outline-none transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] placeholder-[var(--text-quaternary)]"
                                         />
                                     </div>
                                 )}
 
                                 {proofType === 'original' && (
-                                    <div className="border border-dashed border-luxury-steel/30 p-8 text-center">
-                                        <p className="text-luxury-muted/50 text-xs mb-1">Upload your original source file</p>
-                                        <p className="text-luxury-muted/30 text-[10px] uppercase tracking-wider">Raw file (PSD, AI, original photo)</p>
-                                        <input type="file" className="mt-4 text-xs text-luxury-muted/50" />
+                                    <div className="border border-dashed var(--border) p-8 text-center">
+                                        <p className="var(--text-quaternary) text-xs mb-1">Upload your original source file</p>
+                                        <p className="var(--text-quaternary) text-[10px] uppercase tracking-wider">Raw file (PSD, AI, original photo)</p>
+                                        <input type="file" className="mt-4 text-xs var(--text-quaternary)" />
                                     </div>
                                 )}
                             </div>
 
                             {!proofSubmitted && (
-                            <div className="flex gap-0 border-t border-luxury-steel/30">
+                            <div className="flex gap-0 border-t var(--border)">
                                 <button
                                     onClick={() => { setProofModalFile(null); setProofSubmitted(false); }}
-                                    className="flex-1 py-4 text-xs uppercase tracking-ultra-wide font-semibold text-luxury-muted/60 hover:text-luxury-cream transition-colors duration-200"
+                                    className="flex-1 py-4 text-xs uppercase tracking-ultra-wide font-semibold var(--text-quaternary) hover:var(--text-primary) transition-colors duration-200"
                                 >
                                     Cancel
                                 </button>
-                                <div className="w-px bg-luxury-steel/30" />
+                                <div className="w-px var(--border)" />
                                 <button
                                     onClick={submitOwnershipProof}
                                     disabled={submittingProof || (proofType === 'declaration' && !proofText)}
-                                    className="flex-1 py-4 text-xs uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold transition-colors duration-500 disabled:opacity-30"
+                                    className="flex-1 py-4 text-xs uppercase tracking-ultra-wide font-semibold rgba(255,255,255,0.9) text-black hover:opacity-80 transition-colors duration-500 disabled:opacity-30"
                                 >
                                     {submittingProof ? 'Submitting...' : 'Submit Proof'}
                                 </button>
@@ -788,7 +788,7 @@ function DashboardInner() {
                             )}
 
                             {proofModalFile.ownershipProofStatus === 'pending' && (
-                                <p className="text-luxury-gold/50 text-[10px] uppercase tracking-wider text-center mt-4">
+                                <p className="var(--text-tertiary) text-[10px] uppercase tracking-wider text-center mt-4">
                                     Previous proof under review
                                 </p>
                             )}
@@ -796,7 +796,7 @@ function DashboardInner() {
                             {proofSubmitted && (
                                 <div className="mt-6 p-6 border border-green-500/30 bg-green-500/5 text-center">
                                     <p className="text-green-400 text-sm font-semibold mb-1">Proof submitted successfully</p>
-                                    <p className="text-luxury-muted/50 text-xs">Your file will be reviewed within 24 hours.</p>
+                                    <p className="var(--text-quaternary) text-xs">Your file will be reviewed within 24 hours.</p>
                                     <button
                                         onClick={() => { setProofModalFile(null); setProofSubmitted(false); setProofText(''); setProofUrl(''); }}
                                         className="mt-4 px-6 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors"
@@ -815,13 +815,13 @@ function DashboardInner() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="fixed bottom-6 right-6 z-50 bg-luxury-gold/90 text-black px-6 py-3 text-xs font-semibold uppercase tracking-wider"
+                    className="fixed bottom-6 right-6 z-50 rgba(255,255,255,0.9) text-black px-6 py-3 text-xs font-semibold uppercase tracking-wider"
                 >
                     Uploaded: {lastUploadResult.name}
                 </motion.div>
             )}
 
-            <div className="min-h-screen bg-[#050505] text-luxury-cream flex overflow-x-hidden">
+            <div className="min-h-screen flex overflow-x-hidden">
                 <DashboardSidebar
                     userName={user?.full_name || ''}
                     userInitials={user?.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
@@ -840,22 +840,22 @@ function DashboardInner() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.15, ease: easeLuxury }}
-                        className="border-b border-luxury-steel/30"
+                        className="border-b var(--border)"
                     >
                         <div className="px-8 md:px-16 lg:px-24 flex items-center justify-between h-16">
                             <div className="flex items-center gap-4 lg:hidden">
                                 <button
                                     onClick={() => setIsSidebarOpen(true)}
                                     suppressHydrationWarning
-                                    className="p-2 border border-luxury-steel/40 text-luxury-cream transition-all duration-200"
+                                    className="p-2 border var(--border) var(--text-primary) transition-all duration-200"
                                 >
                                     <Layout className="w-4 h-4" />
                                 </button>
                                 <div className="flex items-center gap-3">
-                                    <div className="w-6 h-6 border border-luxury-gold/60 flex items-center justify-center">
-                                        <Shield className="h-3 w-3 text-luxury-gold" />
+                                    <div className="w-6 h-6 border var(--border) flex items-center justify-center">
+                                        <Shield className="h-3 w-3 var(--text-secondary)" />
                                     </div>
-                                    <span className="text-sm font-display tracking-wide">CVBER</span>
+                                    <span className="text-sm tracking-wide">CVBER</span>
                                 </div>
                             </div>
 
@@ -869,8 +869,8 @@ function DashboardInner() {
                                             suppressHydrationWarning
                                             className={`text-[10px] uppercase tracking-ultra-wide font-semibold pb-1 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${
                                                 activeTab === tab
-                                                    ? 'text-luxury-gold border-b border-luxury-gold'
-                                                    : 'text-luxury-muted/40 hover:text-luxury-muted/70 border-b border-transparent'
+                                                    ? 'var(--text-secondary) border-b var(--border)'
+                                                    : 'var(--text-quaternary) hover:var(--text-tertiary) border-b border-transparent'
                                             }`}
                                         >
                                             {labels[tab]}
@@ -880,11 +880,11 @@ function DashboardInner() {
                             </div>
 
                             <div className="flex items-center gap-6">
-                                <p className="text-[10px] text-luxury-muted/50 uppercase tracking-ultra-wide font-semibold hidden sm:block">
+                                <p className="text-[10px] var(--text-quaternary) uppercase tracking-ultra-wide font-semibold hidden sm:block">
                                     {stats.total} {stats.total === 1 ? 'piece' : 'pieces'}
                                 </p>
-                                <div className="w-px h-4 bg-luxury-steel/30 hidden sm:block" />
-                                <p className="text-[10px] text-luxury-gold/60 uppercase tracking-ultra-wide font-semibold hidden sm:block">
+                                <div className="w-px h-4 var(--border) hidden sm:block" />
+                                <p className="text-[10px] var(--text-tertiary) uppercase tracking-ultra-wide font-semibold hidden sm:block">
                                     {stats.successRate} authentic
                                 </p>
                             </div>
@@ -892,7 +892,7 @@ function DashboardInner() {
                     </motion.div>
 
                     {/* Mobile Tab Switcher */}
-                    <div className="lg:hidden border-b border-luxury-steel/30 px-8 md:px-16">
+                    <div className="lg:hidden border-b var(--border) px-8 md:px-16">
                         <div className="flex gap-6">
                             {(['monitor', 'provenance'] as const).map((tab) => {
                                 const labels = { monitor: 'Collection', provenance: 'Ledger' };
@@ -903,8 +903,8 @@ function DashboardInner() {
                                         suppressHydrationWarning
                                         className={`text-[10px] uppercase tracking-ultra-wide font-semibold py-4 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] border-b-2 ${
                                             activeTab === tab
-                                                ? 'text-luxury-gold border-luxury-gold'
-                                                : 'text-luxury-muted/40 hover:text-luxury-muted/70 border-transparent'
+                                                ? 'var(--text-secondary) var(--border)'
+                                                : 'var(--text-quaternary) hover:var(--text-tertiary) border-transparent'
                                         }`}
                                     >
                                         {labels[tab]}
@@ -938,7 +938,7 @@ function DashboardInner() {
                                             <motion.section variants={itemVariants}>
                                                 <div className="mb-6">
                                                     <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-2">The Atelier</p>
-                                                    <h2 className="text-xl md:text-2xl font-display tracking-tight text-white">Present Your Work</h2>
+                                                    <h2 className="text-xl md:text-2xl tracking-tight text-white">Present Your Work</h2>
                                                 </div>
                                                 <FileUploader onUploadComplete={handleUploadComplete} />
                                             </motion.section>
@@ -975,19 +975,19 @@ function DashboardInner() {
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.15, ease: easeLuxury, delay: 0.05 }}
-                                                className="border border-luxury-steel/30 p-6"
+                                                className="border var(--border) p-6"
                                             >
                                                 <div className="flex items-center gap-3 mb-4">
-                                                    <Globe className="w-4 h-4 text-luxury-gold/60" />
-                                                    <h3 className="text-xs font-display text-luxury-cream uppercase tracking-wide">Search the World</h3>
+                                                    <Globe className="w-4 h-4 var(--text-tertiary)" />
+                                                    <h3 className="text-xs var(--text-primary) uppercase tracking-wide">Search the World</h3>
                                                 </div>
-                                                <p className="text-xs text-luxury-muted/50 leading-relaxed mb-6">
+                                                <p className="text-xs var(--text-quaternary) leading-relaxed mb-6">
                                                     Our agent scours the open web for unauthorized reproductions of your work&mdash;social platforms, marketplaces, and beyond.
                                                 </p>
                                                 <button
                                                     onClick={() => indexVault(false)}
                                                     disabled={isIndexing}
-                                                    className="w-full py-3 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-steel/30 text-luxury-muted/60 hover:text-luxury-gold hover:border-luxury-gold/40 transition-all duration-300 disabled:opacity-30"
+                                                    className="w-full py-3 text-[10px] uppercase tracking-ultra-wide font-semibold border var(--border) var(--text-quaternary) hover:var(--text-secondary) hover:var(--border) transition-all duration-300 disabled:opacity-30"
                                                 >
                                                     {isIndexing ? 'Indexing...' : indexError ? 'Retry Index' : `Index Vault for Copy Detection (${files.length} files)`}
                                                 </button>
@@ -1010,33 +1010,33 @@ function DashboardInner() {
                                         <div className="space-y-12">
                                             <motion.div variants={itemVariants}>
                                                 <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 mb-2">The Ledger</p>
-                                                <h2 className="text-xl md:text-2xl font-display tracking-tight text-white">Provenance, Immutable</h2>
+                                                <h2 className="text-xl md:text-2xl tracking-tight text-white">Provenance, Immutable</h2>
                                             </motion.div>
 
-                                            <motion.p variants={itemVariants} className="text-sm text-luxury-muted/50 leading-relaxed max-w-2xl">
+                                            <motion.p variants={itemVariants} className="text-sm var(--text-quaternary) leading-relaxed max-w-2xl">
                                                 Every stroke, every pixel, every note&mdash;immortalised on the Bitcoin blockchain. Through OP_RETURN, your creation receives a permanent, legally-recognisable timestamp of existence, independent of any intermediary.
                                             </motion.p>
 
-                                            <motion.div variants={itemVariants} className="grid md:grid-cols-2 gap-0 border border-luxury-steel/30">
-                                                <div className="p-6 border-r border-b md:border-b-0 border-luxury-steel/30">
-                                                    <p className="text-[10px] text-luxury-gold/60 uppercase tracking-ultra-wide font-semibold mb-3">Network</p>
-                                                    <p className="text-lg font-display text-luxury-cream">Mainnet Connected</p>
+                                            <motion.div variants={itemVariants} className="grid md:grid-cols-2 gap-0 border var(--border)">
+                                                <div className="p-6 border-r border-b md:border-b-0 var(--border)">
+                                                    <p className="text-[10px] var(--text-tertiary) uppercase tracking-ultra-wide font-semibold mb-3">Network</p>
+                                                    <p className="text-lg var(--text-primary)">Mainnet Connected</p>
                                                 </div>
                                                 <div className="p-6">
-                                                    <p className="text-[10px] text-luxury-gold/60 uppercase tracking-ultra-wide font-semibold mb-3">Total Proofs</p>
-                                                    <p className="text-lg font-display text-luxury-cream">{files.length} Anchors</p>
+                                                    <p className="text-[10px] var(--text-tertiary) uppercase tracking-ultra-wide font-semibold mb-3">Total Proofs</p>
+                                                    <p className="text-lg var(--text-primary)">{files.length} Anchors</p>
                                                 </div>
                                             </motion.div>
 
                                             {/* Vault Files */}
-                                            <motion.div variants={itemVariants} className="space-y-0 border border-luxury-steel/30 max-h-[500px] overflow-y-auto">
+                                            <motion.div variants={itemVariants} className="space-y-0 border var(--border) max-h-[500px] overflow-y-auto">
                                                 {files.length === 0 ? (
-                                                    <div className="p-12 text-center border-b border-luxury-steel/30">
-                                                        <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-4">
-                                                            <Upload className="w-5 h-5 text-purple-400" />
+                                                    <div className="p-12 text-center border-b var(--border)">
+                                                        <div className="w-12 h-12 rounded-2xl var(--accent) border var(--border) flex items-center justify-center mx-auto mb-4">
+                                                            <Upload className="w-5 h-5 var(--text-secondary)" />
                                                         </div>
-                                                        <p className="text-sm text-luxury-cream font-display mb-2">Your vault is empty</p>
-                                                        <p className="text-xs text-luxury-muted/50">Upload your first artwork above to get a C2PA certificate and start monitoring for theft.</p>
+                                                        <p className="text-sm var(--text-primary) mb-2">Your vault is empty</p>
+                                                        <p className="text-xs var(--text-quaternary)">Upload your first artwork above to get a C2PA certificate and start monitoring for theft.</p>
                                                     </div>
                                                 ) : files.map((f, idx) => (
                                                     <motion.div
@@ -1045,28 +1045,28 @@ function DashboardInner() {
                                                         animate={{ opacity: 1, x: 0 }}
                                                         transition={{ duration: 0.2, ease: easeLuxury, delay: idx * 0.02 }}
                                                         onClick={() => loadBlockchainProofs(f)}
-                                                        className={`p-5 cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] border-b border-luxury-steel/30 last:border-b-0 ${
+                                                        className={`p-5 cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] border-b var(--border) last:border-b-0 ${
                                                             selectedBlockchainFile?.id === f.id
-                                                                ? 'bg-luxury-gold/5'
-                                                                : 'hover:bg-luxury-deep'
+                                                                ? 'rgba(255,255,255,0.04)'
+                                                                : 'hover:var(--bg-surface)'
                                                         }`}
                                                     >
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-4 min-w-0">
-                                                                <FileText className="w-4 h-4 text-luxury-muted/40 shrink-0" />
-                                                                <span className="text-sm font-display text-luxury-cream truncate">{f.name}</span>
+                                                                <FileText className="w-4 h-4 var(--text-quaternary) shrink-0" />
+                                                                <span className="text-sm var(--text-primary) truncate">{f.name}</span>
                                                             </div>
                                                             <div className="flex items-center gap-4 shrink-0">
                                                                 {f.hash && (
                                                                     <button
                                                                         onClick={(e) => { e.stopPropagation(); handleTimestamp(f); }}
                                                                         disabled={timestampingId === f.id}
-                                                                        className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold border border-luxury-gold/30 text-luxury-gold hover:bg-luxury-gold/10 transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] disabled:opacity-40 disabled:cursor-wait"
+                                                                        className="px-4 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold border var(--border) var(--text-secondary) hover:var(--accent) transition-all duration-200 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] disabled:opacity-40 disabled:cursor-wait"
                                                                     >
                                                                         {timestampingId === f.id ? 'Anchoring...' : 'Anchor'}
                                                                     </button>
                                                                 )}
-                                                                <span className="text-[10px] text-luxury-muted/40 uppercase tracking-widest">
+                                                                <span className="text-[10px] var(--text-quaternary) uppercase tracking-widest">
                                                                     {(f.size / 1024).toFixed(0)}KB
                                                                 </span>
                                                             </div>
@@ -1083,48 +1083,48 @@ function DashboardInner() {
                                                     transition={{ duration: 0.15, ease: easeLuxury }}
                                                 >
                                                     <div className="flex items-center gap-3 mb-6">
-                                                        <Anchor className="w-4 h-4 text-luxury-gold/60" />
-                                                        <h3 className="text-sm font-display text-luxury-cream">
+                                                        <Anchor className="w-4 h-4 var(--text-tertiary)" />
+                                                        <h3 className="text-sm font-display var(--text-primary)">
                                                             Proofs for {selectedBlockchainFile.name}
                                                         </h3>
                                                     </div>
                                                     {proofsLoading ? (
                                                         <div className="flex items-center justify-center py-12">
-                                                            <div className="w-5 h-5 border border-luxury-gold/30 border-t-luxury-gold/60 animate-spin" />
+                                                            <div className="w-5 h-5 border var(--border) border-[var(--border)] animate-spin" />
                                                         </div>
                                                     ) : blockchainFileProofs.length === 0 ? (
-                                                        <div className="p-8 border border-luxury-steel/30 text-center">
-                                                            <p className="text-xs text-luxury-muted/50 uppercase tracking-wider">No blockchain proofs yet. Click Anchor to create one.</p>
+                                                        <div className="p-8 border var(--border) text-center">
+                                                            <p className="text-xs var(--text-quaternary) uppercase tracking-wider">No blockchain proofs yet. Click Anchor to create one.</p>
                                                         </div>
                                                     ) : (
-                                                        <div className="space-y-0 border border-luxury-steel/30">
+                                                        <div className="space-y-0 border var(--border)">
                                                             {blockchainFileProofs.map((proof: any) => (
-                                                                <div key={proof.proof_id} className="p-5 border-b border-luxury-steel/30 last:border-b-0">
+                                                                <div key={proof.proof_id} className="p-5 border-b var(--border) last:border-b-0">
                                                                     <div className="flex items-center justify-between mb-3">
-                                                                        <span className="text-[10px] text-luxury-muted/50 uppercase tracking-ultra-wide font-semibold">{proof.status === 'confirmed' ? 'Anchored' : proof.status === 'pending' ? 'Pending (~2h)' : 'Local'}</span>
+                                                                        <span className="text-[10px] var(--text-quaternary) uppercase tracking-ultra-wide font-semibold">{proof.status === 'confirmed' ? 'Anchored' : proof.status === 'pending' ? 'Pending (~2h)' : 'Local'}</span>
                                                                         <span className={`text-[10px] uppercase tracking-ultra-wide font-semibold ${
-                                                                            proof.status === 'confirmed' ? 'text-luxury-gold/80' :
-                                                                            proof.status === 'pending' ? 'text-luxury-gold/60' :
-                                                                            'text-luxury-muted/40'
+                                                                            proof.status === 'confirmed' ? 'var(--text-secondary)/80' :
+                                                                            proof.status === 'pending' ? 'var(--text-tertiary)' :
+                                                                            'var(--text-quaternary)'
                                                                         }`}>
                                                                             {proof.status}
                                                                         </span>
                                                                     </div>
-                                                                    <p className="text-[10px] text-luxury-muted/30 font-mono truncate mb-4">{proof.proof_id}</p>
+                                                                    <p className="text-[10px] var(--text-quaternary) font-mono truncate mb-4">{proof.proof_id}</p>
                                                                     <div className="flex items-center justify-between">
-                                                                        <span className="text-[10px] text-luxury-muted/30">{new Date(proof.created_at).toLocaleString()}</span>
+                                                                        <span className="text-[10px] var(--text-quaternary)">{new Date(proof.created_at).toLocaleString()}</span>
                                                                         <div className="flex items-center gap-4">
                                                                             {proof.status !== 'local_only' ? (
                                                                                 <button
                                                                                     onClick={() => downloadOtsProof(proof.proof_id, proof.asset_name)}
-                                                                                    className="text-[10px] text-luxury-gold/60 hover:text-luxury-gold uppercase tracking-wider font-semibold transition-colors duration-150"
+                                                                                    className="text-[10px] var(--text-tertiary) hover:var(--text-secondary) uppercase tracking-wider font-semibold transition-colors duration-150"
                                                                                 >
                                                                                     Download .ots
                                                                                 </button>
                                                                             ) : (
-                                                                                <span className="text-[10px] text-luxury-muted/30 italic">No proof file</span>
+                                                                                <span className="text-[10px] var(--text-quaternary) italic">No proof file</span>
                                                                             )}
-                                                                            <a href="https://opentimestamps.org/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-luxury-muted/30 hover:text-luxury-cream uppercase tracking-wider transition-colors duration-150">Info</a>
+                                                                            <a href="https://opentimestamps.org/" target="_blank" rel="noopener noreferrer" className="text-[10px] var(--text-quaternary) hover:var(--text-primary) uppercase tracking-wider transition-colors duration-150">Info</a>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -1142,15 +1142,15 @@ function DashboardInner() {
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.15, ease: easeLuxury, delay: 0.04 }}
-                                                className="border border-luxury-gold/30 p-8"
+                                                className="border var(--border) p-8"
                                             >
-                                                <h3 className="text-lg font-display text-luxury-cream mb-3">Court-Ready Evidence</h3>
-                                                <p className="text-xs text-luxury-muted/50 leading-relaxed mb-8">
+                                                <h3 className="text-lg var(--text-primary) mb-3">Court-Ready Evidence</h3>
+                                                <p className="text-xs var(--text-quaternary) leading-relaxed mb-8">
                                                     A comprehensive dossier combining your C2PA provenance manifests with on-chain transaction hashes&mdash;certified for submission in any legal proceeding.
                                                 </p>
                                                 <button
                                                     onClick={downloadEvidencePdf}
-                                                    className="w-full py-4 text-[10px] uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold transition-colors duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
+                                                    className="w-full py-4 text-[10px] uppercase tracking-ultra-wide font-semibold rgba(255,255,255,0.9) text-black hover:opacity-80 transition-colors duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
                                                 >
                                                     Download Evidence Dossier
                                                 </button>
