@@ -12,6 +12,7 @@ import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { ToastProvider, useToast } from '@/components/common/Toast';
 import { apiClient, BASE_URL, downloadBlob } from '@/lib/api-client';
 import { FeedbackWidget } from '@/components/common/FeedbackWidget';
+import { AIAgentChat } from '@/components/agent/AIAgentChat';
 import { easeLuxurySharp as easeLuxury } from '@/lib/animations';
 
 import { SearchResultsModal } from '@/components/search/SearchResultsModal';
@@ -1206,6 +1207,7 @@ function DashboardInner() {
                 />
 
                 <FeedbackWidget />
+                <AIAgentChat />
             </div>
         </>
     );
