@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link2, CheckCircle, Clock, AlertCircle, RefreshCw, ExternalLink, Copy, Check, Download } from 'lucide-react';
 import { apiClient, BASE_URL, downloadBlob } from '@/lib/api-client';
 
@@ -20,62 +20,52 @@ export function BlockchainStatus() {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [copied, setCopied] = useState<string | null>(null);
+    const mountedRef = useRef(true);
 
-    // Load proofs from backend on mount
     useEffect(() => {
-        let mounted = true;
+        mountedRef.current = true;
+        let cleanup = false;
 
         const loadProofs = async () => {
-            if (!mounted) return;
+            if (!mountedRef.current || cleanup) return;
             try {
                 const result = await apiClient.getUserBlockchainProofs();
-                if (mounted && result && result.success && Array.isArray(result.proofs)) {
+                if (mountedRef.current && !cleanup && result && result.success && Array.isArray(result.proofs)) {
                     setProofs(result.proofs);
                 }
-            } catch (e) {
-            }
+            } catch { /* proofs unavailable */ }
         };
 
         loadProofs();
 
-        // Listen for blockchain-update events (dispatched after creating a timestamp)
-        const handleUpdate = () => {
-            setTimeout(() => loadProofs(), 500);
-        };
+        const handleUpdate = () => setTimeout(() => loadProofs(), 500);
         window.addEventListener('blockchain-update', handleUpdate);
-
-        // Refresh every 15 seconds to check for status updates
         const interval = setInterval(loadProofs, 15000);
+
         return () => {
-            mounted = false;
+            cleanup = true;
+            mountedRef.current = false;
             clearInterval(interval);
             window.removeEventListener('blockchain-update', handleUpdate);
         };
     }, []);
 
-    // Calculate counts from proofs
     const pendingCount = proofs.filter(p => p.status === 'pending').length;
     const confirmedCount = proofs.filter(p => p.status === 'confirmed').length;
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'confirmed':
-                return <CheckCircle className="h-4 w-4 text-green-500" />;
-            case 'pending':
-                return <Clock className="h-4 w-4 text-yellow-500 animate-pulse" />;
-            default:
-                return <AlertCircle className="h-4 w-4 text-gray-400" />;
+            case 'confirmed': return <CheckCircle className="h-4 w-4" style={{ color: 'var(--text-secondary)' }} />;
+            case 'pending': return <Clock className="h-4 w-4 animate-pulse" style={{ color: 'var(--text-tertiary)' }} />;
+            default: return <AlertCircle className="h-4 w-4" style={{ color: 'var(--text-quaternary)' }} />;
         }
     };
 
     const getStatusLabel = (status: string) => {
         switch (status) {
-            case 'confirmed':
-                return 'Anchored';
-            case 'pending':
-                return 'Pending (~2h)';
-            default:
-                return 'Local Only';
+            case 'confirmed': return 'Anchored';
+            case 'pending': return 'Pending (~2h)';
+            default: return 'Local Only';
         }
     };
 
@@ -90,8 +80,8 @@ export function BlockchainStatus() {
             const token = localStorage.getItem('access_token');
             const baseName = assetName.includes('.') ? assetName.split('.').slice(0, -1).join('.') : assetName;
             await downloadBlob(`${BASE_URL}/vault/proofs/${proofId}/ots-proof`, { 'Authorization': `Bearer ${token}` }, `${baseName}.ots`);
-        } catch (e) {
-            window.dispatchEvent(new CustomEvent('cvber:toast', { detail: { message: 'Failed to download OTS proof. The proof file may not be available.', type: 'error' } }));
+        } catch {
+            window.dispatchEvent(new CustomEvent('cvber:toast', { detail: { message: 'proofs unavailable', type: 'error' } }));
         }
     };
 
@@ -99,143 +89,98 @@ export function BlockchainStatus() {
         setIsLoading(true);
         try {
             const result = await apiClient.getUserBlockchainProofs();
-            if (result.success) {
-                setProofs(result.proofs);
-            }
-        } catch (e) {
-        } finally {
-            setIsLoading(false);
-        }
+            if (result.success) setProofs(result.proofs);
+        } catch { /* proofs unavailable */ }
+        setIsLoading(false);
     };
 
     return (
-        <div className="bg-gradient-to-br from-purple-900 to-indigo-900 rounded-3xl shadow-xl overflow-hidden border border-purple-700/50">
-            {/* Header - Always Visible */}
-            <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
-            >
+        <div className="border overflow-hidden" style={{ borderColor: 'var(--border)', borderRadius: 'var(--radius)', background: 'var(--bg-surface)' }}>
+            <button onClick={() => setIsExpanded(!isExpanded)} className="w-full p-4 flex items-center justify-between transition-colors" style={{ color: 'var(--text-secondary)' }}>
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-500/20 rounded-xl">
-                        <Link2 className="h-5 w-5 text-purple-300" />
+                    <div className="p-2" style={{ borderRadius: 'var(--radius)', background: 'var(--accent)' }}>
+                        <Link2 className="h-5 w-5" style={{ color: 'var(--text-tertiary)' }} />
                     </div>
                     <div className="text-left">
-                        <h3 className="font-bold text-white text-sm">Blockchain Status</h3>
-                        <p className="text-xs text-purple-300">
-                            {proofs.length === 0 ? 'No timestamps yet' : (
-                                <>
-                                    {confirmedCount} anchored · {pendingCount} pending
-                                </>
-                            )}
+                        <h3 style={{ fontSize: '13px', fontWeight: 900, color: 'var(--text-primary)' }}>Blockchain Status</h3>
+                        <p style={{ fontSize: '12px', color: 'var(--text-quaternary)' }}>
+                            {proofs.length === 0 ? 'No timestamps yet' : `${confirmedCount} anchored \u00b7 ${pendingCount} pending`}
                         </p>
                     </div>
                 </div>
-
                 <div className="flex items-center gap-2">
                     {pendingCount > 0 && (
-                        <span className="px-2 py-1 bg-yellow-500/20 text-yellow-300 text-[10px] font-bold rounded-full animate-pulse">
+                        <span className="px-2 py-1 text-[10px] font-bold animate-pulse" style={{ color: 'var(--text-tertiary)', borderRadius: 'var(--radius)' }}>
                             {pendingCount} SYNCING
                         </span>
                     )}
-                    <svg
-                        className={`h-5 w-5 text-purple-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
+                    <svg className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} style={{ color: 'var(--text-quaternary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                 </div>
             </button>
 
-            {/* Expanded Content */}
             {isExpanded && (
-                <div className="border-t border-purple-700/50 animate-in slide-in-from-top-2 duration-200">
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-3 gap-2 p-4 border-b border-purple-700/50">
-                        <div className="text-center p-3 bg-purple-800/30 rounded-xl">
-                            <p className="text-2xl font-black text-white">{proofs.length}</p>
-                            <p className="text-[10px] text-purple-300 uppercase">Total</p>
+                <div className="border-t" style={{ borderColor: 'var(--border)' }}>
+                    <div className="grid grid-cols-3 gap-2 p-4 border-b" style={{ borderColor: 'var(--border)' }}>
+                        <div className="text-center p-3" style={{ borderRadius: 'var(--radius)', background: 'var(--bg-surface)' }}>
+                            <p style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)' }}>{proofs.length}</p>
+                            <p style={{ fontSize: '10px', color: 'var(--text-quaternary)', letterSpacing: '+0.08em', textTransform: 'uppercase' }}>Total</p>
                         </div>
-                        <div className="text-center p-3 bg-green-900/30 rounded-xl">
-                            <p className="text-2xl font-black text-green-400">{confirmedCount}</p>
-                            <p className="text-[10px] text-green-300 uppercase">Confirmed</p>
+                        <div className="text-center p-3" style={{ borderRadius: 'var(--radius)', background: 'var(--bg-surface)' }}>
+                            <p style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-secondary)' }}>{confirmedCount}</p>
+                            <p style={{ fontSize: '10px', color: 'var(--text-tertiary)', letterSpacing: '+0.08em', textTransform: 'uppercase' }}>Confirmed</p>
                         </div>
-                        <div className="text-center p-3 bg-yellow-900/30 rounded-xl">
-                            <p className="text-2xl font-black text-yellow-400">{pendingCount}</p>
-                            <p className="text-[10px] text-yellow-300 uppercase">Pending</p>
+                        <div className="text-center p-3" style={{ borderRadius: 'var(--radius)', background: 'var(--bg-surface)' }}>
+                            <p style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-tertiary)' }}>{pendingCount}</p>
+                            <p style={{ fontSize: '10px', color: 'var(--text-quaternary)', letterSpacing: '+0.08em', textTransform: 'uppercase' }}>Pending</p>
                         </div>
                     </div>
 
-                    {/* Proofs List */}
                     <div className="max-h-[300px] overflow-auto">
                         {proofs.length === 0 ? (
                             <div className="p-8 text-center">
-                                <Link2 className="h-10 w-10 text-purple-700 mx-auto mb-3" />
-                                <p className="text-purple-300 text-sm font-medium">No blockchain timestamps</p>
-                                <p className="text-purple-400 text-xs mt-1">
-                                    Timestamps are created when you protect assets
-                                </p>
+                                <Link2 className="h-10 w-10 mx-auto mb-3" style={{ color: 'var(--text-quaternary)' }} />
+                                <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>No blockchain timestamps</p>
+                                <p style={{ fontSize: '12px', color: 'var(--text-quaternary)', marginTop: '4px' }}>Timestamps are created when you protect assets</p>
                             </div>
                         ) : (
-                            <div className="divide-y divide-purple-700/30">
+                            <div>
                                 {proofs.map((proof) => (
-                                    <div key={proof.proof_id} className="p-4 hover:bg-white/5 transition-colors">
+                                    <div key={proof.proof_id} className="p-4 transition-colors border-b" style={{ borderColor: 'var(--border)' }}>
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     {getStatusIcon(proof.status)}
-                                                    <span className="text-sm font-bold text-white truncate">
-                                                        {proof.asset_name}
-                                                    </span>
+                                                    <span className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>{proof.asset_name}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <code className="text-[10px] text-purple-300 font-mono bg-purple-800/50 px-2 py-0.5 rounded">
+                                                    <code className="text-[10px] font-mono px-2 py-0.5" style={{ color: 'var(--text-quaternary)', background: 'var(--bg-surface)', borderRadius: 'var(--radius)' }}>
                                                         {proof.asset_hash.slice(0, 16)}...
                                                     </code>
-                                                    <button
-                                                    onClick={() => copyHash(proof.asset_hash)}
-                                                    type="button"
-                                                    className="text-purple-400 hover:text-white transition-colors"
-                                                >
-                                                        {copied === proof.asset_hash ? (
-                                                            <Check className="h-3 w-3" />
-                                                        ) : (
-                                                            <Copy className="h-3 w-3" />
-                                                        )}
+                                                    <button onClick={() => copyHash(proof.asset_hash)} style={{ color: 'var(--text-quaternary)' }}>
+                                                        {copied === proof.asset_hash ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                                                     </button>
                                                 </div>
-                                                <p className="text-[10px] text-purple-400 mt-1">
-                                                    {new Date(proof.timestamp).toLocaleString()}
-                                                </p>
+                                                <p className="text-[10px] mt-1" style={{ color: 'var(--text-quaternary)' }}>{new Date(proof.timestamp).toLocaleString()}</p>
                                             </div>
                                             <div className="flex flex-col items-end gap-2">
-                                                <span className={`px-2 py-1 text-[10px] font-bold rounded-full ${proof.status === 'confirmed'
-                                                    ? 'bg-green-500/20 text-green-300'
-                                                    : proof.status === 'pending'
-                                                        ? 'bg-yellow-500/20 text-yellow-300'
-                                                        : 'bg-gray-500/20 text-gray-300'
-                                                    }`}>
-                                                    {getStatusLabel(proof.status)}
-                                                </span>
+                                                <span className="px-2 py-1 text-[10px] font-bold" style={{
+                                                    color: proof.status === 'confirmed' ? 'var(--text-secondary)' : proof.status === 'pending' ? 'var(--text-tertiary)' : 'var(--text-quaternary)',
+                                                    borderRadius: 'var(--radius)',
+                                                    background: 'var(--bg-surface)',
+                                                }}>{getStatusLabel(proof.status)}</span>
                                                 <div className="flex items-center gap-2">
                                                     {proof.status !== 'local_only' ? (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => downloadOtsProof(proof.proof_id, proof.asset_name)}
-                                                            className="text-[10px] text-purple-400 hover:text-white flex items-center gap-1"
-                                                        >
+                                                        <button onClick={() => downloadOtsProof(proof.proof_id, proof.asset_name)}
+                                                            className="text-[10px] flex items-center gap-1" style={{ color: 'var(--text-quaternary)' }}>
                                                             <Download className="h-3 w-3" /> .ots
                                                         </button>
                                                     ) : (
-                                                        <span className="text-[10px] text-zinc-500 italic">No proof file</span>
+                                                        <span className="text-[10px] italic" style={{ color: 'var(--text-quaternary)' }}>No proof file</span>
                                                     )}
-                                                    <a
-                                                        href="https://opentimestamps.org/"
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-[10px] text-purple-400 hover:text-white flex items-center gap-1"
-                                                    >
+                                                    <a href="https://opentimestamps.org/" target="_blank" rel="noopener noreferrer"
+                                                        className="text-[10px] flex items-center gap-1" style={{ color: 'var(--text-quaternary)' }}>
                                                         <ExternalLink className="h-3 w-3" /> Info
                                                     </a>
                                                 </div>
@@ -247,17 +192,14 @@ export function BlockchainStatus() {
                         )}
                     </div>
 
-                    {/* Footer */}
-                    <div className="p-4 border-t border-purple-700/50 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-[10px] text-purple-400">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    <div className="p-4 border-t flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
+                        <div className="flex items-center gap-2 text-[10px]" style={{ color: 'var(--text-quaternary)' }}>
+                            <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--text-secondary)' }} />
                             Bitcoin Network
                         </div>
-                        <button
-                            onClick={refreshStatus}
-                            disabled={isLoading}
-                            className="px-3 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 disabled:opacity-50"
-                        >
+                        <button onClick={refreshStatus} disabled={isLoading}
+                            className="px-3 py-1.5 text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50"
+                            style={{ borderRadius: 'var(--radius)', background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
                             <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
                             Refresh
                         </button>

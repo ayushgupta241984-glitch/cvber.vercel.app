@@ -27,8 +27,7 @@ export function FeedbackWidget() {
                     body: JSON.stringify({ rating: rating || 3, message: message.trim(), category: "dashboard" }),
                 }
             );
-            if (res.ok) setSent(true);
-            else setSent(true);
+            setSent(true);
         } catch {
             setSent(true);
         } finally {
@@ -39,14 +38,13 @@ export function FeedbackWidget() {
     if (sent) {
         return (
             <div className="fixed bottom-6 right-6 z-50">
-                <button
-                    onClick={() => { setOpen(false); setTimeout(() => setSent(false), 300); }}
-                    className="w-12 h-12 rounded-full bg-luxury-gold/90 text-black flex items-center justify-center shadow-2xl hover:bg-luxury-gold transition-all"
-                >
+                <button onClick={() => { setOpen(false); setTimeout(() => setSent(false), 300); }}
+                    className="w-12 h-12 rounded-full flex items-center justify-center transition-all"
+                    style={{ background: 'rgba(255,255,255,0.9)', color: '#000' }}>
                     <MessageSquare className="w-5 h-5" />
                 </button>
-                <div className="absolute bottom-16 right-0 w-72 p-4 border border-luxury-gold/30 bg-[#0a0a0a] backdrop-blur-xl">
-                    <p className="text-xs text-luxury-cream/70 font-sans">Thanks for the feedback!</p>
+                <div className="absolute bottom-16 right-0 w-72 p-4 border" style={{ background: '#0a0a0a', borderColor: 'var(--border)', borderRadius: 'var(--radius)' }}>
+                    <p style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>feedback received</p>
                 </div>
             </div>
         );
@@ -55,47 +53,36 @@ export function FeedbackWidget() {
     return (
         <div className="fixed bottom-6 right-6 z-50">
             {open && (
-                <div className="absolute bottom-16 right-0 w-80 border border-luxury-gold/30 bg-[#0a0a0a] backdrop-blur-xl shadow-2xl">
-                    <div className="flex items-center justify-between p-4 border-b border-luxury-steel/30">
-                        <span className="text-xs uppercase tracking-ultra-wide text-luxury-gold font-semibold">Feedback</span>
-                        <button onClick={() => setOpen(false)} className="text-luxury-muted/50 hover:text-luxury-cream">
+                <div className="absolute bottom-16 right-0 w-80 border" style={{ background: '#0a0a0a', borderColor: 'var(--border)', borderRadius: 'var(--radius)' }}>
+                    <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border)' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '+0.1em', textTransform: 'uppercase', color: 'var(--text-quaternary)' }}>Feedback</span>
+                        <button onClick={() => setOpen(false)} style={{ color: 'var(--text-quaternary)' }}>
                             <X className="w-4 h-4" />
                         </button>
                     </div>
                     <div className="p-4 space-y-4">
                         <div className="flex items-center gap-1">
                             {[1, 2, 3, 4, 5].map((n) => (
-                                <button
-                                    key={n}
-                                    onMouseEnter={() => setHoverRating(n)}
-                                    onMouseLeave={() => setHoverRating(0)}
-                                    onClick={() => setRating(n)}
-                                    className={`p-1 transition-colors ${(hoverRating || rating) >= n ? "text-luxury-gold" : "text-luxury-muted/30"}`}
-                                >
+                                <button key={n} onMouseEnter={() => setHoverRating(n)} onMouseLeave={() => setHoverRating(0)} onClick={() => setRating(n)}
+                                    style={{ color: (hoverRating || rating) >= n ? 'var(--text-secondary)' : 'var(--text-quaternary)' }}>
                                     <Star className="w-5 h-5" fill={(hoverRating || rating) >= n ? "currentColor" : "none"} />
                                 </button>
                             ))}
                         </div>
-                        <textarea
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
+                        <textarea value={message} onChange={(e) => setMessage(e.target.value)}
                             placeholder="What would make CVBER better for you?"
-                            className="w-full bg-transparent border border-luxury-steel/30 p-3 text-xs text-luxury-cream placeholder-luxury-muted/30 resize-none h-24 focus:outline-none focus:border-luxury-gold/50"
-                        />
-                        <button
-                            onClick={submit}
-                            disabled={!message.trim() || sending}
-                            className="w-full py-3 text-[10px] uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-                        >
+                            className="w-full p-3 text-xs resize-none h-24 focus:outline-none"
+                            style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-primary)', borderRadius: 'var(--radius)' }} />
+                        <button onClick={submit} disabled={!message.trim() || sending}
+                            className="w-full py-3 flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '+0.1em', textTransform: 'uppercase', background: 'rgba(255,255,255,0.9)', color: '#000', borderRadius: 'var(--radius)' }}>
                             {sending ? "Sending..." : <>Send <Send className="w-3 h-3" /></>}
                         </button>
                     </div>
                 </div>
             )}
-            <button
-                onClick={() => setOpen(!open)}
-                className="w-12 h-12 rounded-full bg-luxury-gold/90 text-black flex items-center justify-center shadow-2xl hover:bg-luxury-gold transition-all"
-            >
+            <button onClick={() => setOpen(!open)} className="w-12 h-12 rounded-full flex items-center justify-center transition-all"
+                style={{ background: 'rgba(255,255,255,0.9)', color: '#000' }}>
                 <MessageSquare className="w-5 h-5" />
             </button>
         </div>

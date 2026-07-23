@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { FileUploader } from '@/components/dashboard/FileUploader';
 import { SafeVault } from '@/components/dashboard/SafeVault';
-import { SecurityMentor } from '@/components/chat/SecurityMentor';
-import { ScreenshotGuard } from '@/components/security/ScreenshotGuard';
+
 import { FileViewer } from '@/components/dashboard/FileViewer';
 import { WatermarkEngine } from '@/components/tools/WatermarkEngine';
 import { BlockchainStatus } from '@/components/enforcement/BlockchainStatus';
@@ -14,7 +13,7 @@ import { ToastProvider, useToast } from '@/components/common/Toast';
 import { apiClient, BASE_URL, downloadBlob } from '@/lib/api-client';
 import { FeedbackWidget } from '@/components/common/FeedbackWidget';
 import { easeLuxurySharp as easeLuxury } from '@/lib/animations';
-import { ReferralBanner } from '@/components/common/ReferralBanner';
+
 import { SearchResultsModal } from '@/components/search/SearchResultsModal';
 import { SearchTV } from '@/components/search/SearchTV';
 import { Shield, FileText, Award, HardDrive, Stamp, Upload, Search, Lock, Bot, Hash, Layout, Zap, Activity, Eye, ScanLine, Anchor, Globe, ChevronDown, ArrowUpRight } from 'lucide-react';
@@ -685,7 +684,7 @@ function DashboardInner() {
     };
 
     return (
-        <ScreenshotGuard>
+        <>
             {proofModalFile && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -935,8 +934,6 @@ function DashboardInner() {
                                     <div className="grid lg:grid-cols-[1fr_420px] gap-12">
                                         {/* Main Column */}
                                         <div className="space-y-12">
-                                            <ReferralBanner />
-
                                             {/* Upload Section — The Atelier */}
                                             <motion.section variants={itemVariants}>
                                                 <div className="mb-6">
@@ -974,7 +971,6 @@ function DashboardInner() {
 
                                         {/* Sidebar Column */}
                                         <motion.div variants={itemVariants} className="space-y-8">
-                                            <SecurityMentor context={{ files }} onSearchFile={handleSearch} />
                                             <motion.div
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
@@ -1211,7 +1207,7 @@ function DashboardInner() {
 
                 <FeedbackWidget />
             </div>
-        </ScreenshotGuard>
+        </>
     );
 }
 

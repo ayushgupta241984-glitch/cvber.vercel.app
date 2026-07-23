@@ -46,20 +46,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                             animate={{ opacity: 1, x: 0, scale: 1 }}
                             exit={{ opacity: 0, x: 40, scale: 0.95 }}
                             transition={{ duration: 0.5, ease: easeLuxury }}
-                            className={`
-                                flex items-center gap-3 px-5 py-3.5 border text-xs uppercase tracking-wider font-semibold
-                                ${t.type === 'success' ? 'bg-black border-luxury-gold/40 text-luxury-gold' : ''}
-                                ${t.type === 'error' ? 'bg-black border-luxury-gold/30 text-luxury-gold/70' : ''}
-                                ${t.type === 'info' ? 'bg-black border-luxury-steel/40 text-luxury-cream/80' : ''}
-                            `}
+                            className="flex items-center gap-3 px-5 py-3.5 border text-xs uppercase tracking-wider font-semibold"
+                            style={{ background: '#000', borderColor: 'var(--border)', color: 'var(--text-tertiary)' }}
                         >
-                            {t.type === 'success' && <CheckCircle className="h-4 w-4 text-luxury-gold shrink-0" />}
-                            {t.type === 'error' && <XCircle className="h-4 w-4 text-luxury-gold/70 shrink-0" />}
-                            {t.type === 'info' && <AlertCircle className="h-4 w-4 text-luxury-gold/60 shrink-0" />}
+                            {t.type === 'success' && <CheckCircle className="h-4 w-4 shrink-0" style={{ color: 'var(--text-secondary)' }} />}
+                            {t.type === 'error' && <XCircle className="h-4 w-4 shrink-0" style={{ color: '#f87171' }} />}
+                            {t.type === 'info' && <AlertCircle className="h-4 w-4 shrink-0" style={{ color: 'var(--text-tertiary)' }} />}
                             <span className="flex-1">{t.message}</span>
                             <button
                                 onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
-                                className="p-1 hover:bg-luxury-steel/20 transition-colors duration-300"
+                                className="p-1 transition-colors"
+                                style={{ color: 'var(--text-quaternary)' }}
                                 aria-label="Dismiss"
                             >
                                 <X className="h-3.5 w-3.5" />

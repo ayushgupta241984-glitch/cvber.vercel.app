@@ -18,47 +18,28 @@ const navLinks = [
 function NavLink({ href, children, isActive }: { href: string; children: React.ReactNode; isActive: boolean }) {
     return (
         <Link href={href} className="relative group">
-            <span className={`text-xs font-bold uppercase tracking-[0.2em] transition-colors duration-300 ${
-                isActive ? "text-[#C9A962]" : "text-white/40 group-hover:text-white"
-            }`}>
+            <span style={{
+                fontSize: '11px',
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                letterSpacing: '+0.15em',
+                color: isActive ? 'var(--text-primary)' : 'var(--text-quaternary)',
+            }}>
                 {children}
             </span>
-            <motion.span
-                className="absolute -bottom-1 left-0 h-[1px] bg-[#C9A962]"
-                initial={{ width: isActive ? "100%" : "0%" }}
-                whileHover={{ width: "100%" }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-            />
+            <span className="absolute -bottom-1 left-0 h-[1px] transition-all duration-300"
+                style={{ width: isActive ? '100%' : '0%', background: isActive ? 'var(--text-primary)' : 'transparent' }} />
         </Link>
     );
 }
 
-function GoldButton({ href, children, onClick }: { href?: string; children: React.ReactNode; onClick?: () => void }) {
-    if (href) {
-        return (
-            <Link href={href}
-                className="relative overflow-hidden bg-[#C9A962] hover:bg-[#D4B97A] text-black font-bold py-3 px-6 uppercase tracking-[0.2em] text-[10px] transition-all duration-500">
-                <span className="relative z-10">{children}</span>
-                <motion.div
-                    className="absolute inset-0 bg-white/20"
-                    initial={{ x: "-100%" }}
-                    whileHover={{ x: "0%" }}
-                    transition={{ duration: 0.4 }}
-                />
-            </Link>
-        );
-    }
+function PrimaryButton({ href, children }: { href?: string; children: React.ReactNode }) {
     return (
-        <button onClick={onClick}
-            className="relative overflow-hidden bg-[#C9A962] hover:bg-[#D4B97A] text-black font-bold py-3 px-6 uppercase tracking-[0.2em] text-[10px] transition-all duration-500">
-            <span className="relative z-10">{children}</span>
-            <motion.div
-                className="absolute inset-0 bg-white/20"
-                initial={{ x: "-100%" }}
-                whileHover={{ x: "0%" }}
-                transition={{ duration: 0.4 }}
-            />
-        </button>
+        <Link href={href || '#'}
+            className="px-6 py-3 transition-all duration-200"
+            style={{ background: 'rgba(255,255,255,0.9)', color: '#000', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '+0.15em', borderRadius: 'var(--radius)' }}>
+            {children}
+        </Link>
     );
 }
 
@@ -103,33 +84,14 @@ export default function Navbar() {
 
     return (
         <>
-            <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
-                    scrolled
-                        ? "bg-[#0A0A0A]/85 backdrop-blur-2xl"
-                        : "bg-transparent"
-                }`}
-            >
-                {scrolled && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="absolute inset-0 overflow-hidden pointer-events-none"
-                    >
-                        <div className="absolute top-0 left-1/4 w-96 h-32 bg-[#C9A962]/3 blur-[100px] rounded-full" />
-                        <div className="absolute top-0 right-1/4 w-64 h-24 bg-[#C9A962]/2 blur-[80px] rounded-full" />
-                    </motion.div>
-                )}
-                
-                <div className={`relative ${scrolled ? 'border-b border-white/[0.04]' : ''}`}>
+            <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${scrolled ? "backdrop-blur-2xl" : "bg-transparent"}`}
+                style={scrolled ? { background: 'rgba(0,0,0,0.85)' } : undefined}>
+                <div className={`relative ${scrolled ? 'border-b' : ''}`} style={scrolled ? { borderColor: 'rgba(255,255,255,0.04)' } : undefined}>
                     <div className="max-w-7xl mx-auto px-6 md:px-12">
                         <div className="flex items-center justify-between h-20">
-                            <Link href="/" className="flex items-center gap-2.5 group relative z-10">
+                            <Link href="/" className="flex items-center gap-2.5 relative z-10">
                                 <Logo size="sm" alt="CVBER" />
-                                <span className="font-display text-xl font-bold text-white tracking-tight">Cvber</span>
+                                <span style={{ fontSize: '18px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '+0.02em' }}>CVBER</span>
                             </Link>
 
                             <div className="hidden md:flex items-center gap-12 relative z-10">
@@ -143,25 +105,23 @@ export default function Navbar() {
                             <div className="hidden md:flex items-center gap-6 relative z-10">
                                 {mounted && user ? (
                                     <div className="flex items-center gap-4">
-                                        <span className="text-xs text-white/40 font-sans font-medium">{user.full_name}</span>
-                                        <GoldButton href="/dashboard">Dashboard</GoldButton>
-                                        <button onClick={handleLogout}
-                                            className="text-white/40 hover:text-white text-[10px] font-bold uppercase tracking-[0.2em] transition-colors">
-                                            Logout
+                                        <span style={{ fontSize: '12px', color: 'var(--text-quaternary)' }}>{user.full_name}</span>
+                                        <PrimaryButton href="/dashboard">Workspace</PrimaryButton>
+                                        <button onClick={handleLogout} style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '+0.15em', color: 'var(--text-quaternary)' }}>
+                                            Exit
                                         </button>
                                     </div>
                                 ) : (
                                     <>
-                                        <Link href="/login"
-                                            className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-[0.2em] transition-colors">
-                                            Log In
+                                        <Link href="/login" style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '+0.15em', color: 'var(--text-quaternary)' }}>
+                                            Member Access
                                         </Link>
-                                        <GoldButton href="/gate">Apply for Access</GoldButton>
+                                        <PrimaryButton href="/gate">Request an Invitation</PrimaryButton>
                                     </>
                                 )}
                             </div>
 
-                            <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden text-white relative z-10" aria-label="Toggle menu">
+                            <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden relative z-10" style={{ color: 'var(--text-primary)' }} aria-label="Toggle menu">
                                 {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                             </button>
                         </div>
@@ -170,42 +130,43 @@ export default function Navbar() {
 
                 <AnimatePresence>
                     {menuOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="md:hidden bg-[#0A0A0A]/95 backdrop-blur-2xl border-t border-white/[0.06] overflow-hidden relative z-20"
-                        >
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                            className="md:hidden border-t overflow-hidden relative z-20" style={{ background: 'rgba(0,0,0,0.95)', backdropFilter: 'blur(2xl)', borderColor: 'rgba(255,255,255,0.06)' }}>
                             <div className="px-6 py-8 space-y-6">
                                 {navLinks.map((link) => (
                                     <Link key={link.name} href={link.href} onClick={() => setMenuOpen(false)}
-                                        className={`block text-sm font-bold uppercase tracking-[0.2em] transition-colors ${
-                                            pathname === link.href ? "text-[#C9A962]" : "text-white/50 hover:text-white"
-                                        }`}>
+                                        style={{
+                                            fontSize: '13px',
+                                            fontWeight: 900,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '+0.15em',
+                                            color: pathname === link.href ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                                        }}>
                                         {link.name}
                                     </Link>
                                 ))}
-                                <div className="h-px bg-gradient-to-r from-[#C9A962]/20 to-transparent" />
+                                <div style={{ height: '1px', background: 'linear-gradient(to right, var(--accent), transparent)' }} />
                                 {mounted && user ? (
                                     <div className="space-y-4">
                                         <Link href="/dashboard" onClick={() => setMenuOpen(false)}
-                                            className="block text-sm font-bold uppercase tracking-[0.2em] text-[#C9A962]">
-                                            Dashboard
+                                            style={{ fontSize: '13px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '+0.15em', color: 'var(--text-primary)' }}>
+                                            Workspace
                                         </Link>
                                         <button onClick={handleLogout}
-                                            className="block text-sm font-bold uppercase tracking-[0.2em] text-white/50">
-                                            Logout
+                                            style={{ fontSize: '13px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '+0.15em', color: 'var(--text-tertiary)' }}>
+                                            Exit
                                         </button>
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
                                         <Link href="/login" onClick={() => setMenuOpen(false)}
-                                            className="block text-sm font-bold uppercase tracking-[0.2em] text-white/50 hover:text-white">
-                                            Log In
+                                            style={{ fontSize: '13px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '+0.15em', color: 'var(--text-tertiary)' }}>
+                                            Member Access
                                         </Link>
                                         <Link href="/gate" onClick={() => setMenuOpen(false)}
-                                            className="block text-center bg-[#C9A962] hover:bg-[#D4B97A] text-black font-bold py-3 uppercase tracking-[0.2em] text-xs">
-                                            Apply for Access
+                                            className="block text-center py-3"
+                                            style={{ background: 'rgba(255,255,255,0.9)', color: '#000', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '+0.15em' }}>
+                                            Request an Invitation
                                         </Link>
                                     </div>
                                 )}
@@ -213,7 +174,7 @@ export default function Navbar() {
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </motion.div>
+            </div>
             <div className="h-20" />
         </>
     );

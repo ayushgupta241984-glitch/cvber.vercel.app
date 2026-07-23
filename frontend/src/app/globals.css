@@ -1,8 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  --bg-primary: #000000;
+  --bg-surface: #0a0a0a;
+  --border: rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.15);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255,255,255,0.55);
+  --text-tertiary: rgba(255,255,255,0.30);
+  --text-quaternary: rgba(255,255,255,0.15);
+  --accent: rgba(168,85,247,0.25);
+  --accent-hover: rgba(168,85,247,0.35);
+  --accent-ring: rgba(168,85,247,0.6);
+
   --background: 222 47% 11%;
   --foreground: 0 0% 100%;
   --muted-foreground: 240 4% 66%;
@@ -10,34 +24,41 @@
   --primary-foreground: 0 0% 4%;
   --secondary: 0 0% 10%;
   --muted: 0 0% 10%;
-  --accent: 0 0% 10%;
-  --border: 0 0% 18%;
+  --accent-tailwind: 0 0% 10%;
   --input: 0 0% 18%;
   --ring: 0 0% 40%;
-  --radius: 0.625rem;
+  --radius: 0.5rem;
 
-  --font-display: 'Instrument Serif', serif;
-  --font-body: 'Inter', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
 }
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    border-color: var(--border);
+  }
+  html {
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
   }
   body {
-    @apply antialiased;
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background: var(--bg-primary);
+    color: var(--text-primary);
     font-family: var(--font-body);
   }
   ::selection {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(168,85,247,0.3);
     color: white;
   }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: hsl(var(--background)); }
-  ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 4px; }
-  html { scroll-behavior: smooth; }
+  :focus-visible {
+    outline: 2px solid var(--accent-ring);
+    outline-offset: 2px;
+  }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0a0a0a; }
+  ::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #333; }
 }
 
 @layer components {
@@ -86,33 +107,32 @@
 
 /* ─── Animations ────────────────────────────────────── */
 @keyframes fade-rise {
-  from { opacity: 0; transform: translateY(24px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-rise {
-  animation: fade-rise 0.8s ease-out both;
+  animation: fade-rise 500ms ease-out both;
 }
 .animate-fade-rise-delay {
-  animation: fade-rise 0.8s ease-out 0.2s both;
+  animation: fade-rise 500ms ease-out 80ms both;
 }
 .animate-fade-rise-delay-2 {
-  animation: fade-rise 0.8s ease-out 0.4s both;
+  animation: fade-rise 500ms ease-out 160ms both;
 }
 
-@keyframes pulse-ring {
-  0% { transform: scale(0.95); opacity: 0.7; }
-  50% { transform: scale(1); opacity: 1; }
-  100% { transform: scale(0.95); opacity: 0.7; }
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.5; }
 }
-.animate-pulse-ring {
-  animation: pulse-ring 2s ease-in-out infinite;
+.animate-pulse-dot {
+  animation: pulse-dot 3s ease-in-out infinite;
 }
 
-@keyframes gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+@keyframes indeterminate {
+  0% { width: 20%; left: 0%; }
+  50% { width: 60%; left: 20%; }
+  100% { width: 20%; left: 80%; }
 }
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradient-shift 6s ease infinite;
+.animate-indeterminate {
+  animation: indeterminate 1.5s ease-in-out infinite;
 }

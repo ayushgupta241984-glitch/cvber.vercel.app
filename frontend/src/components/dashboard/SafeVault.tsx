@@ -3,7 +3,7 @@
 import { FileText, Shield, AlertTriangle, CheckCircle, Trash2, Anchor, Image, Search, Scale, BadgeCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { easeLuxury } from '@/lib/animations';
+import { apiClient } from '@/lib/api-client';
 
 interface FileItem {
     id: string;
@@ -37,17 +37,11 @@ interface SafeVaultProps {
 
 function SkeletonCard() {
     return (
-        <div className="border border-luxury-steel/30 bg-luxury-deep shimmer">
-            <div className="aspect-[4/3] bg-luxury-steel/20" />
-            <div className="p-6 space-y-4">
-                <div className="h-4 bg-luxury-steel/30 w-3/4" />
-                <div className="h-3 bg-luxury-steel/30 w-1/3" />
-                <div className="h-px bg-luxury-steel/20" />
-                <div className="flex gap-2 pt-2">
-                    <div className="h-8 w-8 bg-luxury-steel/30" />
-                    <div className="h-8 w-8 bg-luxury-steel/30" />
-                    <div className="h-8 w-16 bg-luxury-steel/30" />
-                </div>
+        <div className="border border-[var(--border)]" style={{ background: 'var(--bg-surface)', borderRadius: 'var(--radius)', padding: '32px' }}>
+            <div className="aspect-[4/3]" style={{ background: 'var(--border)', borderRadius: 'var(--radius)' }} />
+            <div className="mt-4 space-y-3">
+                <div className="h-3 w-3/4" style={{ background: 'var(--border)', borderRadius: 'var(--radius)' }} />
+                <div className="h-2 w-1/3" style={{ background: 'var(--border)', borderRadius: 'var(--radius)' }} />
             </div>
         </div>
     );
@@ -55,6 +49,7 @@ function SkeletonCard() {
 
 export function SafeVault({ files = [], loading = false, onView, onWatermark, onDelete, onTimestamp, onSearch, onDMCA }: SafeVaultProps) {
     const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const markBroken = (id: string) => {
         setBrokenImages(prev => new Set(prev).add(id));
@@ -62,11 +57,24 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'safe': return { label: 'Verified', class: 'text-luxury-gold/80' };
-            case 'warning': return { label: 'Under Review', class: 'text-luxury-gold/60' };
-            case 'danger': return { label: 'Flagged', class: 'text-luxury-gold/40' };
-            case 'scanning': return { label: 'Scanning', class: 'text-luxury-gold/60' };
-            default: return { label: 'Unknown', class: 'text-luxury-muted' };
+            case 'safe': return { label: 'Verified', color: 'var(--text-secondary)' };
+            case 'warning': return { label: 'Review', color: 'var(--text-tertiary)' };
+            case 'danger': return { label: 'Flagged', color: 'var(--text-quaternary)' };
+            case 'scanning': return { label: 'Scanning', color: 'var(--text-tertiary)' };
+            default: return { label: 'Unknown', color: 'var(--text-quaternary)' };
+        }
+    };
+
+    const handleDelete = async (file: FileItem) => {
+        if (!confirm(`Remove "${file.name}" from your collection?`)) return;
+        setDeletingId(file.id);
+        try {
+            await apiClient.deleteVaultFile(file.id);
+            onDelete?.(file);
+        } catch (err) {
+            window.dispatchEvent(new CustomEvent('cvber:toast', { detail: { message: 'Could not remove file. Please try again.', type: 'error' } }));
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -75,17 +83,15 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, ease: easeLuxury }}
-                className="text-center py-24 px-8 border border-luxury-steel/30 bg-luxury-deep"
+                transition={{ duration: 0.8 }}
+                className="text-center py-24 px-8 border border-[var(--border)]"
+                style={{ background: 'var(--bg-surface)', borderRadius: 'var(--radius)' }}
             >
-                <div className="w-16 h-16 border border-luxury-steel/30 flex items-center justify-center mx-auto mb-8 text-luxury-muted/30">
-                    <Image className="h-6 w-6" />
+                <div className="animate-pulse-dot mx-auto mb-8" style={{ color: 'var(--text-quaternary)' }}>
+                    <Image className="h-8 w-8 mx-auto" />
                 </div>
-                <h3 className="text-xl font-display text-luxury-cream mb-3">
-                    An Empty Gallery
-                </h3>
-                <p className="text-xs text-luxury-muted uppercase tracking-ultra-wide max-w-md mx-auto leading-relaxed">
-                    Your portfolio stands silent. Present your first piece, and we shall guard it across every corner of the web.
+                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                    No pieces yet. Submit your first work above.
                 </p>
             </motion.div>
         );
@@ -93,19 +99,22 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
 
     return (
         <div>
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-luxury-steel/30">
-                    <div>
-                        <p className="text-luxury-subheading mb-2">The Gallery</p>
-                        <h2 className="text-xl font-display text-luxury-cream">Your Collection</h2>
-                    </div>
-                    <span className="text-[10px] text-luxury-muted uppercase tracking-ultra-wide font-semibold">{files.length} {files.length === 1 ? 'piece' : 'pieces'}</span>
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <p style={{ fontSize: '10px', color: 'var(--text-quaternary)', letterSpacing: '+0.08em', textTransform: 'uppercase', marginBottom: '8px' }}>
+                        The Gallery
+                    </p>
+                    <h2 style={{ fontSize: '14px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '+0.02em' }}>
+                        Your Collection
+                    </h2>
                 </div>
+                <span style={{ fontSize: '10px', color: 'var(--text-quaternary)', letterSpacing: '+0.08em', textTransform: 'uppercase' }}>
+                    {files.length} {files.length === 1 ? 'piece' : 'pieces'}
+                </span>
+            </div>
 
             {loading && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0">
-                    <SkeletonCard />
-                    <SkeletonCard />
-                    <SkeletonCard />
                     <SkeletonCard />
                     <SkeletonCard />
                     <SkeletonCard />
@@ -119,137 +128,120 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                         return (
                             <motion.div
                                 key={file.id}
-                                initial={{ opacity: 0, y: 20 }}
+                                initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{
-                                    duration: 0.6,
-                                    ease: easeLuxury,
-                                    delay: index * 0.1,
-                                }}
-                                className="group relative border border-luxury-steel/30 bg-luxury-deep flex flex-col"
+                                transition={{ duration: 0.5, delay: index * 0.08 }}
+                                className="group relative border border-[var(--border)] flex flex-col transition-all duration-200 hover:border-[var(--border-hover)]"
+                                style={{ background: 'var(--bg-surface)' }}
                             >
-                                {/* Preview Area - Rolex style image zoom */}
-                                <div className="aspect-[4/3] bg-luxury-steel/10 flex items-center justify-center overflow-hidden relative">
+                                <div className="aspect-[4/3] flex items-center justify-center overflow-hidden relative" style={{ background: 'var(--border)' }}>
                                     {file.previewUrl && !brokenImages.has(file.id) ? (
                                         <img
                                             src={file.previewUrl}
                                             alt={file.name}
                                             onError={() => markBroken(file.id)}
-                                            className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] group-hover:scale-105"
+                                            className="w-full h-full object-cover"
                                         />
                                     ) : (
-                                        <div className="text-luxury-muted/20 flex flex-col items-center gap-2">
+                                        <div style={{ color: 'var(--text-quaternary)' }} className="flex flex-col items-center gap-2">
                                             <Image className="h-10 w-10" />
-                                            <span className="text-[9px] uppercase tracking-widest text-luxury-muted/10">{file.name}</span>
+                                            <span style={{ fontSize: '9px', letterSpacing: '+0.1em', textTransform: 'uppercase' }}>{file.name}</span>
                                         </div>
                                     )}
-                                    {/* Status overlay */}
                                     <div className="absolute top-4 right-4 flex items-center gap-2">
                                         {file.c2paSignedUrl && (
-                                            <span className="text-[8px] uppercase tracking-ultra-wide font-semibold text-cyan-400/80 flex items-center gap-1">
+                                            <span className="flex items-center gap-1" style={{ fontSize: '8px', letterSpacing: '+0.1em', textTransform: 'uppercase', color: 'rgba(34,211,238,0.8)' }}>
                                                 <BadgeCheck className="h-2.5 w-2.5" />
                                                 C2PA
                                             </span>
                                         )}
-                                        <span className={`text-[9px] uppercase tracking-ultra-wide font-semibold ${badge.class}`}>
+                                        <span style={{ fontSize: '9px', letterSpacing: '+0.1em', textTransform: 'uppercase', color: badge.color }}>
                                             {badge.label}
                                         </span>
                                     </div>
                                 </div>
 
-                                {/* Details */}
                                 <div className="p-6 flex flex-col flex-1">
                                     <div className="mb-4">
-                                        <h3 className="font-display text-luxury-cream truncate pr-2 text-sm mb-1">
+                                        <h3 style={{ fontSize: '13px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '+0.02em' }} className="truncate pr-2 mb-1">
                                             {file.name}
                                         </h3>
-                                        <div className="flex items-center gap-3">
-                                            <p className="text-[10px] text-luxury-muted/60 uppercase tracking-widest">
-                                                {(file.size / 1024).toFixed(1)} KB
-                                            </p>
-                                            {file.isScreenshot && (
-                                                <span className="text-[9px] text-luxury-gold/60 uppercase tracking-ultra-wide font-semibold">Screenshot</span>
-                                            )}
-                                        </div>
+                                        <p style={{ fontSize: '10px', color: 'var(--text-quaternary)', letterSpacing: '+0.1em', textTransform: 'uppercase' }}>
+                                            {(file.size / 1024).toFixed(1)} KB
+                                        </p>
                                     </div>
 
-                                    <div className="h-px bg-luxury-steel/20 mb-4" />
+                                    <div className="h-px mb-4" style={{ background: 'var(--border)' }} />
 
-                                    {/* Scores */}
                                     <div className="space-y-3 mb-4">
                                         {file.riskScore !== undefined && (
                                             <div>
-                                                <div className="flex justify-between text-[10px] uppercase tracking-widest mb-2">
-                                                    <span className="text-luxury-muted/60">Risk</span>
-                                                    <span className={file.riskScore < 30 ? 'text-luxury-gold/80' : 'text-luxury-gold/40'}>
+                                                <div className="flex justify-between mb-2" style={{ fontSize: '10px', letterSpacing: '+0.1em', textTransform: 'uppercase' }}>
+                                                    <span style={{ color: 'var(--text-quaternary)' }}>Risk</span>
+                                                    <span style={{ color: file.riskScore < 30 ? 'var(--text-secondary)' : 'var(--text-quaternary)' }}>
                                                         {file.riskScore.toFixed(0)}%
                                                     </span>
                                                 </div>
-                                                <div className="h-[2px] bg-luxury-steel/30 relative">
+                                                <div className="h-[2px] relative" style={{ background: 'var(--border)' }}>
                                                     <div
-                                                        className={`absolute left-0 top-0 h-full transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${file.riskScore < 30 ? 'bg-luxury-gold/60' : 'bg-luxury-gold/30'}`}
-                                                        style={{ width: `${file.riskScore}%` }}
+                                                        className="absolute left-0 top-0 h-full transition-all duration-500"
+                                                        style={{ width: `${file.riskScore}%`, background: file.riskScore < 30 ? 'rgba(255,255,255,0.15)' : 'var(--accent)' }}
                                                     />
                                                 </div>
                                             </div>
                                         )}
                                         {file.originalityScore !== undefined && (
                                             <div>
-                                                <div className="flex justify-between text-[10px] uppercase tracking-widest mb-2">
-                                                    <span className="text-luxury-muted/60">Originality</span>
-                                                    <span className={file.originalityScore > 70 ? 'text-luxury-gold/80' : 'text-luxury-gold/40'}>
+                                                <div className="flex justify-between mb-2" style={{ fontSize: '10px', letterSpacing: '+0.1em', textTransform: 'uppercase' }}>
+                                                    <span style={{ color: 'var(--text-quaternary)' }}>Originality</span>
+                                                    <span style={{ color: file.originalityScore > 70 ? 'var(--text-secondary)' : 'var(--text-quaternary)' }}>
                                                         {file.originalityScore.toFixed(0)}%
                                                     </span>
                                                 </div>
-                                                <div className="h-[2px] bg-luxury-steel/30 relative">
+                                                <div className="h-[2px] relative" style={{ background: 'var(--border)' }}>
                                                     <div
-                                                        className={`absolute left-0 top-0 h-full transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${file.originalityScore > 70 ? 'bg-luxury-gold/60' : 'bg-luxury-gold/30'}`}
-                                                        style={{ width: `${file.originalityScore}%` }}
+                                                        className="absolute left-0 top-0 h-full transition-all duration-500"
+                                                        style={{ width: `${file.originalityScore}%`, background: file.originalityScore > 70 ? 'rgba(255,255,255,0.15)' : 'var(--accent)' }}
                                                     />
                                                 </div>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Actions */}
-                                    <div className="flex items-center justify-between pt-4 border-t border-luxury-steel/20 mt-auto">
-                                        <span className="text-[9px] text-luxury-muted/40 uppercase tracking-widest">{new Date(file.uploadedAt).toLocaleDateString()}</span>
+                                    <div className="flex items-center justify-between pt-4 mt-auto" style={{ borderTop: '1px solid var(--border)' }}>
+                                        <span style={{ fontSize: '9px', color: 'var(--text-quaternary)', letterSpacing: '+0.1em', textTransform: 'uppercase' }}>
+                                            {new Date(file.uploadedAt).toLocaleDateString()}
+                                        </span>
                                         <div className="flex items-center gap-1">
                                             <button
-                                                onClick={() => onDelete?.(file)}
-                                                className="p-2 text-luxury-muted/40 hover:text-luxury-gold/60 transition-colors duration-300"
+                                                onClick={() => handleDelete(file)}
+                                                disabled={deletingId === file.id}
+                                                className="w-8 h-8 flex items-center justify-center transition-colors duration-200"
+                                                style={{ color: 'var(--text-quaternary)' }}
                                                 title="Remove"
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </button>
                                             <button
                                                 onClick={() => onTimestamp?.(file)}
-                                                className="p-2 text-luxury-muted/40 hover:text-luxury-gold/60 transition-colors duration-300"
+                                                className="w-8 h-8 flex items-center justify-center transition-colors duration-200 hover:text-[var(--text-secondary)]"
+                                                style={{ color: 'var(--text-quaternary)' }}
                                                 title="Anchor to Blockchain"
                                             >
                                                 <Anchor className="h-3.5 w-3.5" />
                                             </button>
                                             <button
                                                 onClick={() => onSearch?.(file)}
-                                                className="p-2 text-luxury-muted/40 hover:text-luxury-gold/60 transition-colors duration-300"
+                                                className="w-8 h-8 flex items-center justify-center transition-colors duration-200 hover:text-[var(--text-secondary)]"
+                                                style={{ color: 'var(--text-quaternary)' }}
                                                 title="Search web for copies"
                                             >
                                                 <Search className="h-3.5 w-3.5" />
                                             </button>
-                                            {file.c2paSignedUrl && (
-                                                <a
-                                                    href={file.c2paSignedUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="p-2 text-cyan-400/60 hover:text-cyan-400 transition-colors duration-300"
-                                                    title="Download C2PA Signed File"
-                                                >
-                                                    <BadgeCheck className="h-3.5 w-3.5" />
-                                                </a>
-                                            )}
                                             <button
                                                 onClick={() => onDMCA?.(file)}
-                                                className="p-2 text-luxury-muted/40 hover:text-purple-400/80 transition-colors duration-300"
+                                                className="w-8 h-8 flex items-center justify-center transition-colors duration-200 hover:text-[var(--text-secondary)]"
+                                                style={{ color: 'var(--text-quaternary)' }}
                                                 title="Generate DMCA takedown notice"
                                             >
                                                 <Scale className="h-3.5 w-3.5" />
@@ -260,7 +252,8 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                         {file.status !== 'scanning' && (
                                             <button
                                                 onClick={() => onView?.(file)}
-                                                className="flex-1 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold text-luxury-cream border border-luxury-steel/40 hover:border-luxury-gold/40 hover:text-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
+                                                className="flex-1 py-2 text-[10px] uppercase tracking-widest transition-all duration-200 hover:border-[var(--border-hover)]"
+                                                style={{ fontWeight: 900, color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}
                                             >
                                                 View
                                             </button>
@@ -268,7 +261,8 @@ export function SafeVault({ files = [], loading = false, onView, onWatermark, on
                                         {file.status === 'safe' && (!file.proofRequired || file.ownershipProofStatus === 'verified') && (
                                             <button
                                                 onClick={() => onWatermark?.(file)}
-                                                className="flex-1 py-2 text-[10px] uppercase tracking-ultra-wide font-semibold bg-luxury-gold/90 text-black hover:bg-luxury-gold transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] flex items-center justify-center gap-2"
+                                                className="flex-1 py-2 text-[10px] uppercase tracking-widest transition-all duration-200 flex items-center justify-center gap-2"
+                                                style={{ fontWeight: 900, background: 'rgba(255,255,255,0.9)', color: '#000', borderRadius: 'var(--radius)' }}
                                             >
                                                 <Shield className="h-3 w-3" />
                                                 Mark
