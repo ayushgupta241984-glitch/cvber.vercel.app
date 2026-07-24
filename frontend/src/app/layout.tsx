@@ -51,7 +51,7 @@ export const metadata: Metadata = {
         url: siteUrl,
         siteName: "CVBER",
         title: "How to Protect Your Art Online | CVBER — AI-Powered Art Security & DMCA",
-        description: "Protect your art from AI theft. Generate certificates of origin, detect scraping, and automate DMCA takedowns with blockchain-backed security. Free forever, no credit card required.",
+        description: "Protect your art from AI theft. Generate certificates of origin, detect scraping, and automate DMCA takedowns with blockchain-backed security. Invitation only.",
         images: [{ url: `${siteUrl}/og-image.png`, width: 1200, height: 630, alt: "CVBER - Free AI-Powered Art Protection Platform" }],
         determiner: "the",
     },

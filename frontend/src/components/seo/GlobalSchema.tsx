@@ -92,7 +92,7 @@ const globalSoftwareApp = {
         "price": "0",
         "priceCurrency": "USD",
         "availability": "https://schema.org/InStock",
-        "description": "Free forever. No credit card required. No paid tiers."
+        "description": "No credit card required. Invitation only."
     },
     "featureList": [
         "C2PA Digital Provenance Certificates",

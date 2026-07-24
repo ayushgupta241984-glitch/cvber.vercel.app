@@ -12,6 +12,7 @@ interface DashboardSidebarProps {
     isOpen: boolean;
     onClose: () => void;
     onLogout: () => void;
+    onNavigate?: (tab: string) => void;
 }
 
 const sections = [
@@ -34,7 +35,7 @@ const sections = [
     ]},
 ];
 
-export function DashboardSidebar({ userName, userInitials, isOpen, onClose, onLogout }: DashboardSidebarProps) {
+export function DashboardSidebar({ userName, userInitials, isOpen, onClose, onLogout, onNavigate }: DashboardSidebarProps) {
     const pathname = usePathname();
 
     return (
@@ -53,7 +54,7 @@ export function DashboardSidebar({ userName, userInitials, isOpen, onClose, onLo
                 transition={{ duration: 0.5, ease: easeLuxury }}
                 suppressHydrationWarning
                 className="w-60 border-r flex flex-col fixed inset-y-0 left-0 z-50 lg:translate-x-0"
-                style={{ background: '#000', borderColor: 'var(--border)' }}
+                style={{ background: 'var(--bg-primary)', borderColor: 'var(--border)' }}
             >
                 <div className="px-6 pt-8 pb-6">
                     <div className="flex items-center justify-between">
@@ -84,7 +85,14 @@ export function DashboardSidebar({ userName, userInitials, isOpen, onClose, onLo
                                     const isActive = pathname === item.href || pathname + '#' + item.id === item.href;
                                     return (
                                         <Link key={item.id} href={item.href}
-                                            onClick={() => { if (typeof window !== 'undefined' && window.innerWidth < 1024) onClose(); }}
+                                            onClick={(e) => {
+                                                if (item.href.includes('#') && onNavigate) {
+                                                    e.preventDefault();
+                                                    const hash = item.href.split('#')[1];
+                                                    onNavigate(hash);
+                                                }
+                                                if (typeof window !== 'undefined' && window.innerWidth < 1024) onClose();
+                                            }}
                                             className="w-full flex items-center gap-3 px-3 py-2.5 transition-all duration-200"
                                             style={{
                                                 fontSize: '13px',

@@ -132,10 +132,10 @@ export default function GatePage() {
               <p style={{ fontSize: '15px', color: 'var(--text-tertiary)', marginBottom: '40px', lineHeight: '1.6' }}>
                 You are one of the 1,000.
               </p>
-              <Link href="/register"
+              <Link href="/claim"
                 className="inline-flex items-center gap-3 px-10 py-4"
                 style={{ background: 'rgba(255,255,255,0.9)', color: '#000', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '+0.15em', borderRadius: 'var(--radius)' }}>
-                Create Your Account <ArrowRight className="w-4 h-4" />
+                Claim Your Access <ArrowRight className="w-4 h-4" />
               </Link>
             </motion.div>
           ) : status === "pending" ? (

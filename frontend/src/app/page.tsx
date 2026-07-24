@@ -76,7 +76,7 @@ function Hero() {
           Your Art Has Provenance.
         </h1>
         <p className="mt-6 animate-fade-rise-delay" style={{ fontSize: '16px', color: 'var(--text-tertiary)', lineHeight: '1.6', maxWidth: '480px' }}>
-          C2PA certificates, AI theft detection, and automated enforcement. Free forever.
+          C2PA certificates, AI theft detection, and automated enforcement.
         </p>
         <Link href="/gate" className="mt-10 px-10 py-4 animate-fade-rise-delay-2" style={{ background: 'rgba(255,255,255,0.9)', color: '#000', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '+0.15em', borderRadius: 'var(--radius)' }}>
           Request an Invitation
@@ -114,10 +114,10 @@ function MethodSection() {
             Every artwork has a story. CVBER ensures that story has proof. When you upload a piece, we embed a C2PA cryptographic certificate that proves origin, authorship, and timestamp\u2014recognized by Adobe, Microsoft, Google, and the EU AI Act.
           </p>
           <p style={{ fontSize: '17px', color: 'var(--text-tertiary)', lineHeight: '1.7' }}>
-            Our AI crawlers scan the open web 24/7, searching for unauthorized reproductions. When a match is found, CVBER generates a legally-compliant DMCA takedown notice and files it automatically. No lawyers. No fees. No hesitation.
+            Our AI crawlers scan the open web 24/7, searching for unauthorized reproductions. When a match is found, CVBER generates a legally-compliant DMCA takedown notice and files it automatically.
           </p>
           <p style={{ fontSize: '17px', color: 'var(--text-tertiary)', lineHeight: '1.7' }}>
-            Every timestamp is anchored to the Bitcoin blockchain through OpenTimestamps, creating an immutable record that cannot be forged, backdated, or disputed. Your art. Your proof. Your rules.
+            Every timestamp is anchored to the Bitcoin blockchain through OpenTimestamps, creating an immutable record that cannot be forged, backdated, or disputed.
           </p>
         </div>
       </div>

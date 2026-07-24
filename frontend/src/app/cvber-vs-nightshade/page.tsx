@@ -50,7 +50,7 @@ export default function CvberVsNightshade() {
                                 </tr>
                             </thead>
                             <tbody className="text-zinc-400">
-                                <tr className="border-b border-white/5"><td className="py-3 px-4">Price</td><td className="py-3 px-4 text-white">Free forever</td><td className="py-3 px-4">Free</td></tr>
+                                <tr className="border-b border-white/5"><td className="py-3 px-4">Price</td><td className="py-3 px-4 text-white">Free</td><td className="py-3 px-4">Free</td></tr>
                                 <tr className="border-b border-white/5"><td className="py-3 px-4">What it does</td><td className="py-3 px-4 text-white">Legal proof + enforcement</td><td className="py-3 px-4">Training data poisoning</td></tr>
                                 <tr className="border-b border-white/5"><td className="py-3 px-4">C2PA Certificates</td><td className="py-3 px-4 text-white">Yes</td><td className="py-3 px-4">No</td></tr>
                                 <tr className="border-b border-white/5"><td className="py-3 px-4">DMCA Takedowns</td><td className="py-3 px-4 text-white">Automated, unlimited</td><td className="py-3 px-4">No</td></tr>

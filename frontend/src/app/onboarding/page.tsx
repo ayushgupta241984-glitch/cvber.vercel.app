@@ -135,7 +135,7 @@ export default function OnboardingPage() {
                     </form>
 
                     <div className="flex items-center justify-center gap-4 mt-4 text-zinc-600 text-xs">
-                        <span>Free forever</span>
+                        <span>Invitation only</span>
                         <span>·</span>
                         <span>No credit card</span>
                         <span>·</span>

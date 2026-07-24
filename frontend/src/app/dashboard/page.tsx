@@ -12,6 +12,7 @@ import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { ToastProvider, useToast } from '@/components/common/Toast';
 import { apiClient, BASE_URL, downloadBlob } from '@/lib/api-client';
 import { FeedbackWidget } from '@/components/common/FeedbackWidget';
+import { WelcomeBanner } from '@/components/common/WelcomeBanner';
 import { AIAgentChat } from '@/components/agent/AIAgentChat';
 import { easeLuxurySharp as easeLuxury } from '@/lib/animations';
 
@@ -527,7 +528,7 @@ function DashboardInner() {
         try {
             await apiClient.deleteVaultFile(file.id);
         } catch (err) {
-
+            toast('Failed to remove file. Please try again.', 'error');
         }
         setFiles(prev => prev.filter(f => f.id !== file.id));
         revokeBlob(file.previewUrl);
@@ -542,7 +543,6 @@ function DashboardInner() {
             const result = await apiClient.getVaultFileWithProofs(file.id);
             setBlockchainFileProofs(result.blockchain_proofs || []);
         } catch (err) {
-
             setBlockchainFileProofs([]);
         } finally {
             setProofsLoading(false);
@@ -608,8 +608,7 @@ function DashboardInner() {
             const result = await apiClient.deepImageSearch(file);
             setSearchResults((prev: any) => ({ ...(prev || {}), _deepResults: result }));
         } catch (err: any) {
-
-            throw err;
+            // swallow — caller handles UI feedback
         }
     };
 
@@ -829,13 +828,13 @@ function DashboardInner() {
                     isOpen={isSidebarOpen}
                     onClose={() => setIsSidebarOpen(false)}
                     onLogout={handleLogout}
+                    onNavigate={(tab) => {
+                        if (tab === 'vault' || tab === 'scan' || tab === 'watermark' || tab === 'enforcement') setActiveTab('monitor');
+                        else if (tab === 'watchtower' || tab === 'ledger') setActiveTab('provenance');
+                    }}
                 />
 
                 <main className="flex-1 lg:ml-72 relative flex flex-col min-h-screen">
-                    {/* Film grain + vignette applied to full app */}
-                    <div className="grain-overlay" />
-                    <div className="vignette-overlay" />
-
                     {/* Slim Top Bar */}
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -896,7 +895,7 @@ function DashboardInner() {
                     <div className="lg:hidden border-b border-b-[var(--border)] px-8 md:px-16">
                         <div className="flex gap-6">
                             {(['monitor', 'provenance'] as const).map((tab) => {
-                                const labels = { monitor: 'Collection', provenance: 'Ledger' };
+                                const labels = { monitor: 'My Work', provenance: 'Blockchain Proofs' };
                                 return (
                                     <button
                                         key={tab}
@@ -916,6 +915,7 @@ function DashboardInner() {
                     </div>
 
                     {/* Content Area */}
+                    <WelcomeBanner email={user?.full_name} />
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
