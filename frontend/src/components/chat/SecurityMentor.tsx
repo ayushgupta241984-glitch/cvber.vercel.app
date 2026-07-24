@@ -36,7 +36,7 @@ function getStatusIcon(status: string) {
 }
 
 function getScoreColor(score?: number) {
-    if (score === undefined) return 'text-luxury-muted/40';
+    if (score === undefined) return 'text-white/40/40';
     if (score >= 70) return 'text-red-400';
     if (score >= 30) return 'text-amber-400';
     return 'text-green-400';
@@ -308,15 +308,15 @@ export function SecurityMentor({ context, onSearchFile }: SecurityMentorProps) {
             transition={{ duration: 0.8, ease: easeLuxury }}
             className="card-luxury h-[680px] flex flex-col overflow-hidden"
         >
-            <div className="flex items-center gap-4 px-8 py-6 border-b border-luxury-steel/30">
-                <div className="w-10 h-10 border border-luxury-gold/50 flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-luxury-gold" />
+            <div className="flex items-center gap-4 px-8 py-6 border-b border-white/[0.08]/30">
+                <div className="w-10 h-10 border border-white/[0.15]/50 flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-white/60" />
                 </div>
                 <div>
-                    <h3 className="text-sm font-display text-luxury-cream uppercase tracking-wide">The Custodian</h3>
+                    <h3 className="text-sm text-white uppercase tracking-wide">The Custodian</h3>
                     <div className="flex items-center gap-3 mt-1">
-                        <div className="w-1 h-1 bg-luxury-gold/60" />
-                        <p className="text-[10px] uppercase tracking-ultra-wide text-luxury-muted/60 font-semibold">File Search & Analysis</p>
+                        <div className="w-1 h-1 bg-white/[0.06]/60" />
+                        <p className="text-[10px] uppercase tracking-ultra-wide text-white/40/60 font-semibold">File Search & Analysis</p>
                     </div>
                 </div>
             </div>
@@ -334,8 +334,8 @@ export function SecurityMentor({ context, onSearchFile }: SecurityMentorProps) {
                             <div
                                 className={`max-w-[85%] ${
                                     message.role === 'user'
-                                        ? 'bg-luxury-gold/90 text-black px-6 py-4'
-                                        : 'text-luxury-cream/80 px-0 py-0'
+                                        ? 'bg-white/[0.06]/90 text-black px-6 py-4'
+                                        : 'text-white/80 px-0 py-0'
                                 }`}
                             >
                                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
@@ -343,17 +343,17 @@ export function SecurityMentor({ context, onSearchFile }: SecurityMentorProps) {
                                 {message.results && message.results.length > 0 && (
                                     <div className="mt-4 space-y-1.5">
                                         {message.results.map((r, i) => (
-                                            <div key={i} className="flex items-center gap-2 text-xs border border-luxury-steel/20 px-3 py-2">
+                                            <div key={i} className="flex items-center gap-2 text-xs border border-white/[0.08]/20 px-3 py-2">
                                                 {getStatusIcon(r.status)}
-                                                <FileText className="w-3 h-3 text-luxury-muted/40 shrink-0" />
-                                                <span className="truncate flex-1 text-luxury-cream/90">{r.name}</span>
+                                                <FileText className="w-3 h-3 text-white/40/40 shrink-0" />
+                                                <span className="truncate flex-1 text-white/90">{r.name}</span>
                                                 {r.score !== undefined && (
                                                     <span className={`font-semibold shrink-0 ${getScoreColor(r.score)}`}>
                                                         {r.score}%
                                                     </span>
                                                 )}
                                                 {r.originality !== undefined && (
-                                                    <span className="text-luxury-muted/40 text-[10px] shrink-0">
+                                                    <span className="text-white/40/40 text-[10px] shrink-0">
                                                         O:{r.originality}%
                                                     </span>
                                                 )}
@@ -362,7 +362,7 @@ export function SecurityMentor({ context, onSearchFile }: SecurityMentorProps) {
                                     </div>
                                 )}
 
-                                <div className={`text-[9px] mt-3 uppercase tracking-ultra-wide font-semibold ${message.role === 'user' ? 'text-black/40' : 'text-luxury-muted/30'}`}>
+                                <div className={`text-[9px] mt-3 uppercase tracking-ultra-wide font-semibold ${message.role === 'user' ? 'text-black/40' : 'text-white/40/30'}`}>
                                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                             </div>
@@ -381,8 +381,8 @@ export function SecurityMentor({ context, onSearchFile }: SecurityMentorProps) {
                         >
                             <div className="px-0 py-0">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-4 h-4 border border-luxury-gold/30 border-t-luxury-gold/60 animate-spin" />
-                                    <span className="text-xs text-luxury-muted/60 uppercase tracking-wider">Searching</span>
+                                    <div className="w-4 h-4 border border-white/30 border-t-white/60 animate-spin" />
+                                    <span className="text-xs text-white/40/60 uppercase tracking-wider">Searching</span>
                                 </div>
                             </div>
                         </motion.div>
@@ -392,8 +392,8 @@ export function SecurityMentor({ context, onSearchFile }: SecurityMentorProps) {
                 <div ref={messagesEndRef} />
             </div>
 
-            <div className="px-8 py-6 border-t border-luxury-steel/30">
-                <div className="flex gap-0 border border-luxury-steel/40 focus-within:border-luxury-gold/40 transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]">
+            <div className="px-8 py-6 border-t border-white/[0.08]/30">
+                <div className="flex gap-0 border border-white/[0.08]/40 focus-within:border-white/[0.15]/40 transition-all duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]">
                     <input
                         type="text"
                         value={input}
@@ -402,20 +402,20 @@ export function SecurityMentor({ context, onSearchFile }: SecurityMentorProps) {
                             if (e.key === 'Enter') handleSend();
                         }}
                         placeholder="Search your collection (try 'help', 'summary', 'high risk')..."
-                        className="flex-1 bg-transparent px-6 py-4 text-sm text-luxury-cream placeholder-luxury-muted/30 focus:outline-none"
+                        className="flex-1 bg-transparent px-6 py-4 text-sm text-white placeholder-white/30 focus:outline-none"
                     />
                     <button
                         onClick={handleSend}
                         disabled={!input.trim()}
-                        className="px-6 text-luxury-gold/60 hover:text-luxury-gold transition-colors duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="px-6 text-white/60/60 hover:text-white/60 transition-colors duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                         <Send className="h-4 w-4" />
                     </button>
                 </div>
                 {files.length > 0 && (
                     <div className="flex items-center gap-2 mt-3">
-                        <Search className="w-3 h-3 text-luxury-muted/30 shrink-0" />
-                        <p className="text-[10px] text-luxury-muted/40">
+                        <Search className="w-3 h-3 text-white/40/30 shrink-0" />
+                        <p className="text-[10px] text-white/40/40">
                             {files.length} {files.length === 1 ? 'file' : 'files'} in collection
                         </p>
                     </div>

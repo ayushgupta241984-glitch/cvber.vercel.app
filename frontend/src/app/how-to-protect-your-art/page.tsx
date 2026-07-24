@@ -210,7 +210,7 @@ export default function HowToProtectYourArt() {
                             <p className="text-lg text-zinc-300/70 max-w-xl mx-auto mb-12 font-medium">Join thousands of creators using C2PA certificates and automated DMCA enforcement to protect their work from AI scraping and theft.</p>
                             <Link
                                 href="/gate"
-                                className="inline-flex items-center gap-3 px-12 py-6 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all active:scale-95 shadow-xl shadow-black/20"
+                                className="inline-flex items-center gap-3 px-12 py-6 bg-white text-black rounded-full font-bold text-sm uppercase tracking-widest hover:bg-zinc-100 transition-all active:scale-95 shadow-none"
                             >
                                 Apply for Access
                                 <ArrowRight className="w-5 h-5" />

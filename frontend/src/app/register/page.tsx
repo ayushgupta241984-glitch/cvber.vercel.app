@@ -75,7 +75,7 @@ export default function RegisterPage() {
                     <div className="w-12 h-12 rounded-2xl bg-[#a855f7]/10 border border-[#a855f7]/20 flex items-center justify-center mb-8">
                         <svg className="w-6 h-6 text-[#a855f7]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </div>
-                    <h2 className="font-display text-4xl font-bold text-white leading-tight mb-4">
+                    <h2 className="text-4xl font-bold text-white leading-tight mb-4">
                         Start Protecting<br />Your Art Today
                     </h2>
                     <p className="text-white/40 text-sm leading-relaxed max-w-sm">

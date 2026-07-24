@@ -23,7 +23,7 @@ export default function FeaturesPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-gallery-black text-luxury-cream selection:bg-luxury-gold/25 overflow-x-hidden">
+        <div className="min-h-screen bg-black text-white selection:bg-white/[0.06]/25 overflow-x-hidden">
             {/* Hero */}
             <section className="relative pt-40 pb-20 px-8 md:px-16 overflow-hidden">
                 <div className="absolute inset-0 opacity-[0.03]">
@@ -32,11 +32,11 @@ export default function FeaturesPage() {
                 <div className="max-w-7xl mx-auto text-center relative z-10">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="tag mb-10">Feature Catalog</motion.div>
                     <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                        className="font-display text-5xl md:text-8xl font-bold text-luxury-cream mb-8 leading-tight gold-glow">
-                        Advanced <span className="text-luxury-gold">Defense.</span>
+                        className="text-5xl md:text-8xl font-bold text-white mb-8 leading-tight">
+                        Advanced <span className="text-white/60">Defense.</span>
                     </motion.h1>
                     <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                        className="text-lg text-luxury-muted max-w-2xl mx-auto font-sans">
+                        className="text-lg text-white/40 max-w-2xl mx-auto font-sans">
                         Enterprise-grade tools built for the modern creator. Protect, prove, and enforce digital ownership.
                     </motion.p>
                 </div>
@@ -54,14 +54,14 @@ export default function FeaturesPage() {
                                 initial="hidden"
                                 whileInView="visible"
                                 viewport={{ once: true }}
-                                className="card-gallery p-10 min-h-[320px] flex flex-col justify-between group"
+                                className="bg-[#0a0a0a] border border-white/[0.08] p-10 min-h-[320px] flex flex-col justify-between group"
                             >
                                 <div>
-                                    <div className="w-14 h-14 rounded-full border border-luxury-gold/20 flex items-center justify-center mb-8 group-hover:border-luxury-gold/40 transition-colors">
-                                        <feature.icon className="w-7 h-7 text-luxury-gold" />
+                                    <div className="w-14 h-14 rounded-full border border-white/[0.15]/20 flex items-center justify-center mb-8 group-hover:border-white/[0.15]/40 transition-colors">
+                                        <feature.icon className="w-7 h-7 text-white/60" />
                                     </div>
-                                    <h3 className="font-display text-2xl font-bold text-luxury-cream mb-4">{feature.title}</h3>
-                                    <p className="text-luxury-muted font-sans text-sm leading-relaxed">{feature.desc}</p>
+                                    <h3 className="text-2xl font-bold text-white mb-4">{feature.title}</h3>
+                                    <p className="text-white/40 font-sans text-sm leading-relaxed">{feature.desc}</p>
                                 </div>
                             </motion.div>
                         ))}
@@ -70,12 +70,12 @@ export default function FeaturesPage() {
             </section>
 
             {/* Protected Mediums */}
-            <section className="py-24 md:py-32 px-8 md:px-16 border-t border-gallery-border">
+            <section className="py-24 md:py-32 px-8 md:px-16 border-t border-white/[0.08]">
                 <div className="max-w-7xl mx-auto">
                     <div className="mb-16">
                         <span className="tag mb-4 block">Supported Media</span>
-                        <h2 className="font-display text-4xl md:text-6xl font-bold text-luxury-cream leading-tight">Protected<br />Mediums</h2>
-                        <p className="text-luxury-muted font-sans text-base mt-4 max-w-lg">From concept art to photography portfolios, CVBER scales to your creative ambition.</p>
+                        <h2 className="text-4xl md:text-6xl font-bold text-white leading-tight">Protected<br />Mediums</h2>
+                        <p className="text-white/40 font-sans text-base mt-4 max-w-lg">From concept art to photography portfolios, CVBER scales to your creative ambition.</p>
                     </div>
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -92,15 +92,15 @@ export default function FeaturesPage() {
                                 initial="hidden"
                                 whileInView="visible"
                                 viewport={{ once: true }}
-                                className="group relative overflow-hidden rounded-2xl bg-gallery-surface border border-gallery-border hover:border-luxury-gold/20 transition-all cursor-default"
+                                className="group relative overflow-hidden rounded-2xl bg-[#0a0a0a] border border-white/[0.08] hover:border-white/[0.15]/20 transition-all cursor-default"
                             >
                                 <div className="aspect-[3/4] relative overflow-hidden">
                                     <img src={asset.img} alt={asset.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-gallery-surface via-transparent to-transparent" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
                                 </div>
                                 <div className="px-5 pb-5 -mt-10 relative z-10">
-                                    <span className="text-[9px] font-bold uppercase tracking-ultra-wide text-luxury-gold font-sans">{asset.subtitle}</span>
-                                    <h3 className="font-display text-lg font-bold text-luxury-cream">{asset.title}</h3>
+                                    <span className="text-[9px] font-bold uppercase tracking-ultra-wide text-white/60 font-sans">{asset.subtitle}</span>
+                                    <h3 className="text-lg font-bold text-white">{asset.title}</h3>
                                 </div>
                             </motion.div>
                         ))}
@@ -112,7 +112,7 @@ export default function FeaturesPage() {
             <section className="py-24 md:py-32 px-8 md:px-16 text-center">
                 <div className="max-w-4xl mx-auto">
                     <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                        className="font-display text-4xl md:text-6xl font-bold text-luxury-cream mb-10 leading-tight gold-glow">
+                        className="text-4xl md:text-6xl font-bold text-white mb-10 leading-tight">
                         Start protecting your art.
                     </motion.h2>
                     <Link href="/gate" className="btn-primary inline-flex items-center gap-3 group">

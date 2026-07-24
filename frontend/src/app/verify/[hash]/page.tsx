@@ -97,20 +97,20 @@ export default function VerifyPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gallery-black flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-luxury-muted/30 border-t-luxury-gold rounded-full animate-spin" />
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-white/30 border-t-white/60 rounded-full animate-spin" />
             </div>
         );
     }
 
     if (!proof) {
         return (
-            <div className="min-h-screen bg-gallery-black flex items-center justify-center p-4">
+            <div className="min-h-screen bg-black flex items-center justify-center p-4">
                 <div className="text-center max-w-md">
-                    <Shield className="h-12 w-12 text-luxury-muted/30 mx-auto mb-6" />
-                    <h1 className="font-display text-3xl font-bold text-luxury-cream mb-3">Proof Not Found</h1>
-                    <p className="text-luxury-muted font-sans text-sm mb-6">No blockchain timestamp exists for this hash.</p>
-                    <code className="block text-xs text-luxury-muted/40 bg-gallery-deep p-3 rounded-lg font-mono break-all mb-8">{hash}</code>
+                    <Shield className="h-12 w-12 text-white/40/30 mx-auto mb-6" />
+                    <h1 className="text-3xl font-bold text-white mb-3">Proof Not Found</h1>
+                    <p className="text-white/40 font-sans text-sm mb-6">No blockchain timestamp exists for this hash.</p>
+                    <code className="block text-xs text-white/40/40 bg-[#050505] p-3 rounded-lg font-mono break-all mb-8">{hash}</code>
                     <Link href="/verify" className="btn-ghost inline-flex items-center gap-2">
                         <ArrowLeft className="w-3 h-3" /> Back to Validator
                     </Link>
@@ -120,7 +120,7 @@ export default function VerifyPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gallery-black text-luxury-cream p-4 md:p-8">
+        <div className="min-h-screen bg-black text-white p-4 md:p-8">
             <div className="max-w-2xl mx-auto pt-20">
                 <Link href="/verify" className="tag mb-8 block flex items-center gap-2">
                     <ArrowLeft className="w-3 h-3" /> Back to Validator
@@ -128,19 +128,19 @@ export default function VerifyPage() {
 
                 {/* Header */}
                 <div className="text-center mb-10">
-                    <div className="w-16 h-16 rounded-full border border-luxury-gold/20 flex items-center justify-center mx-auto mb-6">
-                        <Shield className="h-8 w-8 text-luxury-gold" />
+                    <div className="w-16 h-16 rounded-full border border-white/[0.15]/20 flex items-center justify-center mx-auto mb-6">
+                        <Shield className="h-8 w-8 text-white/60" />
                     </div>
-                    <h1 className="font-display text-3xl md:text-4xl font-bold text-luxury-cream mb-2 gold-glow">
+                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
                         Blockchain Verification
                     </h1>
-                    <p className="text-luxury-muted font-sans text-sm">Court-admissible proof of existence</p>
+                    <p className="text-white/40 font-sans text-sm">Court-admissible proof of existence</p>
                 </div>
 
                 {/* Main Card */}
-                <div className="card-gallery overflow-hidden">
+                <div className="bg-[#0a0a0a] border border-white/[0.08] overflow-hidden">
                     {/* Status Banner */}
-                    <div className={`p-6 text-center ${proof.status === 'confirmed' ? 'bg-luxury-gold/90' : 'bg-luxury-gold/60'}`}>
+                    <div className={`p-6 text-center ${proof.status === 'confirmed' ? 'bg-white/[0.9]' : 'bg-white/[0.6]'}`}>
                         <div className="flex items-center justify-center gap-3">
                             {proof.status === 'confirmed' ? (
                                 <CheckCircle className="h-6 w-6 text-black" />
@@ -156,42 +156,42 @@ export default function VerifyPage() {
                     {/* Details */}
                     <div className="p-6 md:p-8 space-y-8">
                         <div>
-                            <p className="text-[9px] font-bold text-luxury-muted/50 uppercase tracking-ultra-wide font-sans mb-2">Asset Name</p>
-                            <p className="font-display text-lg font-bold text-luxury-cream">{proof.asset_name}</p>
+                            <p className="text-[9px] font-bold text-white/40/50 uppercase tracking-ultra-wide font-sans mb-2">Asset Name</p>
+                            <p className="text-lg font-bold text-white">{proof.asset_name}</p>
                         </div>
 
                         <div>
-                            <p className="text-[9px] font-bold text-luxury-muted/50 uppercase tracking-ultra-wide font-sans mb-2">SHA-256 Hash</p>
-                            <code className="block p-3 bg-gallery-deep border border-gallery-border rounded-xl text-xs font-mono text-luxury-muted break-all">
+                            <p className="text-[9px] font-bold text-white/40/50 uppercase tracking-ultra-wide font-sans mb-2">SHA-256 Hash</p>
+                            <code className="block p-3 bg-[#050505] border border-white/[0.08] rounded-xl text-xs font-mono text-white/40 break-all">
                                 {proof.asset_hash}
                             </code>
                         </div>
 
                         <div className="grid grid-cols-2 gap-6">
                             <div>
-                                <p className="text-[9px] font-bold text-luxury-muted/50 uppercase tracking-ultra-wide font-sans mb-2">Timestamp</p>
-                                <p className="font-sans text-sm font-medium text-luxury-cream">{new Date(proof.timestamp).toLocaleString()}</p>
-                                <p className="text-xs text-luxury-muted/60 font-sans">{new Date(proof.timestamp).toUTCString()}</p>
+                                <p className="text-[9px] font-bold text-white/40/50 uppercase tracking-ultra-wide font-sans mb-2">Timestamp</p>
+                                <p className="font-sans text-sm font-medium text-white">{new Date(proof.timestamp).toLocaleString()}</p>
+                                <p className="text-xs text-white/40/60 font-sans">{new Date(proof.timestamp).toUTCString()}</p>
                             </div>
                             <div>
-                                <p className="text-[9px] font-bold text-luxury-muted/50 uppercase tracking-ultra-wide font-sans mb-2">Blockchain</p>
-                                <p className="font-sans text-sm font-medium text-luxury-cream">{proof.blockchain.toUpperCase()}</p>
-                                <p className="text-xs text-luxury-muted/60 font-sans">via OpenTimestamps</p>
+                                <p className="text-[9px] font-bold text-white/40/50 uppercase tracking-ultra-wide font-sans mb-2">Blockchain</p>
+                                <p className="font-sans text-sm font-medium text-white">{proof.blockchain.toUpperCase()}</p>
+                                <p className="text-xs text-white/40/60 font-sans">via OpenTimestamps</p>
                             </div>
                         </div>
 
                         <div>
-                            <p className="text-[9px] font-bold text-luxury-muted/50 uppercase tracking-ultra-wide font-sans mb-2">Proof ID</p>
-                            <code className="text-sm font-mono text-luxury-gold">{proof.proof_id}</code>
+                            <p className="text-[9px] font-bold text-white/40/50 uppercase tracking-ultra-wide font-sans mb-2">Proof ID</p>
+                            <code className="text-sm font-mono text-white/60">{proof.proof_id}</code>
                         </div>
 
                         {/* Legal Notice */}
-                        <div className="p-5 card-gallery bg-gallery-deep">
+                        <div className="p-5 bg-[#0a0a0a] border border-white/[0.08] bg-[#050505]">
                             <div className="flex items-start gap-3">
-                                <Scale className="w-4 h-4 text-luxury-gold mt-0.5 shrink-0" />
+                                <Scale className="w-4 h-4 text-white/60 mt-0.5 shrink-0" />
                                 <div>
-                                    <p className="font-sans text-xs font-bold text-luxury-cream mb-1">Legal Validity</p>
-                                    <p className="text-xs text-luxury-muted font-sans leading-relaxed">
+                                    <p className="font-sans text-xs font-bold text-white mb-1">Legal Validity</p>
+                                    <p className="text-xs text-white/40 font-sans leading-relaxed">
                                         This timestamp is anchored to the Bitcoin blockchain via OpenTimestamps, providing cryptographically verifiable proof that this file existed at the stated time.
                                     </p>
                                 </div>
@@ -200,7 +200,7 @@ export default function VerifyPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="p-6 md:p-8 border-t border-gallery-border flex flex-col sm:flex-row gap-3">
+                    <div className="p-6 md:p-8 border-t border-white/[0.08] flex flex-col sm:flex-row gap-3">
                         <button onClick={generateCourtDocument}
                             className="flex-1 py-3 btn-primary text-[10px] flex items-center justify-center gap-2">
                             <Download className="w-3 h-3" />
@@ -214,7 +214,7 @@ export default function VerifyPage() {
                     </div>
                 </div>
 
-                <p className="text-center text-luxury-muted/20 text-[8px] font-bold uppercase tracking-[0.5em] mt-10 font-sans">
+                <p className="text-center text-white/40/20 text-[8px] font-bold uppercase tracking-[0.5em] mt-10 font-sans">
                     CVBER Blockchain Verification System
                 </p>
             </div>

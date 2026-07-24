@@ -50,15 +50,15 @@ const faqCategories = [
 
 export default function FAQPage() {
     return (
-        <div className="min-h-screen bg-gallery-black text-luxury-cream selection:bg-luxury-gold/25 overflow-x-hidden">
+        <div className="min-h-screen bg-black text-white selection:bg-white/10 overflow-x-hidden">
             <div className="max-w-7xl mx-auto px-8 md:px-16 pt-[20vh] pb-32">
                 {/* Header */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-24">
                     <div className="tag mb-10">Knowledge Repository</div>
-                    <h1 className="font-display text-5xl md:text-8xl font-bold text-luxury-cream mb-8 leading-tight gold-glow">
-                        Art<br /><span className="text-luxury-gold">Protection Hub.</span>
+                    <h1 className="text-5xl md:text-8xl font-bold text-white mb-8 leading-tight">
+                        Art<br /><span className="text-white/60">Protection Hub.</span>
                     </h1>
-                    <p className="text-lg text-luxury-muted max-w-2xl mx-auto font-sans">
+                    <p className="text-lg text-white/40 max-w-2xl mx-auto font-sans">
                         Your essential guide to digital sovereignty. Master the tools of protection, defense, and active enforcement in the AI age.
                     </p>
                 </motion.div>
@@ -69,9 +69,9 @@ export default function FAQPage() {
                         className="lg:col-span-3 hidden lg:block sticky top-32 self-start space-y-2">
                         {faqCategories.map((cat) => (
                             <Link key={cat.id} href={`#${cat.id}`}
-                                className="flex items-center justify-between p-4 rounded-xl card-gallery hover:border-luxury-gold/20 text-luxury-muted hover:text-luxury-cream transition-all group">
+                                className="flex items-center justify-between p-4 rounded-xl bg-[#0a0a0a] border border-white/[0.08] hover:border-white/[0.15]/20 text-white/40 hover:text-white transition-all group">
                                 <div className="flex items-center gap-3">
-                                    <cat.icon className="w-4 h-4 text-luxury-gold" />
+                                    <cat.icon className="w-4 h-4 text-white/60" />
                                     <span className="text-[10px] font-bold uppercase tracking-ultra-wide font-sans">{cat.name}</span>
                                 </div>
                                 <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -86,17 +86,17 @@ export default function FAQPage() {
                                 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }} transition={{ delay: catIdx * 0.1 }}
                                 className="scroll-mt-32">
-                                <div className="flex items-center gap-6 mb-12 pb-6 border-b border-gallery-border">
-                                    <div className="w-10 h-10 rounded-full border border-luxury-gold/20 flex items-center justify-center">
-                                        <cat.icon className="w-5 h-5 text-luxury-gold" />
+                                <div className="flex items-center gap-6 mb-12 pb-6 border-b border-white/[0.08]">
+                                    <div className="w-10 h-10 rounded-full border border-white/[0.15]/20 flex items-center justify-center">
+                                        <cat.icon className="w-5 h-5 text-white/60" />
                                     </div>
-                                    <h2 className="font-display text-3xl font-bold text-luxury-cream">{cat.name}</h2>
+                                    <h2 className="text-3xl font-bold text-white">{cat.name}</h2>
                                 </div>
                                 <div className="space-y-6">
                                     {cat.questions.map((item, qidx) => (
-                                        <div key={qidx} className="card-gallery p-8 md:p-10 group">
-                                            <h3 className="font-sans text-base font-bold text-luxury-cream mb-4 leading-snug uppercase tracking-wide group-hover:text-luxury-gold transition-colors">{item.q}</h3>
-                                            <p className="text-luxury-muted font-sans text-sm leading-relaxed">{item.a}</p>
+                                        <div key={qidx} className="bg-[#0a0a0a] border border-white/[0.08] p-8 md:p-10 group">
+                                            <h3 className="font-sans text-base font-bold text-white mb-4 leading-snug uppercase tracking-wide group-hover:text-white/60 transition-colors">{item.q}</h3>
+                                            <p className="text-white/40 font-sans text-sm leading-relaxed">{item.a}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -107,10 +107,10 @@ export default function FAQPage() {
 
                 {/* Bottom CTA */}
                 <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                    className="mt-24 md:mt-40 p-12 md:p-20 rounded-3xl card-gallery text-center relative overflow-hidden">
+                    className="mt-24 md:mt-40 p-12 md:p-20 rounded-3xl bg-[#0a0a0a] border border-white/[0.08] text-center relative overflow-hidden">
                     <div className="relative z-10">
-                        <h2 className="font-display text-3xl md:text-5xl font-bold text-luxury-cream mb-6 leading-tight gold-glow">Need more help?</h2>
-                        <p className="text-luxury-muted font-sans mb-10 max-w-xl mx-auto">Our security mentors can help you navigate specific copyright issues and content protection scenarios.</p>
+                        <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">Need more help?</h2>
+                        <p className="text-white/40 font-sans mb-10 max-w-xl mx-auto">Our security mentors can help you navigate specific copyright issues and content protection scenarios.</p>
                         <Link href="/gate" className="btn-primary inline-flex items-center gap-3">
                             Apply for Access <ArrowRight className="w-4 h-4" />
                         </Link>
