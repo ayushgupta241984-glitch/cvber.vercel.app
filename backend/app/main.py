@@ -1,0 +1,243 @@
+import os
+import time
+import json
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
+from app.config import settings
+from app.dependencies import is_mock_mode
+from app.rate_limiter import limiter
+from app.routers import scan, auth, mentor, enforcement, diagnostics, vault, agent, leads, feedback, image_search, watermark, ai, gate
+from app.services.vertex_ai import vertex_ai_service
+from app.services.storage import storage_service
+
+logger = logging.getLogger(__name__)
+
+
+async def _gate_sweep_loop():
+    """Background loop: auto-accept pending gate applications every 60s."""
+    await asyncio.sleep(120)
+    while True:
+        try:
+            from app.routers.gate import _applications
+            now = datetime.now(timezone.utc)
+            accepted = 0
+            for email, app_data in _applications.items():
+                if app_data["status"] == "pending":
+                    created = datetime.fromisoformat(app_data["created_at"])
+                    if (now - created).total_seconds() >= 120:
+                        app_data["status"] = "accepted"
+                        app_data["reviewed_at"] = now.isoformat()
+                        app_data["accepted_at"] = now.isoformat()
+                        accepted += 1
+            if accepted:
+                logger.info(f"Gate sweep: auto-accepted {accepted} applications")
+        except Exception as e:
+            logger.warning(f"Gate sweep error: {e}")
+        await asyncio.sleep(60)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Starting CVBER Free API...")
+    validate_environment()
+
+    gcp_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
+    if gcp_json:
+        try:
+            from supabase import create_client
+            from app.config import settings as s
+            gcp_storage = create_client(s.supabase_url, s.supabase_service_role_key)
+            gcp_storage.table("app_secrets").upsert({
+                "key": "gcp_service_account",
+                "value": gcp_json,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }).execute()
+            logger.info("GCP credentials stored in Supabase secrets table")
+        except Exception as e:
+            logger.warning(f"Could not store GCP credentials in secrets table: {e}")
+
+    try:
+        await storage_service.ensure_buckets_exist()
+        logger.info("Storage buckets verified")
+    except Exception as e:
+        logger.warning(f"Could not verify storage buckets: {e}")
+
+    provider_status = vertex_ai_service.get_provider_status()
+    logger.info(f"AI provider status: {json.dumps(provider_status, default=str)}")
+
+    sweep_task = asyncio.create_task(_gate_sweep_loop())
+    logger.info("Gate sweep background task started")
+
+    app.state.start_time = time.time()
+    yield
+
+    sweep_task.cancel()
+    try:
+        await sweep_task
+    except asyncio.CancelledError:
+        pass
+
+
+app = FastAPI(
+    title="CVBER Free API",
+    description="Cybersecurity platform with AI-powered threat detection and C2PA verification",
+    version="1.0.1",
+    lifespan=lifespan,
+)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = "default-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-Response-Time-Ms"] = str(int((time.time() - start_time) * 1000))
+    return response
+
+_IMAGE_ERROR_PATTERNS_MW = ["does not support image", "image input", "cannot read", "image_url", "image data", "vision model", "model does not support", "not a vision model", "inform the user", "image.png", "this model"]
+
+@app.middleware("http")
+async def strip_image_errors_middleware(request: Request, call_next):
+    response = await call_next(request)
+    if response.status_code >= 400 and "application/json" in (response.headers.get("content-type", "")):
+        try:
+            body = await response.body()
+            body_str = body.decode("utf-8")
+            if any(p in body_str.lower() for p in _IMAGE_ERROR_PATTERNS_MW):
+                logger.warning(f"Stripping image error from {request.method} {request.url.path}")
+                import json as json_lib
+                data = json_lib.loads(body_str)
+                detail = data.get("detail", "")
+                for p in _IMAGE_ERROR_PATTERNS_MW:
+                    detail = detail.lower().replace(p, "").strip()
+                detail = " ".join(detail.split()).strip()
+                data["detail"] = detail or "Service error"
+                body_str = json_lib.dumps(data)
+                from starlette.responses import Response
+                return Response(content=body_str, status_code=response.status_code, headers=dict(response.headers), media_type="application/json")
+        except Exception:
+            pass
+    return response
+
+trusted_hosts = ["cvber-free-las-app.onrender.com", "cvber.vercel.app", "cvber.free.las.app", "localhost"]
+if settings.allowed_origins and settings.allowed_origins != "*":
+    trusted_hosts.append(settings.allowed_origins.replace("https://", "").replace("http://", ""))
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=trusted_hosts,
+)
+
+cors_origins = settings.parsed_allowed_origins
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
+)
+
+
+def validate_environment():
+    """Validate critical environment variables at startup."""
+    required = {
+        "supabase_url": settings.supabase_url,
+        "supabase_anon_key": settings.supabase_anon_key,
+        "supabase_service_role_key": settings.supabase_service_role_key,
+        "jwt_secret": settings.jwt_secret,
+    }
+    placeholders = ["placeholder", "your-", "key-here", "secret-here"]
+
+    missing = []
+    for name, value in required.items():
+        if not value or any(p in str(value).lower() for p in placeholders):
+            missing.append(name)
+
+    if missing:
+        logger.warning(f"Missing or placeholder values for: {', '.join(missing)}")
+
+    svc_key = settings.supabase_service_role_key
+    if svc_key and svc_key.startswith("sb_secret_"):
+        logger.warning("SUPABASE_SERVICE_ROLE_KEY appears to be a real key stored in plaintext. "
+                        "Rotate it immediately in the Supabase dashboard. "
+                        "Never commit real service role keys. Use a secrets manager for production.")
+
+    if not settings.google_api_key and not settings.groq_api_key:
+        logger.warning("No AI API keys configured. AI features will use mock data.")
+
+    return len(missing) == 0
+
+
+app.include_router(scan.router)
+app.include_router(auth.router)
+app.include_router(mentor.router)
+app.include_router(enforcement.router)
+app.include_router(diagnostics.router)
+app.include_router(vault.router)
+app.include_router(agent.router)
+app.include_router(leads.router)
+app.include_router(feedback.router)
+app.include_router(image_search.router)
+app.include_router(watermark.router)
+app.include_router(ai.router)
+app.include_router(gate.router)
+
+
+@app.api_route("/", methods=["GET", "HEAD"])
+async def root():
+    return {"status": "online", "service": "CVBER Free API", "version": "1.0.1"}
+
+
+@app.get("/health")
+async def health_check():
+    try:
+        ai_status = vertex_ai_service.get_provider_status()
+    except Exception:
+        ai_status = {"status": "unknown"}
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "uptime_seconds": time.time() - getattr(app.state, "start_time", time.time()),
+        "services": {
+            "api": "operational",
+            "vertex_ai": ai_status,
+        }
+    }
+
+
+@app.get("/api/ai-status")
+async def ai_status():
+    provider_status = vertex_ai_service.get_provider_status()
+    return {
+        "ai_service": provider_status,
+    }
+
+
+@app.get("/api/status")
+async def api_status():
+    return {
+        "mock_mode": is_mock_mode(),
+        "version": "1.0.1",
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
