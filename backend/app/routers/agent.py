@@ -491,6 +491,14 @@ def _strip_image_errors(text: str) -> str:
 
 _supabase_cache = None
 
+def _get_supabase_sync():
+    global _supabase_cache
+    if _supabase_cache:
+        return _supabase_cache
+    from supabase import create_client
+    _supabase_cache = create_client(settings.supabase_url, settings.supabase_service_role_key)
+    return _supabase_cache
+
 async def _get_supabase():
     global _supabase_cache
     if _supabase_cache:
@@ -2501,6 +2509,27 @@ async def agent_chat(
 
         greeting_name = full_name if full_name else current_user.get("email", "there").split("@")[0]
         personalized_prompt = SYSTEM_PROMPT.replace("{USER_NAME}", greeting_name)
+
+        # Inject vault context so the agent always knows what files exist
+        try:
+            vault_resp = await asyncio.wait_for(
+                asyncio.to_thread(
+                    lambda: _get_supabase_sync().table("vault_files")
+                    .select("scan_id, file_name, risk_score, originality_score")
+                    .eq("user_id", current_user["id"])
+                    .order("created_at", desc=True)
+                    .limit(20)
+                    .execute()
+                ),
+                timeout=8
+            )
+            vault_files = vault_resp.data or []
+            if vault_files:
+                vault_lines = [f"  - \"{f['file_name']}\" (scan_id: {f['scan_id']}, risk: {f.get('risk_score', 'N/A')}%)" for f in vault_files]
+                vault_block = f"\n\n## User's Vault ({len(vault_files)} files)\n" + "\n".join(vault_lines)
+                personalized_prompt += vault_block
+        except Exception as e:
+            logger.warning(f"Vault context injection failed: {e}")
 
         messages = [{"role": "system", "content": personalized_prompt}]
         for h in request.history:
