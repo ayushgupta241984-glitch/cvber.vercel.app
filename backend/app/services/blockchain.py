@@ -20,15 +20,15 @@ logger = logging.getLogger(__name__)
 class TimestampProof(BaseModel):
     """Blockchain timestamp proof"""
     proof_id: str
-    asset_hash: str
-    asset_name: str
-    timestamp: datetime
-    blockchain: str
-    status: str  # pending, confirmed, local_only, failed
-    ots_proof: Optional[str]  # Base64 encoded .ots proof file
-    verification_url: str
-    bitcoin_block: Optional[int]
-    confirmed_at: Optional[datetime]
+    asset_hash: str = ""
+    asset_name: str = ""
+    timestamp: Optional[datetime] = None
+    blockchain: str = "bitcoin"
+    status: str = "pending"
+    ots_proof: Optional[str] = None
+    verification_url: str = ""
+    bitcoin_block: Optional[int] = None
+    confirmed_at: Optional[datetime] = None
     vault_file_id: Optional[str] = None
 
 
