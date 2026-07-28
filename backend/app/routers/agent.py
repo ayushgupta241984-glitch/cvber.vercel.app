@@ -452,19 +452,26 @@ Workflows:
 Call the tool first, then respond to the user with what you found. Explain your process step by step."""
 
 async def _nim_completion(client, model: str, messages: list, tools: list, tool_choice: str, temperature: float, max_tokens: int):
-    """Make a completion call using the OpenAI-compatible API (Groq, NVIDIA NIM, etc.)"""
+    """Make a completion call with a hard timeout to prevent Render request timeouts."""
     extra = {}
     if "step-3.7" in model:
         extra["extra_body"] = {"chat_template_kwargs": {"thinking": False}, "include_reasoning": False}
-    return await client.chat.completions.create(
-        model=model,
-        messages=messages,
-        tools=tools,
-        tool_choice=tool_choice,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        **extra,
-    )
+    try:
+        return await asyncio.wait_for(
+            client.chat.completions.create(
+                model=model,
+                messages=messages,
+                tools=tools,
+                tool_choice=tool_choice,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                **extra,
+            ),
+            timeout=55,
+        )
+    except asyncio.TimeoutError:
+        logger.error(f"NIM/Groq call timed out after 55s (model={model})")
+        raise HTTPException(status_code=504, detail="AI provider timed out. Please try again.")
 
 def _strip_image_errors(text: str) -> str:
     lines = text.split("\n")
@@ -482,9 +489,15 @@ def _strip_image_errors(text: str) -> str:
         result = "I couldn't process the image. Try describing your artwork manually and I can search for it."
     return result
 
+_supabase_cache = None
+
 async def _get_supabase():
+    global _supabase_cache
+    if _supabase_cache:
+        return _supabase_cache
     from supabase import create_client
-    return create_client(settings.supabase_url, settings.supabase_service_role_key)
+    _supabase_cache = create_client(settings.supabase_url, settings.supabase_service_role_key)
+    return _supabase_cache
 
 async def execute_tool(name: str, arguments: dict, user_id: str) -> str:
     if name == "describe_vault_image":
@@ -2474,8 +2487,11 @@ async def agent_chat(
         # Dynamically fetch profile name for Jarvis greeting
         full_name = "Manoj" # Premium default fallback
         try:
-            supabase = await _get_supabase()
-            profile_response = supabase.table("profiles").select("full_name").eq("id", current_user["id"]).single().execute()
+            supabase = await asyncio.wait_for(_get_supabase(), timeout=5)
+            profile_response = await asyncio.wait_for(
+                supabase.table("profiles").select("full_name").eq("id", current_user["id"]).single().execute(),
+                timeout=5
+            )
             if profile_response and profile_response.data:
                 name = profile_response.data.get("full_name")
                 if name:
@@ -2491,8 +2507,29 @@ async def agent_chat(
             messages.append({"role": h.role, "content": h.content})
         messages.append({"role": "user", "content": request.message})
 
+        # FAST PATH: simple messages get a plain completion (no tools, ~3-8s)
+        # Tool-requiring messages need the full loop (~30-60s)
+        tool_keywords = ["search", "find", "scan", "detect", "copy", "stolen", "dmca",
+                         "watermark", "protect", "investigate", "list", "vault", "file",
+                         "upload", "describe", "report", "evidence", "monitor"]
+        msg_lower = request.message.lower()
+        needs_tools = any(kw in msg_lower for kw in tool_keywords)
+
+        if not needs_tools:
+            try:
+                logger.info(f"Agent fast path (no tools) for: {request.message[:50]}")
+                completion = await _nim_completion(
+                    client=client, model=model, messages=messages,
+                    tools=TOOLS, tool_choice="none",
+                    temperature=0.3, max_tokens=1500,
+                )
+                response_text = _strip_image_errors(completion.choices[0].message.content or "")
+                return AgentChatResponse(response=response_text, tool_calls=[], thinking="")
+            except Exception as fast_err:
+                logger.warning(f"Fast path failed, falling through to tool loop: {fast_err}")
+
         tool_calls_made = []
-        max_tool_rounds = 5
+        max_tool_rounds = 3
         find_copies_done = False
         last_thinking_log: list = []
         last_find_copies_result = ""
