@@ -985,12 +985,13 @@ async def _list_vault_files(user_id: str, limit: int = 20) -> str:
     try:
         supabase = await _get_supabase()
         response = supabase.table("vault_files")\
-            .select("scan_id, file_name, file_size, content_type, risk_score, originality_score, created_at")\
+            .select("scan_id, file_name, file_size, content_type, risk_score, originality_score, created_at, storage_path")\
             .eq("user_id", user_id)\
             .order("created_at", desc=True)\
             .limit(limit)\
             .execute()
-        return json.dumps({"files": response.data or [], "total": len(response.data or [])}, indent=2)
+        data = [f for f in (response.data or []) if not (f.get("storage_path") or "").startswith(("/", "uploads", "\\"))]
+        return json.dumps({"files": data, "total": len(data)}, indent=2)
     except Exception as e:
         logger.error(f"List vault files error: {e}")
         return json.dumps({"error": f"Failed to list vault files: {str(e)}", "files": []})
@@ -2515,7 +2516,7 @@ async def agent_chat(
             vault_resp = await asyncio.wait_for(
                 asyncio.to_thread(
                     lambda: _get_supabase_sync().table("vault_files")
-                    .select("scan_id, file_name, risk_score, originality_score")
+                    .select("scan_id, file_name, risk_score, originality_score, storage_path")
                     .eq("user_id", current_user["id"])
                     .order("created_at", desc=True)
                     .limit(20)
@@ -2524,6 +2525,10 @@ async def agent_chat(
                 timeout=8
             )
             vault_files = vault_resp.data or []
+            # Filter out orphaned local files
+            vault_files = [f for f in vault_files if not any(
+                (f.get("storage_path") or "").startswith(p) for p in ("/", "uploads", "\\")
+            )] if vault_files else []
             if vault_files:
                 vault_lines = [f"  - \"{f['file_name']}\" (scan_id: {f['scan_id']}, risk: {f.get('risk_score', 'N/A')}%)" for f in vault_files]
                 vault_block = f"\n\n## User's Vault ({len(vault_files)} files)\n" + "\n".join(vault_lines)
