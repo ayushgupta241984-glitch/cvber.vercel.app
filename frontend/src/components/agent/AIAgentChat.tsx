@@ -267,7 +267,7 @@ function searchFilesLocal(query: string, files: FileData[]): { message: string; 
 
 function isLocalCommand(input: string): boolean {
     const q = input.toLowerCase().trim();
-    return /^(help|summary|overview|status|stats?|dashboard|all files|collection|count|find|search|look|locate|show|where|get|open|safe|clean|low risk|warning|danger|high risk|critical|risky|score|analyze|examine|inspect|details?|info|tell me about|my art|my work|my files|my collection|everything|all|what)/i.test(q) ||
+    return /^(help|summary|overview|status|stats?|dashboard|all files|collection|count|find|search|look|locate|show|where|get|open|safe|clean|low risk|warning|danger|high risk|critical|risky|score|analyze|examine|inspect|details?|info|tell me about|my art|my work|my files|my collection|everything|all)/i.test(q) ||
         /score\s*(above|below|over|under|>|<|>=|<=|greater|less|higher|lower)?\s*\d+/i.test(q);
 }
 
