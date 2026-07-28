@@ -219,26 +219,29 @@ function DashboardInner() {
                         previewUrl: undefined,
                     }));
 
-                    // Fetch preview images via backend proxy (auth required)
-                    const token = localStorage.getItem('access_token');
-                    if (token) {
-                        for (const vf of vaultFiles) {
-                            if (!vf.previewUrl) {
-                                try {
-                                    const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${vf.id}/download`, {
-                                        headers: { 'Authorization': `Bearer ${token}` },
-                                        signal: AbortSignal.timeout(10000),
-                                    });
-                                    if (resp.ok) {
-                                        const blob = await resp.blob();
-                                        vf.previewUrl = URL.createObjectURL(blob);
-                                    }
-                                } catch { /* use placeholder */ }
-                            }
-                        }
-                    }
+                    // Set files immediately so UI renders
                     setFiles(vaultFiles);
                     localStorage.removeItem('cvber_vault_memory');
+
+                    // Fetch preview images via backend proxy in parallel (auth required)
+                    const token = localStorage.getItem('access_token');
+                    if (token) {
+                        const fetchPreviews = vaultFiles.map(async (vf) => {
+                            if (vf.previewUrl) return;
+                            try {
+                                const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${vf.id}/download`, {
+                                    headers: { 'Authorization': `Bearer ${token}` },
+                                    signal: AbortSignal.timeout(15000),
+                                });
+                                if (resp.ok) {
+                                    const blob = await resp.blob();
+                                    const blobUrl = URL.createObjectURL(blob);
+                                    setFiles(prev => prev.map(f => f.id === vf.id ? { ...f, previewUrl: blobUrl } : f));
+                                }
+                            } catch { /* use placeholder */ }
+                        });
+                        await Promise.allSettled(fetchPreviews);
+                    }
                 }
             } catch (err) {
                 setVaultError('Could not load your vault. Check your connection and try again.');
