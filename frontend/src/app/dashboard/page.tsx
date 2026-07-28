@@ -218,6 +218,25 @@ function DashboardInner() {
                         storageUrl: f.storage_url,
                         previewUrl: f.storage_url || undefined,
                     }));
+
+                    // Fetch preview images via backend proxy (auth required)
+                    const token = localStorage.getItem('access_token');
+                    if (token) {
+                        for (const vf of vaultFiles) {
+                            if (!vf.previewUrl) {
+                                try {
+                                    const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${vf.id}/download`, {
+                                        headers: { 'Authorization': `Bearer ${token}` },
+                                        signal: AbortSignal.timeout(10000),
+                                    });
+                                    if (resp.ok) {
+                                        const blob = await resp.blob();
+                                        vf.previewUrl = URL.createObjectURL(blob);
+                                    }
+                                } catch { /* use placeholder */ }
+                            }
+                        }
+                    }
                     setFiles(vaultFiles);
                     localStorage.removeItem('cvber_vault_memory');
                 }

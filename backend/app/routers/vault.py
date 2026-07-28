@@ -45,7 +45,8 @@ async def list_vault_files(
                     bucket=item.get("bucket", "safe-vault")
                 )
             except Exception as url_err:
-                logger.debug(f"Failed to generate signed URL for {item.get('storage_path')}: {url_err}")
+                logger.warning(f"Signed URL failed for {item.get('scan_id')}: {url_err}")
+                signed_url = None
 
             files.append(VaultFile(
                 id=item["id"],
@@ -125,17 +126,38 @@ async def download_vault_file(
         if not response.data:
             raise HTTPException(status_code=404, detail="File not found in vault")
 
-        file_bytes = await storage_service.download_file(
-            file_path=response.data["storage_path"],
-            bucket=response.data.get("bucket", "safe-vault")
-        )
+        try:
+            file_bytes = await storage_service.download_file(
+                file_path=response.data["storage_path"],
+                bucket=response.data.get("bucket", "safe-vault")
+            )
+        except Exception as dl_err:
+            logger.error(f"Storage download failed, trying signed URL fallback: {dl_err}")
+            try:
+                signed_url = await storage_service.get_file_url(
+                    file_path=response.data["storage_path"],
+                    bucket=response.data.get("bucket", "safe-vault")
+                )
+                import httpx
+                async with httpx.AsyncClient(timeout=15) as client:
+                    r = await client.get(signed_url)
+                    if r.status_code == 200:
+                        file_bytes = r.content
+                    else:
+                        raise HTTPException(status_code=500, detail="Failed to download file from storage")
+            except HTTPException:
+                raise
+            except Exception as fallback_err:
+                logger.error(f"Signed URL fallback also failed: {fallback_err}")
+                raise HTTPException(status_code=500, detail="Failed to download file from storage")
 
         from fastapi.responses import Response
         return Response(
             content=file_bytes,
             media_type=response.data.get("content_type", "application/octet-stream"),
             headers={
-                "Content-Disposition": f'attachment; filename="{response.data["file_name"]}"'
+                "Content-Disposition": f'attachment; filename="{response.data["file_name"]}"',
+                "Cache-Control": "no-cache"
             }
         )
     except HTTPException:
