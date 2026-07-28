@@ -216,7 +216,7 @@ function DashboardInner() {
                         c2paSignature: f.c2pa_signature,
                         uploadedAt: f.created_at,
                         storageUrl: f.storage_url,
-                        previewUrl: f.storage_url || undefined,
+                        previewUrl: undefined,
                     }));
 
                     // Fetch preview images via backend proxy (auth required)
