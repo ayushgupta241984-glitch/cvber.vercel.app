@@ -9,6 +9,7 @@ from app.services.storage import storage_service
 from app.models.schemas import VaultFile, VaultFileList, VaultFileDetail, BlockchainProof, OwnershipProofRequest
 from app.services.blockchain import blockchain_service
 import logging
+import os
 import time
 
 logger = logging.getLogger(__name__)
@@ -161,6 +162,17 @@ async def download_vault_file(
                 if attempt < 2:
                     import asyncio
                     await asyncio.sleep(1 * (attempt + 1))
+
+        if not file_bytes:
+            # Try local filesystem (files saved locally when Supabase upload failed)
+            sp = response.data.get("storage_path", "")
+            if os.path.exists(sp):
+                try:
+                    with open(sp, "rb") as f:
+                        file_bytes = f.read()
+                    logger.info(f"Served from local disk: {sp}")
+                except Exception as local_err:
+                    logger.warning(f"Local file read failed: {local_err}")
 
         if not file_bytes:
             try:
