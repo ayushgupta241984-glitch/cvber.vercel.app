@@ -2504,7 +2504,10 @@ async def agent_chat(
 
         messages = [{"role": "system", "content": personalized_prompt}]
         for h in request.history:
-            messages.append({"role": h.role, "content": h.content})
+            content = h.content or ""
+            if h.role == "assistant" and not content.strip():
+                content = "Let me check that for you."
+            messages.append({"role": h.role, "content": content})
         messages.append({"role": "user", "content": request.message})
 
         # FAST PATH: simple messages get a plain completion (no tools, ~3-8s)

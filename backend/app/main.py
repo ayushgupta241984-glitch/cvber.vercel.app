@@ -179,7 +179,7 @@ def validate_environment():
                         "Rotate it immediately in the Supabase dashboard. "
                         "Never commit real service role keys. Use a secrets manager for production.")
 
-    if not settings.google_api_key and not settings.groq_api_key:
+    if not settings.google_api_key and not settings.groq_api_key and not settings.nvidia_nim_api_key:
         logger.warning("No AI API keys configured. AI features will use mock data.")
 
     return len(missing) == 0
