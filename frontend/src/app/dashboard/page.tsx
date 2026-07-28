@@ -218,16 +218,8 @@ function DashboardInner() {
                         storageUrl: f.storage_url,
                         previewUrl: f.storage_url || undefined,
                     }));
-                    setFiles(prev => {
-                        const existingIds = new Set(prev.map(p => p.id));
-                        const merged = [...prev];
-                        for (const vf of vaultFiles) {
-                            if (!existingIds.has(vf.id)) {
-                                merged.push(vf);
-                            }
-                        }
-                        return merged;
-                    });
+                    setFiles(vaultFiles);
+                    localStorage.removeItem('cvber_vault_memory');
                 }
             } catch (err) {
                 setVaultError('Could not load your vault. Check your connection and try again.');
