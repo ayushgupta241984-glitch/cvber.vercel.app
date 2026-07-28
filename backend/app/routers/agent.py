@@ -2485,7 +2485,7 @@ async def agent_chat(
             model = settings.groq_model
 
         # Dynamically fetch profile name for Jarvis greeting
-        full_name = "Manoj" # Premium default fallback
+        full_name = "" # Will use "there" as fallback
         try:
             supabase = await asyncio.wait_for(_get_supabase(), timeout=5)
             profile_response = await asyncio.wait_for(
@@ -2499,7 +2499,7 @@ async def agent_chat(
         except Exception as e:
             logger.warning(f"Failed to fetch profile name for Jarvis: {e}")
 
-        greeting_name = full_name if full_name else "sir"
+        greeting_name = full_name if full_name else "there"
         personalized_prompt = SYSTEM_PROMPT.replace("{USER_NAME}", greeting_name)
 
         messages = [{"role": "system", "content": personalized_prompt}]

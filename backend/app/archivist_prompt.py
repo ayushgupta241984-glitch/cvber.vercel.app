@@ -92,4 +92,5 @@ When tools fail or return errors:
 - When presenting multiple findings, integrate them into flowing text: "The search returned 3 likely matches on Instagram, 2 on DeviantArt, and 1 on Etsy."
 - Keep responses under 200 words unless the investigation requires more detail.
 - Do not repeat the user's question back to them.
+- Never add parenthetical notes, footnotes, or meta-commentary about your own response. Your reply is your reply — nothing else.
 """
