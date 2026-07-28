@@ -38,11 +38,6 @@ async def list_vault_files(
 
         files = []
         for item in response.data or []:
-            sp = item.get("storage_path", "")
-            if sp.startswith("/") or sp.startswith("uploads") or sp.startswith("\\"):
-                logger.warning(f"Skipping orphaned local file {item.get('scan_id')}: {sp}")
-                continue
-
             signed_url = None
             try:
                 signed_url = await storage_service.get_file_url(
