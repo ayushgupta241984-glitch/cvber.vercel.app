@@ -161,10 +161,13 @@ async def delete_vault_file(
         if not response.data:
             raise HTTPException(status_code=404, detail="File not found in vault")
 
-        deleted = await storage_service.delete_file(
-            file_path=response.data["storage_path"],
-            bucket=response.data.get("bucket", "safe-vault")
-        )
+        try:
+            await storage_service.delete_file(
+                file_path=response.data["storage_path"],
+                bucket=response.data.get("bucket", "safe-vault")
+            )
+        except Exception as storage_err:
+            logger.warning(f"Storage delete failed (non-fatal): {storage_err}")
 
         supabase.table("vault_files")\
             .delete()\
