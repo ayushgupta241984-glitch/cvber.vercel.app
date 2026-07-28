@@ -223,22 +223,43 @@ function DashboardInner() {
                     setFiles(vaultFiles);
                     localStorage.removeItem('cvber_vault_memory');
 
-                    // Fetch preview images via backend proxy in parallel (auth required)
+                    // Try storage_url from API first, then fallback to download proxy with retry
                     const token = localStorage.getItem('access_token');
                     if (token) {
                         const fetchPreviews = vaultFiles.map(async (vf) => {
                             if (vf.previewUrl) return;
-                            try {
-                                const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${vf.id}/download`, {
-                                    headers: { 'Authorization': `Bearer ${token}` },
-                                    signal: AbortSignal.timeout(15000),
-                                });
-                                if (resp.ok) {
-                                    const blob = await resp.blob();
-                                    const blobUrl = URL.createObjectURL(blob);
-                                    setFiles(prev => prev.map(f => f.id === vf.id ? { ...f, previewUrl: blobUrl } : f));
+
+                            // Try storage_url (signed URL from list API) first
+                            const storageUrl = vf.storageUrl;
+                            if (storageUrl) {
+                                try {
+                                    const resp = await fetch(storageUrl, { signal: AbortSignal.timeout(10000) });
+                                    if (resp.ok) {
+                                        const blob = await resp.blob();
+                                        const blobUrl = URL.createObjectURL(blob);
+                                        setFiles(prev => prev.map(f => f.id === vf.id ? { ...f, previewUrl: blobUrl } : f));
+                                        return;
+                                    }
+                                } catch { /* fallback to proxy */ }
+                            }
+
+                            // Fallback: download proxy with retry
+                            for (let attempt = 0; attempt < 3; attempt++) {
+                                try {
+                                    const resp = await fetch(`${apiClient.getBaseUrl()}/vault/files/${vf.id}/download`, {
+                                        headers: { 'Authorization': `Bearer ${token}` },
+                                        signal: AbortSignal.timeout(15000),
+                                    });
+                                    if (resp.ok) {
+                                        const blob = await resp.blob();
+                                        const blobUrl = URL.createObjectURL(blob);
+                                        setFiles(prev => prev.map(f => f.id === vf.id ? { ...f, previewUrl: blobUrl } : f));
+                                        return;
+                                    }
+                                } catch {
+                                    if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
                                 }
-                            } catch { /* use placeholder */ }
+                            }
                         });
                         await Promise.allSettled(fetchPreviews);
                     }

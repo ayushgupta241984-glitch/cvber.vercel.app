@@ -9,12 +9,17 @@ from app.services.storage import storage_service
 from app.models.schemas import VaultFile, VaultFileList, VaultFileDetail, BlockchainProof, OwnershipProofRequest
 from app.services.blockchain import blockchain_service
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/vault", tags=["vault"])
 
 supabase = init_supabase()
+
+# In-memory cache: {key: (bytes, content_type, filename, timestamp)}
+_DOWNLOAD_CACHE: dict = {}
+_CACHE_TTL = 3600  # 1 hour
 
 
 @router.get("/files", response_model=VaultFileList)
@@ -115,6 +120,20 @@ async def download_vault_file(
     scan_id: UUID,
     current_user: dict = Depends(get_current_user)
 ):
+    cache_key = f"{current_user['id']}:{scan_id}"
+
+    cached = _DOWNLOAD_CACHE.get(cache_key)
+    if cached and (time.time() - cached[3]) < _CACHE_TTL:
+        file_bytes, ct, fname, _ = cached
+        return Response(
+            content=file_bytes,
+            media_type=ct,
+            headers={
+                "Content-Disposition": f'attachment; filename="{fname}"',
+                "Cache-Control": "public, max-age=3600, immutable",
+            }
+        )
+
     try:
         response = supabase.table("vault_files")\
             .select("storage_path, bucket, file_name, content_type")\
@@ -126,38 +145,50 @@ async def download_vault_file(
         if not response.data:
             raise HTTPException(status_code=404, detail="File not found in vault")
 
-        try:
-            file_bytes = await storage_service.download_file(
-                file_path=response.data["storage_path"],
-                bucket=response.data.get("bucket", "safe-vault")
-            )
-        except Exception as dl_err:
-            logger.error(f"Storage download failed, trying signed URL fallback: {dl_err}")
+        file_bytes = None
+        ct = response.data.get("content_type", "application/octet-stream")
+        fname = response.data["file_name"]
+
+        for attempt in range(3):
+            try:
+                file_bytes = await storage_service.download_file(
+                    file_path=response.data["storage_path"],
+                    bucket=response.data.get("bucket", "safe-vault")
+                )
+                break
+            except Exception as dl_err:
+                logger.warning(f"Download attempt {attempt+1}/3 failed for {scan_id}: {dl_err}")
+                if attempt < 2:
+                    import asyncio
+                    await asyncio.sleep(1 * (attempt + 1))
+
+        if not file_bytes:
             try:
                 signed_url = await storage_service.get_file_url(
                     file_path=response.data["storage_path"],
                     bucket=response.data.get("bucket", "safe-vault")
                 )
                 import httpx
-                async with httpx.AsyncClient(timeout=15) as client:
+                async with httpx.AsyncClient(timeout=20) as client:
                     r = await client.get(signed_url)
                     if r.status_code == 200:
                         file_bytes = r.content
                     else:
-                        raise HTTPException(status_code=500, detail="Failed to download file from storage")
-            except HTTPException:
-                raise
+                        raise Exception(f"Signed URL returned {r.status_code}")
             except Exception as fallback_err:
-                logger.error(f"Signed URL fallback also failed: {fallback_err}")
+                logger.error(f"All download methods failed for {scan_id}: {fallback_err}")
                 raise HTTPException(status_code=500, detail="Failed to download file from storage")
+
+        if file_bytes:
+            _DOWNLOAD_CACHE[cache_key] = (file_bytes, ct, fname, time.time())
 
         from fastapi.responses import Response
         return Response(
             content=file_bytes,
-            media_type=response.data.get("content_type", "application/octet-stream"),
+            media_type=ct,
             headers={
-                "Content-Disposition": f'attachment; filename="{response.data["file_name"]}"',
-                "Cache-Control": "no-cache"
+                "Content-Disposition": f'attachment; filename="{fname}"',
+                "Cache-Control": "public, max-age=3600, immutable",
             }
         )
     except HTTPException:
