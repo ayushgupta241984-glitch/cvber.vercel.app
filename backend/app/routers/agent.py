@@ -2499,7 +2499,7 @@ async def agent_chat(
         except Exception as e:
             logger.warning(f"Failed to fetch profile name for Jarvis: {e}")
 
-        greeting_name = full_name if full_name else "there"
+        greeting_name = full_name if full_name else current_user.get("email", "there").split("@")[0]
         personalized_prompt = SYSTEM_PROMPT.replace("{USER_NAME}", greeting_name)
 
         messages = [{"role": "system", "content": personalized_prompt}]
