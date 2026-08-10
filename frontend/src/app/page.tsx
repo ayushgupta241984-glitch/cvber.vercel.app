@@ -297,7 +297,12 @@ function Footer() {
             </Link>
           ))}
         </div>
-        <p style={{ fontSize: '11px', color: 'var(--text-quaternary)' }}>&copy; 2026 CVBER</p>
+        <div className="flex items-center gap-6">
+          <p style={{ fontSize: '11px', color: 'var(--text-quaternary)' }}>&copy; 2026 CVBER</p>
+          <a href="https://launchboosts.com/project/cvber" target="_blank" rel="noopener noreferrer">
+            <img src="https://launchboosts.com/badges/featured-dark.svg" alt="Featured on LaunchBoosts" width="180" height="54" />
+          </a>
+        </div>
       </div>
     </footer>
   );
