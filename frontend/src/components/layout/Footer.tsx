@@ -56,9 +56,14 @@ export default function Footer() {
                 </div>
                 <div style={{ height: '1px', background: 'var(--border)' }} />
                 <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p style={{ fontSize: '12px', color: 'var(--text-quaternary)' }}>
-                        &copy; {new Date().getFullYear()} CVBER. All rights reserved.
-                    </p>
+                    <div className="flex items-center gap-6">
+                        <p style={{ fontSize: '12px', color: 'var(--text-quaternary)' }}>
+                            &copy; {new Date().getFullYear()} CVBER. All rights reserved.
+                        </p>
+                        <a href="https://launchboosts.com/project/cvber" target="_blank" rel="noopener noreferrer">
+                            <img src="https://launchboosts.com/badges/featured-dark.svg" alt="Featured on LaunchBoosts" width="180" height="54" />
+                        </a>
+                    </div>
                     <div className="flex gap-8">
                         <Link href="/privacy" style={{ fontSize: '12px', color: 'var(--text-quaternary)' }} className="hover:text-[var(--text-primary)] transition-colors">Privacy Policy</Link>
                         <Link href="/terms" style={{ fontSize: '12px', color: 'var(--text-quaternary)' }} className="hover:text-[var(--text-primary)] transition-colors">Terms of Service</Link>
