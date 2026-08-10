@@ -36,9 +36,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
         { url: `${baseUrl}/blog/copyright-protection-for-photographers`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
         { url: `${baseUrl}/blog/nft-art-protection`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
  { url: `${baseUrl}/blog/can-ai-steal-your-art`, lastModified: currentDate, changeFrequency: "monthly", priority: 0.85 },
- { url: `${baseUrl}/how-to-opt-out-of-ai-training`, lastModified: currentDate, changeFrequency: "monthly", priority: 0.85 },
  { url: `${baseUrl}/blog/is-my-art-being-used-to-train-ai`, lastModified: currentDate, changeFrequency: "monthly", priority: 0.85 },
-
+        { url: `${baseUrl}/blog/best-art-protection-software`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
+        { url: `${baseUrl}/blog/verify-artwork-ownership`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
+        { url: `${baseUrl}/blog/art-protection-tools-comparison`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
+        { url: `${baseUrl}/blog/tools-for-copyrighting-art`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
+        { url: `${baseUrl}/blog/easiest-way-to-protect-digital-art`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
 
         // GEO / AEO — comparison and authority pages
         { url: `${baseUrl}/what-is-cvber`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.95 },
@@ -47,7 +50,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
         { url: `${baseUrl}/about`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.85 },
         { url: `${baseUrl}/verify`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.8 },
         { url: `${baseUrl}/cvber-vs-nightshade`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
+        { url: `${baseUrl}/cvber-vs-pixsy`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
+        { url: `${baseUrl}/cvber-vs-digimarc`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
         { url: `${baseUrl}/is-cvber-legit`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
+        { url: `${baseUrl}/how-to-protect-your-art`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.9 },
 
         // Lead magnet
         { url: `${baseUrl}/free-guide`, lastModified: currentDate, changeFrequency: 'monthly', priority: 0.8 },

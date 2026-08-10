@@ -1,0 +1,1 @@
+{"name": "cvber-c2pa-signer", "version": "1.0.0", "description": "C2PA signing service for CVBER", "main": "index.js", "scripts": {"start": "node index.js"}, "dependencies": {"express": "^4.18.2"}}

@@ -1,0 +1,88 @@
+version: "3.8"
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: cvber-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+    deploy:
+      resources:
+        limits:
+          memory: 6g
+    restart: unless-stopped
+
+  c2pa:
+    build:
+      context: ./c2pa-signer
+      dockerfile: Dockerfile
+    container_name: cvber-c2pa
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - C2PA_SIGNING_ENABLED=false
+    volumes:
+      - c2pa_data:/app/data
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: cvber-api
+    depends_on:
+      - ollama
+      - c2pa
+    ports:
+      - "8000:8000"
+    environment:
+      - LOCAL_BRAIN_URL=http://ollama:11434/v1
+      - LOCAL_BRAIN_MODEL=granite-4.0-350m
+      - LOCAL_BRAIN_ENABLED=true
+      - C2PA_SERVICE_URL=http://c2pa:3001
+      - OBSIDIAN_VAULT_PATH=/app/cvber-brain
+      - OBSIDIAN_MEMORY_ENABLED=true
+      - VISION_MODEL_ENABLED=true
+      - VISION_MODEL_NAME=SmolVLM-500M
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - GCP_SERVICE_ACCOUNT_JSON=${GCP_SERVICE_ACCOUNT_JSON:-}
+      - MOCK_MODE=${MOCK_MODE:-false}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+      - PORT=8000
+    volumes:
+      - ./cvber-brain:/app/cvber-brain
+      - ./uploads:/app/uploads
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    restart: unless-stopped
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cvber-tunnel
+    depends_on:
+      - api
+    command: >
+      tunnel run
+    environment:
+      - CLOUDFLARE_TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+  c2pa_data:
+  cvber_brain:
+  uploads:

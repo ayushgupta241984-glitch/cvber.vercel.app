@@ -90,7 +90,21 @@ class Settings(BaseSettings):
     
     # C2PA Service
     c2pa_service_url: str = "http://localhost:3001"
-    
+
+    # Local Brain (llama.cpp / Ollama)
+    local_brain_enabled: bool = True
+    local_brain_url: str = "http://localhost:11434/v1"
+    local_brain_model: str = "granite-4.0-350m"
+    local_brain_router: bool = True
+
+    # Vision Model (runs in browser via ONNX — no local RAM cost)
+    vision_model_enabled: bool = True
+    vision_model_name: str = "SmolVLM-500M"
+
+    # Obsidian Vault for persistent memory
+    obsidian_vault_path: str = "./cvber-brain"
+    obsidian_memory_enabled: bool = True
+
     # CORS - stored as comma-separated string
     allowed_origins: str = "http://localhost:3000,http://localhost:3002,https://cvber.vercel.app,https://cvber.app,https://cvber.free.las.app,https://cvber-free-las-app.onrender.com"
     

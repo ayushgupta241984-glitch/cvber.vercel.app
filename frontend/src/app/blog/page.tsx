@@ -85,6 +85,41 @@ const posts = [
  date: "2026-05-25",
  readTime: "6 min read",
  },
+ {
+ slug: "best-art-protection-software",
+ title: "Best Art Protection Software in 2026",
+ excerpt: "Compare the best art protection software: CVBER, Pixsy, Digimarc, Glaze, Nightshade. Free and paid options reviewed.",
+ date: "2026-08-10",
+ readTime: "12 min read",
+ },
+ {
+ slug: "verify-artwork-ownership",
+ title: "How to Verify Artwork Ownership: Complete Guide",
+ excerpt: "Prove you created your art with C2PA certificates, blockchain timestamps, source files, and copyright registration.",
+ date: "2026-08-10",
+ readTime: "9 min read",
+ },
+ {
+ slug: "art-protection-tools-comparison",
+ title: "Art Protection Tools Comparison 2026",
+ excerpt: "Side-by-side comparison of every art protection tool: CVBER, Glaze, Nightshade, Pixsy, Spawning.ai, Digimarc.",
+ date: "2026-08-10",
+ readTime: "11 min read",
+ },
+ {
+ slug: "tools-for-copyrighting-art",
+ title: "Best Tools for Copyrighting Your Art in 2026",
+ excerpt: "Every tool for copyrighting digital art: C2PA certificates, blockchain timestamps, copyright registration, monitoring.",
+ date: "2026-08-10",
+ readTime: "8 min read",
+ },
+ {
+ slug: "easiest-way-to-protect-digital-art",
+ title: "Easiest Way to Protect Digital Art in 2026",
+ excerpt: "5-minute protection setup with free tools. C2PA certificates, watermarks, low-res uploads, and monitoring.",
+ date: "2026-08-10",
+ readTime: "6 min read",
+ },
 ];
 
 export default function BlogIndex() {

@@ -18,6 +18,8 @@ from app.rate_limiter import limiter
 from app.routers import scan, auth, mentor, enforcement, diagnostics, vault, agent, leads, feedback, image_search, watermark, ai, gate
 from app.services.vertex_ai import vertex_ai_service
 from app.services.storage import storage_service
+from app.services.local_brain import local_brain
+from app.services.supervisor import supervisor
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +73,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Could not verify storage buckets: {e}")
 
+    supervisor.register(
+        "local-brain",
+        health_check=lambda: local_brain.health_check(),
+        restart_handler=None,
+        check_interval=30,
+    )
+
     provider_status = vertex_ai_service.get_provider_status()
     logger.info(f"AI provider status: {json.dumps(provider_status, default=str)}")
 
@@ -85,6 +94,8 @@ async def lifespan(app: FastAPI):
         await sweep_task
     except asyncio.CancelledError:
         pass
+
+    await supervisor.stop()
 
 
 app = FastAPI(
@@ -179,8 +190,8 @@ def validate_environment():
                         "Rotate it immediately in the Supabase dashboard. "
                         "Never commit real service role keys. Use a secrets manager for production.")
 
-    if not settings.google_api_key and not settings.groq_api_key and not settings.nvidia_nim_api_key:
-        logger.warning("No AI API keys configured. AI features will use mock data.")
+    if not settings.local_brain_enabled and not settings.google_api_key and not settings.groq_api_key and not settings.nvidia_nim_api_key:
+        logger.warning("No AI API keys configured and local brain is disabled. AI features will use mock data.")
 
     return len(missing) == 0
 
@@ -211,6 +222,19 @@ async def health_check():
         ai_status = vertex_ai_service.get_provider_status()
     except Exception:
         ai_status = {"status": "unknown"}
+
+    try:
+        brain_status = await local_brain.health_check()
+    except Exception:
+        brain_status = {"status": "unknown"}
+
+    try:
+        sup_status = supervisor.get_overall_status()
+        svc_status = supervisor.get_status()
+    except Exception:
+        sup_status = "unknown"
+        svc_status = {}
+
     return {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -218,7 +242,10 @@ async def health_check():
         "services": {
             "api": "operational",
             "vertex_ai": ai_status,
-        }
+            "local_brain": brain_status,
+            "supervisor": sup_status,
+            "services": svc_status,
+        },
     }
 
 

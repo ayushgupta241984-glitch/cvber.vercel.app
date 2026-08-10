@@ -33,6 +33,7 @@ except ImportError:
 
 from app.config import settings
 from app.models.schemas import RiskReport, ThreatCategory, DetailedFinding, Recommendation
+from app.services.local_brain import local_brain
 
 IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.tiff', '.tif', '.svg'}
 IMAGE_MIME_PREFIXES = ('image/', 'application/octet-stream')
@@ -375,9 +376,10 @@ class VertexAIService:
         self.groq_cb = CircuitBreaker("groq", failure_threshold=3, recovery_timeout=60)
         self.vertex_cb = CircuitBreaker("vertex", failure_threshold=2, recovery_timeout=120)
         self.nim_cb = CircuitBreaker("nim", failure_threshold=3, recovery_timeout=60)
+        self.local_cb = CircuitBreaker("local-brain", failure_threshold=2, recovery_timeout=30)
 
         self._config_models()
-        self.ensure_initialized()
+        self._init_done = False
 
     def _config_models(self):
         self.google_model_name = settings.google_model or "gemini-1.5-flash"
@@ -416,17 +418,39 @@ class VertexAIService:
                 "key_present": self.is_valid_key(settings.nvidia_nim_api_key),
                 "circuit_breaker": self.nim_cb.state.value,
             },
+            "local": {
+                "available": settings.local_brain_enabled,
+                "url": settings.local_brain_url,
+                "model": settings.local_brain_model,
+                "circuit_breaker": self.local_cb.state.value,
+            },
             "active_provider": self.provider,
             "initialized": self.initialized,
         }
 
-    def ensure_initialized(self):
+    async def ensure_initialized(self):
         if self.initialized:
             return True
 
         groq_key_status = "present" if settings.groq_api_key else "missing"
         google_key_status = "present" if settings.google_api_key else "missing"
-        logger.info(f"AI init: groq_key={groq_key_status}, google_key={google_key_status}")
+        logger.info(f"AI init: groq_key={groq_key_status}, google_key={google_key_status}, local_brain_enabled={settings.local_brain_enabled}")
+
+        if settings.local_brain_enabled and self.local_cb.can_attempt():
+            try:
+                health = await local_brain.health_check()
+                if health.get("status") == "healthy":
+                    self.initialized = True
+                    self.provider = "local"
+                    self.local_cb.record_success()
+                    logger.info(f"Local brain initialized ({settings.local_brain_model} @ {settings.local_brain_url})")
+                    return True
+                else:
+                    logger.warning(f"Local brain health check failed: {health}")
+                    self.local_cb.record_failure()
+            except Exception as e:
+                logger.warning(f"Local brain init failed: {e}")
+                self.local_cb.record_failure()
 
         if GROQ_AVAILABLE and self.is_valid_key(settings.groq_api_key) and self.groq_cb.can_attempt():
             if self.provider != "groq":
@@ -530,7 +554,7 @@ class VertexAIService:
         
         prompt = _build_forensic_prompt(file_name, file_type, has_c2pa)
 
-        if not self.initialized:
+        if not self.initialized and not await self.ensure_initialized():
             return _generate_mock_report(file_name, file_type, len(file_buffer), rules=rules)
 
         is_image = is_image_file(file_name, file_type)
@@ -593,6 +617,29 @@ class VertexAIService:
                 response_text = completion.choices[0].message.content
                 self.nim_cb.record_success()
 
+            elif self.provider == "local":
+                active_model = settings.local_brain_model
+                if is_image:
+                    return await self._fallback_image_analysis(file_name, file_type, file_buffer, rules, has_c2pa)
+                else:
+                    sample = file_buffer[:2000].decode('utf-8', errors='replace')
+                    messages = [
+                        {"role": "system", "content": "You are a CVBER security analyst. Analyze the provided file metadata and return a JSON risk assessment."},
+                        {"role": "user", "content": f"{prompt}\n\nFile Content Sample:\n{sample}"}
+                    ]
+                    response = await local_brain.chat_completion(
+                        messages=messages,
+                        tools=[],
+                        temperature=0.1,
+                        max_tokens=1024
+                    )
+                    response_text = response.content
+                    try:
+                        data = json.loads(response_text)
+                    except json.JSONDecodeError:
+                        data = {"overall_risk_score": 50, "originality_score": 50, "forensic_details": response_text}
+                    self.local_cb.record_success()
+
             data = json.loads(_clean_json_response(response_text))
             return _build_risk_from_data(data, rules, has_c2pa, self.provider, active_model,
                                          file_name, file_type, len(file_buffer))
@@ -640,7 +687,7 @@ RULES:
 - Never return error messages about image processing. Instead, redirect to the Agent Hub.
 """
 
-        if not self.initialized:
+        if not self.initialized and not await self.ensure_initialized():
             return "AI is in offline mode. To enable AI features, add your Groq API key in the backend .env file (GROQ_API_KEY=your_key). Get a free key at https://console.groq.com/keys"
 
         try:
@@ -666,6 +713,18 @@ RULES:
                     messages=messages, model=self.nim_model_name,
                 )
                 return self._strip_image_errors(completion.choices[0].message.content)
+            elif self.provider == "local":
+                messages = [{"role": "system", "content": system_prompt}]
+                for h in history:
+                    messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+                messages.append({"role": "user", "content": message})
+                response = await local_brain.chat_completion(
+                    messages=messages,
+                    tools=[],
+                    temperature=0.3,
+                    max_tokens=2048
+                )
+                return self._strip_image_errors(response.content)
         except Exception as e:
             err_str = str(e)
             logger.error(f"Mentor AI Error (provider={self.provider}): {err_str}")
@@ -677,7 +736,7 @@ RULES:
                     settings.google_api_key = None
                 self.initialized = False
                 self.provider = None
-                if self.ensure_initialized() and self.provider != old_provider:
+                if await self.ensure_initialized() and self.provider != old_provider:
                     try:
                         return await self.get_mentor_response(message, history)
                     except Exception:
